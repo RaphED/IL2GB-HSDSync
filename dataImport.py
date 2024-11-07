@@ -1,0 +1,52 @@
+import requests
+import re
+
+def getSkinsList():
+
+    # URL of the skins list
+    #TODO : make it a param
+    url = 'https://skins.combatbox.net/Info.txt'
+
+    # Download the content of the file
+    response = requests.get(url)
+
+    # Check if the request was successful (status code 200)
+    if response.status_code == 200:
+        file_content = response.text
+        
+        # Dictionary to store the skins
+        skins = {}
+
+        # Use regular expression to split the content into skin sections
+        sections = re.split(r'\[Skin-\d+\]', file_content)[1:]  # Ignore the part before the first skin
+
+        # For each section after the header
+        for i, section in enumerate(sections):
+            # Clean up the section
+            section = section.strip()
+            if not section:
+                continue
+
+            skin_id = i
+
+            # Dictionary to store the skin information
+            skin_info = {}
+
+            # Loop through each line of the section
+            for line in section.splitlines():
+                # Ignore empty lines or comment lines (lines starting with #)
+                if line.strip() and not line.startswith("#"):
+                    try:
+                        key, value = line.split('=', 1)  # Split at the first '='
+                        skin_info[key.strip()] = value.strip()  # Store the key-value pair
+                    except ValueError:
+                        print(f"Formatting error on line: {line}")
+
+            # Add the skin information to the main dictionary
+            skins[skin_id] = skin_info
+
+        # Print the collected data
+        return skins
+
+    else:
+        raise Exception(f"Error downloading the file. Status code: {response.status_code}")

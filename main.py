@@ -1,1 +1,3 @@
-print("Hello World")
+import dataImport
+
+print(len(dataImport.getSkinsList()))
