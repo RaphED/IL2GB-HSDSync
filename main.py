@@ -1,6 +1,3 @@
-import remoteService
-import localService
+import synchronizer
 
-#print(len(remoteService.getSkinsList()))
-
-print(localService.getSkinsList())
+print(synchronizer.scanSkins())
