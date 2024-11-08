@@ -1,9 +1,12 @@
 import localService
 import remoteService
 
-class registeredCollection:
-    def __init__():
-        squadron = "IRRE"
+class RegisteredCollection:
+    def __init__(self, IL2Group = None):
+        self.IL2Group = IL2Group
+
+    def isInCollection(self, remoteSkinInfo):
+        return remoteSkinInfo["IL2Group"] == self.IL2Group
 
 
 class ScanResult:
@@ -36,6 +39,8 @@ class ScanResult:
             returnString += f"\t- {skin['ddsFileName']}\n"
 
         return returnString
+
+    
         
 
 
@@ -47,17 +52,22 @@ def scanSkins():
     #get the local skins list in memory
     localSkinsCollection = localService.getSkinsList()
 
-    #TODO : get the registered skins
-    registeredCollectionList = []
-    #TEMP
-    #registeredCollectionList.append(registeredCollection())
+    registeredCollectionList: list[RegisteredCollection] = []
+    #TODO : get the registered collections
+    #TEMP, add one default collection wich is IRRE
+    registeredCollectionList.append(RegisteredCollection("IRRE"))
 
+    registeredRemoteSkins = []
+
+    for skin in remoteSkinsCollection:
+        #for each collection, concat skins in the registered skins
+        for registeredCollection in registeredCollectionList:
+            if registeredCollection.isInCollection(skin):
+                registeredRemoteSkins.append(skin)
+                break #to avoid to add multiple times the same skin
+        
     scanResult = ScanResult()
-    
-    #TODO: identify missing skins
-    #temp, only squadron == il2 group
-    registeredRemoteSkins = [skin for skin in remoteSkinsCollection.values() if skin["IL2Group"] == "IRRE"]
-    
+        
     for remoteSkin in registeredRemoteSkins:
 
         foundLocalSkin = None

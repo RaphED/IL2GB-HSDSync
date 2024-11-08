@@ -46,8 +46,8 @@ def getSkinsList():
             # Add the skin information to the main dictionary
             skins[skin_id] = skin_info
 
-        # Print the collected data
-        return skins
+        # return only the values (we do not need skins ids)
+        return skins.values()
 
     else:
         raise Exception(f"Error downloading the file. Status code: {response.status_code}")
