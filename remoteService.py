@@ -5,7 +5,8 @@ def getSkinsList():
 
     # URL of the skins list
     #TODO : make it a param
-    url = 'https://skins.combatbox.net/Info.txt'
+    #url = 'https://skins.combatbox.net/Info.txt'
+    url = "https://www.lesirreductibles.com/irreskins/IRRE/SkinsList.txt"
 
     # Download the content of the file
     response = requests.get(url)
