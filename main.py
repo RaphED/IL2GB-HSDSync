@@ -1,3 +1,6 @@
-import dataImport
+import remoteService
+import localService
 
-print(len(dataImport.getSkinsList()))
+#print(len(remoteService.getSkinsList()))
+
+print(localService.getSkinsList())
