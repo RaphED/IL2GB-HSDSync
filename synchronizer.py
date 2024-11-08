@@ -6,6 +6,38 @@ class registeredCollection:
         squadron = "IRRE"
 
 
+class ScanResult:
+    def __init__(self):
+        self.missingSkins = []
+        self.toBeUpdatedSkins = []
+        self.toBeRemovedSkins= []
+
+    def appendMissingSkin(self, remoteSkinInfo):
+        self.missingSkins.append(remoteSkinInfo)
+
+    def appendToBeUpdateSkin(self, remoteSkinInfo):
+        self.toBeUpdatedSkins.append(remoteSkinInfo)
+
+    def appendToBeRemovedSkin(self, localSkinInfo):
+        self.toBeRemovedSkins.append(localSkinInfo)
+
+    def toString(self):
+        returnString = ""
+        returnString += "Missing skins:\n"
+        for skin in self.missingSkins:
+            returnString += f"\t- {skin['Skin0']}\n"
+
+        returnString += "To be updated skins:\n"
+        for skin in self.toBeUpdatedSkins:
+            returnString += f"\t- {skin['Skin0']}\n"
+
+        returnString += "To be removed skins:\n"
+        for skin in self.toBeRemovedSkins:
+            returnString += f"\t- {skin['ddsFileName']}\n"
+
+        return returnString
+        
+
 
 def scanSkins():
     
@@ -20,9 +52,7 @@ def scanSkins():
     #TEMP
     #registeredCollectionList.append(registeredCollection())
 
-    missingSkins = []
-    toBeUpdatedSkins = []
-    toBeRemovedSkins= []
+    scanResult = ScanResult()
     
     #TODO: identify missing skins
     #temp, only squadron == il2 group
@@ -36,7 +66,7 @@ def scanSkins():
                 if remoteSkin["Skin0"] == localSkin["ddsFileName"]: #TODO : manage 2 files skins
                     #the skins is already there. Up to date ? 
                     if remoteSkin["HashDDS0"] != localSkin["md5"]:
-                        toBeUpdatedSkins.append(remoteSkin)
+                        scanResult.appendToBeUpdateSkin(remoteSkin)
                     
                     foundLocalSkin = localSkin
                     
@@ -44,7 +74,7 @@ def scanSkins():
                     break
         
         if not foundLocalSkin:
-            missingSkins.append(remoteSkin)
+            scanResult.appendMissingSkin(remoteSkin)
 
     #TODO: identify to be removed skins
     for localSkin in localSkinsCollection:
@@ -55,10 +85,6 @@ def scanSkins():
                     foundRemoteSkin = remoteSkin
                     break
         if foundRemoteSkin is None:
-            toBeRemovedSkins.append(localSkin)
+            scanResult.appendToBeRemovedSkin(localSkin)
 
-    return {
-        "missingSkins": missingSkins,
-        "toBeUpdatedSkins": toBeUpdatedSkins,
-        "toBeRemovedSkins": toBeRemovedSkins
-    }
+    return scanResult

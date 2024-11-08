@@ -1,3 +1,4 @@
 import synchronizer
 
-print(synchronizer.scanSkins())
+scanResult = synchronizer.scanSkins()
+print(scanResult.toString())
