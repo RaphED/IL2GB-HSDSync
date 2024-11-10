@@ -6,8 +6,6 @@ def getSkinsList():
     skinsDirectory = "D:\SteamLibrary\steamapps\common\IL-2 Sturmovik Battle of Stalingrad\data\graphics\skins"
     
     dds_files = []
-
-
     
     for root, dirs, files in os.walk(skinsDirectory):
         

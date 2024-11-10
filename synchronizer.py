@@ -1,13 +1,6 @@
 import localService
 import remoteService
-
-class RegisteredCollection:
-    def __init__(self, IL2Group = None):
-        self.IL2Group = IL2Group
-
-    def isInCollection(self, remoteSkinInfo):
-        return remoteSkinInfo["IL2Group"] == self.IL2Group
-
+import subscriptionService
 
 class ScanResult:
     def __init__(self):
@@ -40,9 +33,6 @@ class ScanResult:
 
         return returnString
 
-    
-        
-
 
 def scanSkins():
     
@@ -52,10 +42,8 @@ def scanSkins():
     #get the local skins list in memory
     localSkinsCollection = localService.getSkinsList()
 
-    registeredCollectionList: list[RegisteredCollection] = []
-    #TODO : get the registered collections
-    #TEMP, add one default collection wich is IRRE
-    registeredCollectionList.append(RegisteredCollection("IRRE"))
+    #TODO : manage properly the different sources
+    registeredCollectionList = subscriptionService.getAllSubscribedCollection()
 
     registeredRemoteSkins = []
 
@@ -98,3 +86,16 @@ def scanSkins():
             scanResult.appendToBeRemovedSkin(localSkin)
 
     return scanResult
+
+
+def updateSkins(scanResult: ScanResult):
+
+    #TEMP: 
+    temporaryDownloadFolder = ""
+
+    #download in temporary repository all missing skins
+    for remoteSkin in scanResult.missingSkins:
+        remoteService.downloadSkin()
+    #dddddd
+    #dddddd
+    #dddddd
