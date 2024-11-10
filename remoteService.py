@@ -1,6 +1,18 @@
 import requests
 import re
 
+sourcesInfo = [
+    {
+        "source":"HSD"
+    }
+]
+
+def getSourceInfo(source):
+    for sourceIter in sourcesInfo:
+        if sourceIter["source"] == source:
+            return sourceIter
+    return None 
+
 def getSkinsList():
 
     # URL of the skins list
@@ -51,3 +63,4 @@ def getSkinsList():
 
     else:
         raise Exception(f"Error downloading the file. Status code: {response.status_code}")
+

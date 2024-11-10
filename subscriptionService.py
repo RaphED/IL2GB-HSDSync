@@ -1,12 +1,15 @@
 import os
 import json
 import re
+from remoteService import getSourceInfo 
 
 class SubscribedCollection:
     def __init__(self, source, criteria):
-        #todo : check source is an existing one
-        self.source = source
-        #todo ? check criteria is a dictionary
+
+        self.source = getSourceInfo(source)
+        if self.source is None:
+            raise Exception("Unkown remote source !")
+        
         self.criteria: dict[str,str]= criteria
         
 
