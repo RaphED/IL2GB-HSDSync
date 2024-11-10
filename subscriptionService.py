@@ -16,7 +16,6 @@ class SubscribedCollection:
             matchingRegExp =self.criteria[criterion].replace("*", ".*") 
             if not re.match(matchingRegExp,remoteSkinInfo[criterion]):
                 return False
-            
         return True
 
 def getSubscribedCollectionFromFile(subscriptionFilePath):
@@ -37,10 +36,12 @@ def getSubscribedCollectionFromFile(subscriptionFilePath):
 
 def getAllSubscribedCollection():
 
-
     returnedCollections = []
     subscriptionPath = os.path.join(os.getcwd(),"Subscriptions")
-    #TODO : manage if folder does not exist
+    #create subsciption path of not exists
+    if not os.path.exists(subscriptionPath):
+        os.makedirs(subscriptionPath)
+    
     for root, dirs, files in os.walk(subscriptionPath):
         for file in files:
             if file.endswith(".is3"):
