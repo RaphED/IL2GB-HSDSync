@@ -121,7 +121,8 @@ def updateAll(scanResult: ScanResult):
     for skin in scanResult.toBeUpdatedSkins["HSD"]:
         updateSingleSkinFromRemote('HSD', skin)
 
-    
+    for skin in scanResult.toBeRemovedSkins:
+        deleteSkinFromLocal(skin)
     return
 
 
@@ -137,6 +138,10 @@ def updateSingleSkinFromRemote(source, remoteSkin):
     #Move the file to the target directory and replace existing file if any
     final_path = localService.moveSkinFromPathToDestination(temp_file_path, remoteSkin["Plane"])
 
-    print(f"Downloaded to {final_path}...")
+    print(f"Downloaded to {final_path}")
 
     return final_path
+
+def deleteSkinFromLocal(localSkinInfo):
+    localService.removeSkin(localSkinInfo)
+    print(f"Deleted skin : {localSkinInfo["ddsFileName"]}")

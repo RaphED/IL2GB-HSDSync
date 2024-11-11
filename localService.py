@@ -62,3 +62,7 @@ def moveFile(src_path, dest_dir):
 
 def moveSkinFromPathToDestination(src_path, aircraft):
     return moveFile(src_path, os.path.join(skinsDirectory, aircraft))
+
+def removeSkin(localSkinInfo):
+    filePath = os.path.join(skinsDirectory, localSkinInfo["aircraft"], localSkinInfo["ddsFileName"])
+    os.remove(filePath)
