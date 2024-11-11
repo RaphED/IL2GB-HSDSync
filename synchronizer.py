@@ -4,28 +4,33 @@ import subscriptionService
 
 class ScanResult:
     def __init__(self):
-        self.missingSkins = []
-        self.toBeUpdatedSkins = []
-        self.toBeRemovedSkins= []
+        self.missingSkins = dict[str, list]()
+        self.toBeUpdatedSkins = dict[str, list]()
+        self.toBeRemovedSkins= list()
 
-    def appendMissingSkin(self, remoteSkinInfo):
-        self.missingSkins.append(remoteSkinInfo)
+    def appendMissingSkin(self, source, remoteSkinInfo):
+        self.missingSkins[source].append(remoteSkinInfo)
 
-    def appendToBeUpdateSkin(self, remoteSkinInfo):
-        self.toBeUpdatedSkins.append(remoteSkinInfo)
+    def appendToBeUpdateSkin(self, source, remoteSkinInfo):
+        self.toBeUpdatedSkins[source].append(remoteSkinInfo)
 
     def appendToBeRemovedSkin(self, localSkinInfo):
         self.toBeRemovedSkins.append(localSkinInfo)
 
     def toString(self):
         returnString = ""
-        returnString += "Missing skins:\n"
-        for skin in self.missingSkins:
-            returnString += f"\t- {skin['Skin0']}\n"
+        
+        allSources = self.missingSkins.keys() | self.toBeUpdatedSkins.keys()
+        
+        for source in allSources:
+            returnString += f"*********** {source} ***********\n"
+            returnString += "Missing skins:\n"
+            for skin in self.missingSkins[source]:
+                returnString += f"\t- {skin['Skin0']}\n"
 
-        returnString += "To be updated skins:\n"
-        for skin in self.toBeUpdatedSkins:
-            returnString += f"\t- {skin['Skin0']}\n"
+            returnString += "To be updated skins:\n"
+            for skin in self.toBeUpdatedSkins[source]:
+                returnString += f"\t- {skin['Skin0']}\n"
 
         returnString += "To be removed skins:\n"
         for skin in self.toBeRemovedSkins:
@@ -36,66 +41,71 @@ class ScanResult:
 
 def scanSkins():
     
-    #get the full collection list in memory
-    remoteSkinsCollection = remoteService.getSkinsList()
-
     #get the local skins list in memory
     localSkinsCollection = localService.getSkinsList()
 
-    #TODO : manage properly the different sources
-    registeredCollectionList = subscriptionService.getAllSubscribedCollection()
+    #load all subscriptions
+    subscribedCollectionList = subscriptionService.getAllSubscribedCollection()
 
-    registeredRemoteSkins = []
-
-    for skin in remoteSkinsCollection:
-        #for each collection, concat skins in the registered skins
-        for registeredCollection in registeredCollectionList:
-            if registeredCollection.isInCollection(skin):
-                registeredRemoteSkins.append(skin)
-                break #to avoid to add multiple times the same skin
+    #identify the used sources
+    usedSource = []
+    for collection in subscribedCollectionList:
+        if collection.source not in usedSource:
+            usedSource.append(collection.source)
+    
+    subscribedSkins = dict[str,list]()
+    #  and get all the skins from each source matching with the subscriptions
+    for source in usedSource:
+        subscribedSkins[source] = list()
+        for skin in remoteService.getSkinsCatalogFromSource(source):
+            #check if the skin matches with a subcription
+            for collection in subscribedCollectionList:
+                if collection.source == source and collection.match(skin):
+                    subscribedSkins[source].append(skin)
+                    break #to avoid to add multiple times the same skin
+    
         
     scanResult = ScanResult()
+    
+    #then, for each source, check if we can find the remote skin matching with the local skin
+    for source in usedSource:
         
-    for remoteSkin in registeredRemoteSkins:
+        #initialise result collections
+        scanResult.missingSkins[source] = list()
+        scanResult.toBeUpdatedSkins[source] = list()
 
-        foundLocalSkin = None
-        for localSkin in localSkinsCollection:
-            if remoteSkin["Plane"] == localSkin["aircraft"]: #prefiltering to optimize search
-                if remoteSkin["Skin0"] == localSkin["ddsFileName"]: #TODO : manage 2 files skins
-                    #the skins is already there. Up to date ? 
-                    if remoteSkin["HashDDS0"] != localSkin["md5"]:
-                        scanResult.appendToBeUpdateSkin(remoteSkin)
-                    
-                    foundLocalSkin = localSkin
-                    
-                    #and then no need to pursue the research
-                    break
-        
-        if not foundLocalSkin:
-            scanResult.appendMissingSkin(remoteSkin)
+        for remoteSkin in subscribedSkins[source]:
+            foundLocalSkin = None
+            for localSkin in localSkinsCollection:
+                if remoteSkin["Plane"] == localSkin["aircraft"]: #prefiltering to optimize search
+                    if remoteSkin["Skin0"] == localSkin["ddsFileName"]: #TODO : manage 2 files skins
+                        #the skins is already there. Up to date ? 
+                        if remoteSkin["HashDDS0"] != localSkin["md5"]:
+                            scanResult.appendToBeUpdateSkin(source, remoteSkin)
+                        
+                        foundLocalSkin = localSkin
+                        #and then no need to pursue the research
+                        break
+            
+            if not foundLocalSkin:
+                scanResult.appendMissingSkin(source, remoteSkin)
 
-    #TODO: identify to be removed skins
+    #Then list all local skins not present in the remote skins
     for localSkin in localSkinsCollection:
         foundRemoteSkin = None
-        for remoteSkin in registeredRemoteSkins:
-            if remoteSkin["Plane"] == localSkin["aircraft"]: #prefiltering to optimize search
-                if remoteSkin["Skin0"] == localSkin["ddsFileName"]: #TODO : manage 2 files skins
-                    foundRemoteSkin = remoteSkin
-                    break
+        #check in all sources
+        for source in usedSource:
+            for remoteSkin in subscribedSkins[source]:
+                if remoteSkin["Plane"] == localSkin["aircraft"]: #prefiltering to optimize search
+                    if remoteSkin["Skin0"] == localSkin["ddsFileName"]: #TODO : manage 2 files skins
+                        foundRemoteSkin = remoteSkin
+                        break
+            if foundRemoteSkin is not None:
+                break
+        #the skin cannot be found in any source
         if foundRemoteSkin is None:
             scanResult.appendToBeRemovedSkin(localSkin)
 
     return scanResult
 
 
-def updateSkins(scanResult: ScanResult):
-
-    #TEMP: 
-    temporaryDownloadFolder = ""
-
-    #download in temporary repository all missing skins
-    for remoteSkin in scanResult.missingSkins:
-        remoteService.downloadSkin()
-    #dddddd
-    #dddddd
-    #dddddd

@@ -1,20 +1,17 @@
 [
     {
-        "source": "HSD",
         "criteria":{
             "IL2Group": "IRRE",
             "Skin0":"*Krapchatyy*"
         }
     },
     {
-        "source": "HSD",
         "criteria":{
             "IL2Group": "IRRE",
             "Skin0":"*Titane*"
         }
     },
     {
-        "source": "HSD",
         "criteria":{
             "IL2Group": "IRRE",
             "Skin0":"*NormandieNiemen*"

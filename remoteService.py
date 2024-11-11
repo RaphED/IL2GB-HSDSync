@@ -3,7 +3,8 @@ import re
 
 sourcesInfo = [
     {
-        "source":"HSD"
+        "source":"HSD",
+        "catalogURL": "https://skins.combatbox.net/Info.txt"
     }
 ]
 
@@ -13,15 +14,13 @@ def getSourceInfo(source):
             return sourceIter
     return None 
 
-def getSkinsList():
-
-    # URL of the skins list
-    #TODO : make it a param
-    #url = 'https://skins.combatbox.net/Info.txt'
-    url = "https://www.lesirreductibles.com/irreskins/IRRE/SkinsList.txt"
+def getSkinsCatalogFromSource(source):
 
     # Download the content of the file
-    response = requests.get(url)
+    sourceInfo = getSourceInfo(source)
+    if sourcesInfo is None: 
+        raise Exception("Unexpected source")
+    response = requests.get(sourceInfo["catalogURL"])
 
     # Check if the request was successful (status code 200)
     if response.status_code == 200:
@@ -63,4 +62,3 @@ def getSkinsList():
 
     else:
         raise Exception(f"Error downloading the file. Status code: {response.status_code}")
-

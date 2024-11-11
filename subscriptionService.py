@@ -5,15 +5,17 @@ from remoteService import getSourceInfo
 
 class SubscribedCollection:
     def __init__(self, source, criteria):
-
-        self.source = getSourceInfo(source)
-        if self.source is None:
-            raise Exception("Unkown remote source !")
+        
+        #default source is HSD
+        sourceName = "HSD"
+        if source is not None:
+            sourceName = source
+        self.source = getSourceInfo(sourceName)["source"]
         
         self.criteria: dict[str,str]= criteria
         
 
-    def isInCollection(self, remoteSkinInfo):
+    def match(self, remoteSkinInfo):
         for criterion in self.criteria.keys():
             #transform * in .*
             matchingRegExp =self.criteria[criterion].replace("*", ".*") 
@@ -30,14 +32,14 @@ def getSubscribedCollectionFromFile(subscriptionFilePath):
     for rawSubscription in rawJsonData:
         subscribedCollectionlist.append(
             SubscribedCollection(
-                source=rawSubscription["source"],
+                source=rawSubscription.get("source"),
                 criteria=rawSubscription["criteria"]
             )
         )
     
     return subscribedCollectionlist
 
-def getAllSubscribedCollection():
+def getAllSubscribedCollection() -> list[SubscribedCollection]:
 
     returnedCollections = []
     subscriptionPath = os.path.join(os.getcwd(),"Subscriptions")
@@ -47,7 +49,7 @@ def getAllSubscribedCollection():
     
     for root, dirs, files in os.walk(subscriptionPath):
         for file in files:
-            if file.endswith(".is3"):
+            if file.endswith(".is3"): #We only consider files with is3 extension
                 returnedCollections += getSubscribedCollectionFromFile(os.path.join(root,file))
     
     return returnedCollections
