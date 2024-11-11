@@ -1,3 +1,5 @@
+import hashlib
+
 import localService
 import remoteService
 import subscriptionService
@@ -26,11 +28,11 @@ class ScanResult:
             returnString += f"*********** {source} ***********\n"
             returnString += "Missing skins:\n"
             for skin in self.missingSkins[source]:
-                returnString += f"\t- {skin['Skin0']}\n"
+                returnString += f"\t- {skin['Title']}\n"
 
             returnString += "To be updated skins:\n"
             for skin in self.toBeUpdatedSkins[source]:
-                returnString += f"\t- {skin['Skin0']}\n"
+                returnString += f"\t- {skin['Title']}\n"
 
         returnString += "To be removed skins:\n"
         for skin in self.toBeRemovedSkins:
@@ -109,3 +111,32 @@ def scanSkins():
     return scanResult
 
 
+def updateAll(scanResult: ScanResult):
+    
+    #import all missings skins
+    for skin in scanResult.missingSkins["HSD"]:
+        updateSingleSkinFromRemote('HSD', skin)
+
+    #import all to be updated skins
+    for skin in scanResult.toBeUpdatedSkins["HSD"]:
+        updateSingleSkinFromRemote('HSD', skin)
+
+    
+    return
+
+
+def updateSingleSkinFromRemote(source, remoteSkin):
+
+    tempDir = "D:\Download"  # Replace with your target directory path
+
+    print(f"Downloading {remoteSkin["Title"]}...")
+
+    #download to temp the skin
+    temp_file_path = remoteService.downloadSkinToTempDir(source, remoteSkin, tempDir)
+    
+    #Move the file to the target directory and replace existing file if any
+    final_path = localService.moveSkinFromPathToDestination(temp_file_path, remoteSkin["Plane"])
+
+    print(f"Downloaded to {final_path}...")
+
+    return final_path

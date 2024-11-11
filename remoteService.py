@@ -1,10 +1,13 @@
 import requests
 import re
+import os
+import hashlib
 
 sourcesInfo = [
     {
         "source":"HSD",
-        "catalogURL": "https://skins.combatbox.net/Info.txt"
+        "catalogURL": "https://skins.combatbox.net/Info.txt",
+        "skinsURL": "https://skins.combatbox.net/[Plane]/[skinsFileName]"
     }
 ]
 
@@ -12,7 +15,7 @@ def getSourceInfo(source):
     for sourceIter in sourcesInfo:
         if sourceIter["source"] == source:
             return sourceIter
-    return None 
+    raise Exception(f"Caanot find source {source}!")
 
 def getSkinsCatalogFromSource(source):
 
@@ -62,3 +65,31 @@ def getSkinsCatalogFromSource(source):
 
     else:
         raise Exception(f"Error downloading the file. Status code: {response.status_code}")
+
+
+# Function to download a file from a URL and save it to a temporary directory
+def downloadFile(url, temp_dir, expectedMD5):
+    response = requests.get(url, stream=True)
+    response.raise_for_status()  # Raise an exception for HTTP errors
+    temp_file_path = os.path.join(temp_dir, os.path.basename(url))
+
+    with open(temp_file_path, 'wb') as f:
+        for chunk in response.iter_content(chunk_size=8192):#TODO : check the chunk size is a good one
+            f.write(chunk)
+    
+    if hashlib.md5(open(temp_file_path, "rb").read()).hexdigest() != expectedMD5:
+        #TODO, retry
+        raise Exception(f"Bad file download {temp_file_path}")
+    
+    return temp_file_path
+
+def downloadSkinToTempDir(source, skinInfo, tempDir):
+
+    #build skin URL
+    #TODO : Works only for HSD source
+    url = getSourceInfo(source)["skinsURL"]
+    url = url.replace("[Plane]", skinInfo['Plane'])
+    url = url.replace("[skinsFileName]", skinInfo['Skin0'])
+
+    # Download the file to the temporary folder
+    return downloadFile(url=url, temp_dir=tempDir, expectedMD5=skinInfo["HashDDS0"])

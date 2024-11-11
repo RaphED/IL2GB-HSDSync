@@ -1,10 +1,11 @@
 import os
 import hashlib
+import shutil
+
+skinsDirectory = "D:\SteamLibrary\steamapps\common\IL-2 Sturmovik Battle of Stalingrad\data\graphics\skins"
 
 def getSkinsList():
 
-    skinsDirectory = "D:\SteamLibrary\steamapps\common\IL-2 Sturmovik Battle of Stalingrad\data\graphics\skins"
-    
     dds_files = []
     
     for root, dirs, files in os.walk(skinsDirectory):
@@ -43,3 +44,21 @@ def getSkinsList():
             #TODO : manage double DDS files
     
     return dds_files
+
+# Function to move the file and replace if necessary
+def moveFile(src_path, dest_dir):
+    if not os.path.exists(dest_dir):
+        os.makedirs(dest_dir)
+
+    dest_path = os.path.join(dest_dir, os.path.basename(src_path))
+    
+    # Remove the destination file if it exists
+    if os.path.exists(dest_path):
+        os.remove(dest_path)
+
+    # Move the file
+    shutil.move(src_path, dest_path)
+    return dest_path
+
+def moveSkinFromPathToDestination(src_path, aircraft):
+    return moveFile(src_path, os.path.join(skinsDirectory, aircraft))
