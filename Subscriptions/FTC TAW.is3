@@ -1,0 +1,8 @@
+[
+    {
+        "comment": "Take all skins from HSD with from Skin pack 'FTC TAW' ",
+        "criteria":{
+            "SkinPack": "FTC TAW"
+        } 
+    }
+]

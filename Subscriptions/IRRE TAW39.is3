@@ -2,19 +2,19 @@
     {
         "criteria":{
             "IL2Group": "IRRE",
-            "Skin0":"*Krapchatyy*"
+            "Title":"*Krapchatyy*"
         }
     },
     {
         "criteria":{
             "IL2Group": "IRRE",
-            "Skin0":"*Titane*"
+            "Title":"*Titane*"
         }
     },
     {
         "criteria":{
             "IL2Group": "IRRE",
-            "Skin0":"*NormandieNiemen*"
+            "Title":"*NormandieNiemen*"
         }
     }
 ]
