@@ -2,13 +2,12 @@ import os
 import hashlib
 import shutil
 
-skinsDirectory = "D:\SteamLibrary\steamapps\common\IL-2 Sturmovik Battle of Stalingrad\data\graphics\skins"
-
-
+from configurationService import getConf
 
 def getSkinsList():
 
     skinList = []
+    skinsDirectory = getConf("skinsDirectory")
     
     for root, dirs, files in os.walk(skinsDirectory):
         
@@ -75,13 +74,13 @@ def moveFile(src_path, dest_dir):
     return dest_path
 
 def moveSkinFromPathToDestination(src_path, aircraft):
-    return moveFile(src_path, os.path.join(skinsDirectory, aircraft))
+    return moveFile(src_path, os.path.join(getConf("skinsDirectory"), aircraft))
 
 def removeSkin(localSkinInfo):
-    filePath = os.path.join(skinsDirectory, localSkinInfo["aircraft"], localSkinInfo["mainFileName"])
+    filePath = os.path.join(getConf("skinsDirectory"), localSkinInfo["aircraft"], localSkinInfo["mainFileName"])
     os.remove(filePath)
 
     if localSkinInfo.get("secondaryFileName") is not None and  localSkinInfo["secondaryFileName"] != "":
         #there is a secondary file
-        secondaryFilePath = os.path.join(skinsDirectory, localSkinInfo["aircraft"], localSkinInfo["secondaryFileName"])
+        secondaryFilePath = os.path.join(getConf("skinsDirectory"), localSkinInfo["aircraft"], localSkinInfo["secondaryFileName"])
         os.remove(secondaryFilePath)

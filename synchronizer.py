@@ -2,6 +2,7 @@ import localService
 import remoteService
 from remoteService import getSourceParam
 import subscriptionService
+from configurationService import getConf
 
 class ScanResult:
     def __init__(self):
@@ -39,9 +40,6 @@ class ScanResult:
             returnString += f"\t- {skin['name']}\n"
 
         return returnString
-    
-
-
 
 def scanSkins():
     
@@ -163,12 +161,10 @@ def updateAll(scanResult: ScanResult):
 
 def updateSingleSkinFromRemote(source, remoteSkin):
 
-    tempDir = "D:\Download"  # TODO : make it a param
-
     print(f"Downloading {remoteSkin[getSourceParam(source, "name")]}...")
 
     #download to temp the skin
-    downloadedFiles = remoteService.downloadSkinToTempDir(source, remoteSkin, tempDir)
+    downloadedFiles = remoteService.downloadSkinToTempDir(source, remoteSkin)
 
     for file in downloadedFiles:
     

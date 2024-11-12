@@ -94,7 +94,12 @@ def downloadFile(url, temp_dir, expectedMD5):
     
     return temp_file_path
 
-def downloadSkinToTempDir(source, skinInfo, tempDir):
+def downloadSkinToTempDir(source, skinInfo):
+
+    tempDir = os.path.join(os.curdir, "temp")
+    #create the temp directory if not exist
+    if not os.path.exists(tempDir):
+        os.makedirs(tempDir)
 
     #build skin URL
     url = getSourceInfo(source)["skinsURL"]
