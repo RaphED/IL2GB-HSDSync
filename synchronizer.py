@@ -36,7 +36,7 @@ class ScanResult:
 
         returnString += "To be removed skins:\n"
         for skin in self.toBeRemovedSkins:
-            returnString += f"\t- {skin['ddsFileName'][:-4]}\n"
+            returnString += f"\t- {skin['name']}\n"
 
         return returnString
     
@@ -81,18 +81,45 @@ def scanSkins():
         for remoteSkin in subscribedSkins[source]:
             foundLocalSkin = None
             for localSkin in localSkinsCollection:
+                #not the same A/C, no match
                 if remoteSkin[getSourceParam(source, "aircraft")] != localSkin["aircraft"]:
                     continue
-                if remoteSkin[getSourceParam(source, "mainSkinFileName")] != localSkin["ddsFileName"]:
+                
+                #not the same skin main file, no match
+                if remoteSkin[getSourceParam(source, "mainSkinFileName")] != localSkin["mainFileName"]:
                     continue
                 
-                #TODO : manage 2 files skins 
-                #the skins is already there. Up to date ? 
-                if remoteSkin[getSourceParam(source, "mainFileMd5")] != localSkin["md5"]:
-                    scanResult.appendToBeUpdateSkin(source, remoteSkin)
-                
+                #there is a match !
                 foundLocalSkin = localSkin
-                #and then no need to pursue the research
+                                
+                #the skins is already there. Up to date ? 
+                skinAsToBeUpdated = False
+
+                #check main file md5
+                if remoteSkin[getSourceParam(source, "mainFileMd5")] != localSkin["mainFileMd5"]:
+                    skinAsToBeUpdated = True
+                else:
+                    #the main file is the same, but we have to look at the secondary file if any
+                    secondarySkinFileName = remoteSkin.get(getSourceParam(source, "secondarySkinFileName"))
+                    
+                    #if there is a secondary file declared on the remote
+                    if secondarySkinFileName is not None and secondarySkinFileName != "":
+                        
+                        #check if we can find the secondary on the local
+                        if localSkin.get("secondaryFileName") is None:
+                            skinAsToBeUpdated = True
+                        #we have a secondary file, check the name is the same one (should always be)
+                        elif remoteSkin[getSourceParam(source, "secondarySkinFileName")] != localSkin["secondaryFileName"]:
+                            skinAsToBeUpdated = True
+                        #check the md5 is the proper one
+                        elif remoteSkin[getSourceParam(source, "secondaryFileMd5")] != localSkin["secondaryFileMd5"]:
+                            skinAsToBeUpdated = True
+                
+                #if any modification has to be made, put the skin in the list to be updated
+                if skinAsToBeUpdated:
+                    scanResult.appendToBeUpdateSkin(source, remoteSkin)
+
+                #and then no need to pursue the research as if we are there, we have found a match
                 break
             
             if not foundLocalSkin:
@@ -105,7 +132,8 @@ def scanSkins():
         for source in usedSource:
             for remoteSkin in subscribedSkins[source]:
                 if remoteSkin[getSourceParam(source, "aircraft")] == localSkin["aircraft"]: #prefiltering to optimize search
-                    if remoteSkin[getSourceParam(source, "mainSkinFileName")] == localSkin["ddsFileName"]: #TODO : manage 2 files skins
+                    #TODO: Manage orphans skins
+                    if remoteSkin[getSourceParam(source, "mainSkinFileName")] == localSkin["mainFileName"]:
                         foundRemoteSkin = remoteSkin
                         break
             if foundRemoteSkin is not None:
@@ -140,15 +168,15 @@ def updateSingleSkinFromRemote(source, remoteSkin):
     print(f"Downloading {remoteSkin[getSourceParam(source, "name")]}...")
 
     #download to temp the skin
-    temp_file_path = remoteService.downloadSkinToTempDir(source, remoteSkin, tempDir)
+    downloadedFiles = remoteService.downloadSkinToTempDir(source, remoteSkin, tempDir)
+
+    for file in downloadedFiles:
     
-    #Move the file to the target directory and replace existing file if any
-    final_path = localService.moveSkinFromPathToDestination(temp_file_path, remoteSkin[getSourceParam(source, "aircraft")])
+        #Move the file to the target directory and replace existing file if any
+        final_path = localService.moveSkinFromPathToDestination(file, remoteSkin[getSourceParam(source, "aircraft")])
 
-    print(f"Downloaded to {final_path}")
-
-    return final_path
+        print(f"Downloaded to {final_path}")
 
 def deleteSkinFromLocal(localSkinInfo):
     localService.removeSkin(localSkinInfo)
-    print(f"Deleted skin : {localSkinInfo["ddsFileName"]}")
+    print(f"Deleted skin : {localSkinInfo["name"]}")

@@ -13,8 +13,8 @@ sourcesInfo = [
             "name": "Title",
             "mainSkinFileName": "Skin0",
             "mainFileMd5": "HashDDS0",
-            "secondSkinFileName": "Skin1",
-            "secondFileMd5": "HashDDS1"
+            "secondarySkinFileName": "Skin01",
+            "secondaryFileMd5": "HashDDS01"
         }
     }
 ]
@@ -99,7 +99,21 @@ def downloadSkinToTempDir(source, skinInfo, tempDir):
     #build skin URL
     url = getSourceInfo(source)["skinsURL"]
     url = url.replace("[aircraft]", skinInfo[getSourceParam(source, "aircraft")])
-    url = url.replace("[skinFileName]", skinInfo[getSourceParam(source, "mainSkinFileName")])
-    #TODO : manage two files skins
-    # Download the file to the temporary folder
-    return downloadFile(url=url, temp_dir=tempDir, expectedMD5=skinInfo[getSourceParam(source, "mainFileMd5")])
+    urlMainSkin = url.replace("[skinFileName]", skinInfo[getSourceParam(source, "mainSkinFileName")])
+
+    # Download the file(s) to the temporary folder
+    downloadedFiles = []
+    downloadedFiles.append(downloadFile(url=urlMainSkin, temp_dir=tempDir, expectedMD5=skinInfo[getSourceParam(source, "mainFileMd5")]))
+    
+    #if there is a second skin file
+    secondarySkinFileName = skinInfo.get(getSourceParam(source, "secondarySkinFileName"))
+    if secondarySkinFileName is not None and secondarySkinFileName != "":
+        #hack : works only for HSD, the #1 is replaced by %123 on the URL
+        remoteFileName = skinInfo[getSourceParam(source, "secondarySkinFileName")].replace("#1", "%231")
+        urlSecondarySkin = url.replace("[skinFileName]", remoteFileName)
+        downloadFileName = downloadFile(url=urlSecondarySkin, temp_dir=tempDir, expectedMD5=skinInfo[getSourceParam(source, "secondaryFileMd5")])
+        properFileName = downloadFileName.replace("%231","#1")
+        os.rename(downloadFileName, properFileName)
+        downloadedFiles.append(properFileName)
+    
+    return downloadedFiles
