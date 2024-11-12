@@ -7,7 +7,15 @@ sourcesInfo = [
     {
         "source":"HSD",
         "catalogURL": "https://skins.combatbox.net/Info.txt",
-        "skinsURL": "https://skins.combatbox.net/[Plane]/[skinsFileName]"
+        "skinsURL": "https://skins.combatbox.net/[aircraft]/[skinFileName]",
+        "params":{
+            "aircraft": "Plane",
+            "name": "Title",
+            "mainSkinFileName": "Skin0",
+            "mainFileMd5": "HashDDS0",
+            "secondSkinFileName": "Skin1",
+            "secondFileMd5": "HashDDS1"
+        }
     }
 ]
 
@@ -16,6 +24,9 @@ def getSourceInfo(source):
         if sourceIter["source"] == source:
             return sourceIter
     raise Exception(f"Caanot find source {source}!")
+
+def getSourceParam(source, param):
+    return getSourceInfo(source)["params"][param]
 
 def getSkinsCatalogFromSource(source):
 
@@ -86,10 +97,9 @@ def downloadFile(url, temp_dir, expectedMD5):
 def downloadSkinToTempDir(source, skinInfo, tempDir):
 
     #build skin URL
-    #TODO : Works only for HSD source
     url = getSourceInfo(source)["skinsURL"]
-    url = url.replace("[Plane]", skinInfo['Plane'])
-    url = url.replace("[skinsFileName]", skinInfo['Skin0'])
-
+    url = url.replace("[aircraft]", skinInfo[getSourceParam(source, "aircraft")])
+    url = url.replace("[skinFileName]", skinInfo[getSourceParam(source, "mainSkinFileName")])
+    #TODO : manage two files skins
     # Download the file to the temporary folder
-    return downloadFile(url=url, temp_dir=tempDir, expectedMD5=skinInfo["HashDDS0"])
+    return downloadFile(url=url, temp_dir=tempDir, expectedMD5=skinInfo[getSourceParam(source, "mainFileMd5")])

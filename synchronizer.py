@@ -1,7 +1,6 @@
-import hashlib
-
 import localService
 import remoteService
+from remoteService import getSourceParam
 import subscriptionService
 
 class ScanResult:
@@ -19,26 +18,29 @@ class ScanResult:
     def appendToBeRemovedSkin(self, localSkinInfo):
         self.toBeRemovedSkins.append(localSkinInfo)
 
+    def getUsedSources(self):
+        return self.missingSkins.keys() | self.toBeUpdatedSkins.keys()
+
     def toString(self):
         returnString = ""
         
-        allSources = self.missingSkins.keys() | self.toBeUpdatedSkins.keys()
-        
-        for source in allSources:
+        for source in self.getUsedSources():
             returnString += f"*********** {source} ***********\n"
             returnString += "Missing skins:\n"
             for skin in self.missingSkins[source]:
-                returnString += f"\t- {skin['Title']}\n"
+                returnString += f"\t- {skin[getSourceParam(source, "name")]}\n"
 
             returnString += "To be updated skins:\n"
             for skin in self.toBeUpdatedSkins[source]:
-                returnString += f"\t- {skin['Title']}\n"
+                returnString += f"\t- {skin[getSourceParam(source, "name")]}\n"
 
         returnString += "To be removed skins:\n"
         for skin in self.toBeRemovedSkins:
-            returnString += f"\t- {skin['ddsFileName']}\n"
+            returnString += f"\t- {skin['ddsFileName'][:-4]}\n"
 
         return returnString
+    
+
 
 
 def scanSkins():
@@ -79,15 +81,19 @@ def scanSkins():
         for remoteSkin in subscribedSkins[source]:
             foundLocalSkin = None
             for localSkin in localSkinsCollection:
-                if remoteSkin["Plane"] == localSkin["aircraft"]: #prefiltering to optimize search
-                    if remoteSkin["Skin0"] == localSkin["ddsFileName"]: #TODO : manage 2 files skins
-                        #the skins is already there. Up to date ? 
-                        if remoteSkin["HashDDS0"] != localSkin["md5"]:
-                            scanResult.appendToBeUpdateSkin(source, remoteSkin)
-                        
-                        foundLocalSkin = localSkin
-                        #and then no need to pursue the research
-                        break
+                if remoteSkin[getSourceParam(source, "aircraft")] != localSkin["aircraft"]:
+                    continue
+                if remoteSkin[getSourceParam(source, "mainSkinFileName")] != localSkin["ddsFileName"]:
+                    continue
+                
+                #TODO : manage 2 files skins 
+                #the skins is already there. Up to date ? 
+                if remoteSkin[getSourceParam(source, "mainFileMd5")] != localSkin["md5"]:
+                    scanResult.appendToBeUpdateSkin(source, remoteSkin)
+                
+                foundLocalSkin = localSkin
+                #and then no need to pursue the research
+                break
             
             if not foundLocalSkin:
                 scanResult.appendMissingSkin(source, remoteSkin)
@@ -98,8 +104,8 @@ def scanSkins():
         #check in all sources
         for source in usedSource:
             for remoteSkin in subscribedSkins[source]:
-                if remoteSkin["Plane"] == localSkin["aircraft"]: #prefiltering to optimize search
-                    if remoteSkin["Skin0"] == localSkin["ddsFileName"]: #TODO : manage 2 files skins
+                if remoteSkin[getSourceParam(source, "aircraft")] == localSkin["aircraft"]: #prefiltering to optimize search
+                    if remoteSkin[getSourceParam(source, "mainSkinFileName")] == localSkin["ddsFileName"]: #TODO : manage 2 files skins
                         foundRemoteSkin = remoteSkin
                         break
             if foundRemoteSkin is not None:
@@ -113,13 +119,14 @@ def scanSkins():
 
 def updateAll(scanResult: ScanResult):
     
-    #import all missings skins
-    for skin in scanResult.missingSkins["HSD"]:
-        updateSingleSkinFromRemote('HSD', skin)
+    for source in scanResult.getUsedSources():
+        #import all missings skins
+        for skin in scanResult.missingSkins[source]:
+            updateSingleSkinFromRemote(source, skin)
 
-    #import all to be updated skins
-    for skin in scanResult.toBeUpdatedSkins["HSD"]:
-        updateSingleSkinFromRemote('HSD', skin)
+        #import all to be updated skins
+        for skin in scanResult.toBeUpdatedSkins[source]:
+            updateSingleSkinFromRemote(source, skin)
 
     for skin in scanResult.toBeRemovedSkins:
         deleteSkinFromLocal(skin)
@@ -128,15 +135,15 @@ def updateAll(scanResult: ScanResult):
 
 def updateSingleSkinFromRemote(source, remoteSkin):
 
-    tempDir = "D:\Download"  # Replace with your target directory path
+    tempDir = "D:\Download"  # TODO : make it a param
 
-    print(f"Downloading {remoteSkin["Title"]}...")
+    print(f"Downloading {remoteSkin[getSourceParam(source, "name")]}...")
 
     #download to temp the skin
     temp_file_path = remoteService.downloadSkinToTempDir(source, remoteSkin, tempDir)
     
     #Move the file to the target directory and replace existing file if any
-    final_path = localService.moveSkinFromPathToDestination(temp_file_path, remoteSkin["Plane"])
+    final_path = localService.moveSkinFromPathToDestination(temp_file_path, remoteSkin[getSourceParam(source, "aircraft")])
 
     print(f"Downloaded to {final_path}")
 
