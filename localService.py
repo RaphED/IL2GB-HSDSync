@@ -4,10 +4,13 @@ import shutil
 
 from configurationService import getConf
 
+def getSkinDirectory():
+    return os.path.join(getConf("IL2GBGameDirectory"), "data\\graphics\\skins")
+
 def getSkinsList():
 
     skinList = []
-    skinsDirectory = getConf("skinsDirectory")
+    skinsDirectory = getSkinDirectory()
     
     for root, dirs, files in os.walk(skinsDirectory):
         
@@ -74,15 +77,15 @@ def moveFile(src_path, dest_dir):
     return dest_path
 
 def moveSkinFromPathToDestination(src_path, aircraft):
-    return moveFile(src_path, os.path.join(getConf("skinsDirectory"), aircraft))
+    return moveFile(src_path, os.path.join(getSkinDirectory(), aircraft))
 
 def removeSkin(localSkinInfo):
-    filePath = os.path.join(getConf("skinsDirectory"), localSkinInfo["aircraft"], localSkinInfo["mainFileName"])
+    filePath = os.path.join(getSkinDirectory(), localSkinInfo["aircraft"], localSkinInfo["mainFileName"])
     os.remove(filePath)
 
     if localSkinInfo.get("secondaryFileName") is not None and  localSkinInfo["secondaryFileName"] != "":
         #there is a secondary file
-        secondaryFilePath = os.path.join(getConf("skinsDirectory"), localSkinInfo["aircraft"], localSkinInfo["secondaryFileName"])
+        secondaryFilePath = os.path.join(getSkinDirectory(), localSkinInfo["aircraft"], localSkinInfo["secondaryFileName"])
         os.remove(secondaryFilePath)
 
 def getSpaceUsageOfLocalSkinCatalog(skinList):
@@ -95,3 +98,4 @@ def getSpaceUsageOfLocalSkinCatalog(skinList):
             totalDiskSpace += int(secondaryFileSpace)
     
     return totalDiskSpace
+

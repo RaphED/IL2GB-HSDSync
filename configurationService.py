@@ -6,7 +6,7 @@ config_file = 'config.json'
 
 # Default values for the configuration file
 default_config = {
-    "skinsDirectory": "D:\SteamLibrary\steamapps\common\IL-2 Sturmovik Battle of Stalingrad\data\graphics\skins",
+    "IL2GBGameDirectory": "D:\\IL-2 Sturmovik Battle of Stalingrad",
 }
 
 # Global variable to hold the configuration in memory
@@ -46,3 +46,13 @@ def update_config_param(param, newValue):
     with open(config_file, 'w') as f:
         json.dump(current_config, f, indent=4)
     print("Configuration updated successfully.")
+
+
+def checkConfParamIsValid(param):
+    match param:
+        case "IL2GBGameDirectory":
+            #skin directory is a good one if we can find the IL2.exe
+            return os.path.exists(os.path.join(getConf(param), "bin\\game\\Il-2.exe"))
+        
+        case _:
+            raise Exception(f"Unexpected param : {param}")
