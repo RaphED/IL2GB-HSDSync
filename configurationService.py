@@ -23,7 +23,6 @@ def load_config():
         return default_config
     else:
         # If the file exists, load it
-        print(f"Loading the configuration file {config_file}...")
         with open(config_file, 'r') as f:
             return json.load(f)
 

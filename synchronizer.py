@@ -37,7 +37,7 @@ class ScanResult:
 
         diskSpaceStats = self.getDiskUsageStats()
 
-        returnString += f"** To be removed skins: ({bytesToString(diskSpaceStats["toBeRemovedSkinsSpace"])})\n"
+        returnString += f"** Unregistered skins: ({bytesToString(diskSpaceStats["toBeRemovedSkinsSpace"])})\n"
         for skin in self.toBeRemovedSkins:
             returnString += f"\t- {skin['name']}\n"
         if len(self.toBeRemovedSkins) == 0:
@@ -60,6 +60,15 @@ class ScanResult:
         returnString += f"Total disk space usage : {bytesToString(sum(diskSpaceStats["subscribedSkinsSpace"].values()))}"
 
         return returnString
+    
+    def IsSyncUpToDate(self):
+        if sum([len(self.missingSkins[source]) for source in self.missingSkins.keys()]) != 0:
+            return False
+        if sum([len(self.toBeUpdatedSkins[source]) for source in self.toBeUpdatedSkins.keys()]) != 0:
+            return False
+        if len(self.toBeRemovedSkins) != 0:
+            return False
+        return True
 
 def bytesToString(file_size_bytes: int):
     file_size_kb = file_size_bytes / 1024
@@ -182,7 +191,7 @@ def scanSkins():
     return scanResult
 
 
-def updateAll(scanResult: ScanResult):
+def updateRegisteredSkins(scanResult: ScanResult):
     
     for source in scanResult.getUsedSources():
         #import all missings skins
@@ -193,10 +202,14 @@ def updateAll(scanResult: ScanResult):
         for skin in scanResult.toBeUpdatedSkins[source]:
             updateSingleSkinFromRemote(source, skin)
 
+
+def deleteUnregisteredSkins(scanResult: ScanResult):
     for skin in scanResult.toBeRemovedSkins:
         deleteSkinFromLocal(skin)
-    return
 
+def updateAll(scanResult: ScanResult):
+    deleteUnregisteredSkins(scanResult)
+    updateRegisteredSkins(scanResult)
 
 def updateSingleSkinFromRemote(source, remoteSkin):
 
