@@ -37,12 +37,6 @@ class ScanResult:
 
         diskSpaceStats = self.getDiskUsageStats()
 
-        returnString += f"** Unregistered skins: ({bytesToString(diskSpaceStats["toBeRemovedSkinsSpace"])})\n"
-        for skin in self.toBeRemovedSkins:
-            returnString += f"\t- {skin['name']}\n"
-        if len(self.toBeRemovedSkins) == 0:
-            returnString +="- None -\n"
-
         for source in self.getUsedSources():
             returnString += f"*********** Sync with {source} ***********\n"
             returnString += f"** Missing skins: ({bytesToString(sum(diskSpaceStats["missingSkinsSpace"].values()))})\n"
@@ -57,7 +51,26 @@ class ScanResult:
             if len(self.toBeUpdatedSkins[source]) == 0:
                 returnString +="- None -\n"
 
-        returnString += f"Total disk space usage : {bytesToString(sum(diskSpaceStats["subscribedSkinsSpace"].values()))}"
+        afterUpdateDiskSpace = sum(diskSpaceStats["subscribedSkinsSpace"].values())
+
+        returnString += f"********** Non-Sync skins ********** ({bytesToString(diskSpaceStats["toBeRemovedSkinsSpace"])}) -> "
+        #if unregistered skins are not deleted, count them it the final space
+        if getConf("autoRemoveUnregisteredSkins"):
+            returnString += "Will be removed after update"
+        else:
+            returnString += "Won't be removed after update"
+            afterUpdateDiskSpace += diskSpaceStats["toBeRemovedSkinsSpace"]
+
+        returnString += "\n"
+        
+        for skin in self.toBeRemovedSkins:
+            returnString += f"- {skin['name']}\n"
+        if len(self.toBeRemovedSkins) == 0:
+            returnString +="- None -\n"
+
+        returnString += "*************************************\n"
+
+        returnString += f"After update total disk space : {bytesToString(afterUpdateDiskSpace)}\n"
 
         return returnString
     

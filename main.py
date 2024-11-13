@@ -16,8 +16,10 @@ else:
         answer = input("Do you want to perform the update ? (y) yes, (n) no : ").lower()
         
         if answer == "y":
-            print("|||||||| Start skins synchronization ||||||||")
+            print("|||||||| START SYNC ||||||||")
             synchronizer.updateAll(scanResult)
+            print("|||||||| END OF SYNC ||||||||")
+            print("Program end.")
             break
         elif answer == "n":
             print("No skin synchronization performed. Program end.")
