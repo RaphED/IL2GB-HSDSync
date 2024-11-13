@@ -25,7 +25,16 @@ def load_config():
     else:
         # If the file exists, load it
         with open(config_file, 'r') as f:
-            return json.load(f)
+            try:
+                return json.load(f)
+            except json.JSONDecodeError as e:
+                raise Exception(
+                    f"Cannot read configuration file {config_file}.\n"
+                    f"Check json format, and especially '\\' caracters in the paths that must be written '\\\\'\n"
+                    f"ERROR detail -> {e}"
+                    )
+            except Exception as e:
+                raise e
 
 def getConf(param):
     global current_config
