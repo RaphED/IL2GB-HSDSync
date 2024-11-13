@@ -3,6 +3,8 @@ import json
 import re
 from remoteService import getSourceInfo 
 
+subscriptionPath = os.path.join(os.getcwd(),"Subscriptions")
+
 class SubscribedCollection:
     def __init__(self, source, criteria):
         
@@ -42,7 +44,6 @@ def getSubscribedCollectionFromFile(subscriptionFilePath):
 def getAllSubscribedCollection() -> list[SubscribedCollection]:
 
     returnedCollections = []
-    subscriptionPath = os.path.join(os.getcwd(),"Subscriptions")
     #create subsciption path of not exists
     if not os.path.exists(subscriptionPath):
         os.makedirs(subscriptionPath)
@@ -53,3 +54,11 @@ def getAllSubscribedCollection() -> list[SubscribedCollection]:
                 returnedCollections += getSubscribedCollectionFromFile(os.path.join(root,file))
     
     return returnedCollections
+
+def isSubcriptionFolderEmpty():
+    for root, dirs, files in os.walk(subscriptionPath):
+        for file in files:
+            if file.endswith(".is3"): #We only consider files with is3 extension
+                return False
+    
+    return True
