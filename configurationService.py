@@ -7,6 +7,7 @@ config_file = 'config.json'
 # Default values for the configuration file
 default_config = {
     "IL2GBGameDirectory": "D:\\IL-2 Sturmovik Battle of Stalingrad",
+    "autoRemoveUnregisteredSkins": False
 }
 
 # Global variable to hold the configuration in memory

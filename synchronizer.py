@@ -44,7 +44,7 @@ class ScanResult:
             returnString +="- None -\n"
 
         for source in self.getUsedSources():
-            returnString += f"*********** {source} ***********\n"
+            returnString += f"*********** Sync with {source} ***********\n"
             returnString += f"** Missing skins: ({bytesToString(sum(diskSpaceStats["missingSkinsSpace"].values()))})\n"
             for skin in self.missingSkins[source]:
                 returnString += f"\t- {skin[getSourceParam(source, "name")]}\n"
@@ -66,7 +66,7 @@ class ScanResult:
             return False
         if sum([len(self.toBeUpdatedSkins[source]) for source in self.toBeUpdatedSkins.keys()]) != 0:
             return False
-        if len(self.toBeRemovedSkins) != 0:
+        if getConf("autoRemoveUnregisteredSkins") and len(self.toBeRemovedSkins) != 0:
             return False
         return True
 
@@ -208,7 +208,8 @@ def deleteUnregisteredSkins(scanResult: ScanResult):
         deleteSkinFromLocal(skin)
 
 def updateAll(scanResult: ScanResult):
-    deleteUnregisteredSkins(scanResult)
+    if getConf("autoRemoveUnregisteredSkins"):
+        deleteUnregisteredSkins(scanResult)
     updateRegisteredSkins(scanResult)
 
 def updateSingleSkinFromRemote(source, remoteSkin):
