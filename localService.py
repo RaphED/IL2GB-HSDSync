@@ -39,7 +39,7 @@ def getSkinsList():
                 "aircraft": aircraft,
                 "name": ddsFileName[:-4], #remove extention to get the name
                 "mainFileName": ddsFileName,
-                "mainFilesize": filestats.st_size,
+                "mainFileSize": filestats.st_size,
                 "mainFileMd5": hashlib.md5(open(fileFullPath, "rb").read()).hexdigest()
             })
 
@@ -84,3 +84,14 @@ def removeSkin(localSkinInfo):
         #there is a secondary file
         secondaryFilePath = os.path.join(getConf("skinsDirectory"), localSkinInfo["aircraft"], localSkinInfo["secondaryFileName"])
         os.remove(secondaryFilePath)
+
+def getSpaceUsageOfLocalSkinCatalog(skinList):
+    totalDiskSpace = 0
+    for skin in skinList:
+        totalDiskSpace += int(skin["mainFileSize"])
+        
+        secondaryFileSpace = skin.get("secondaryFileSize")
+        if secondaryFileSpace is not None and secondaryFileSpace != "":
+            totalDiskSpace += int(secondaryFileSpace)
+    
+    return totalDiskSpace

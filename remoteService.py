@@ -13,8 +13,10 @@ sourcesInfo = [
             "name": "Title",
             "mainSkinFileName": "Skin0",
             "mainFileMd5": "HashDDS0",
+            "mainFileSize":"Filesize0",
             "secondarySkinFileName": "Skin01",
-            "secondaryFileMd5": "HashDDS01"
+            "secondaryFileMd5": "HashDDS01",
+            "secondaryFileSize":"Filesize01",
         }
     }
 ]
@@ -76,6 +78,17 @@ def getSkinsCatalogFromSource(source):
 
     else:
         raise Exception(f"Error downloading the file. Status code: {response.status_code}")
+
+def getSpaceUsageOfRemoteSkinCatalog(source, remoteSkinList):
+    totalDiskSpace = 0
+    for skin in remoteSkinList:
+        totalDiskSpace += int(skin[getSourceParam(source, "mainFileSize")])
+        
+        secondaryFileSpace = skin[getSourceParam(source, "secondaryFileSize")]
+        if secondaryFileSpace is not None and secondaryFileSpace != "":
+            totalDiskSpace += int(secondaryFileSpace)
+    
+    return totalDiskSpace
 
 
 # Function to download a file from a URL and save it to a temporary directory

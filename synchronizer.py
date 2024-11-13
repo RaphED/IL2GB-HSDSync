@@ -1,11 +1,13 @@
 import localService
+from localService import getSpaceUsageOfLocalSkinCatalog
 import remoteService
-from remoteService import getSourceParam
+from remoteService import getSourceParam, getSpaceUsageOfRemoteSkinCatalog
 import subscriptionService
 from configurationService import getConf
 
 class ScanResult:
     def __init__(self):
+        self.subscribedSkins = dict[str, list]()
         self.missingSkins = dict[str, list]()
         self.toBeUpdatedSkins = dict[str, list]()
         self.toBeRemovedSkins= list()
@@ -21,28 +23,66 @@ class ScanResult:
 
     def getUsedSources(self):
         return self.missingSkins.keys() | self.toBeUpdatedSkins.keys()
-
+    
+    def getDiskUsageStats(self):
+        return {
+            "subscribedSkinsSpace":{source:getSpaceUsageOfRemoteSkinCatalog(source, self.subscribedSkins[source]) for source in self.getUsedSources()},
+            "missingSkinsSpace": {source:getSpaceUsageOfRemoteSkinCatalog(source, self.missingSkins[source]) for source in self.getUsedSources()},
+            "toBeUpdatedSkinsSpace": {source:getSpaceUsageOfRemoteSkinCatalog(source, self.toBeUpdatedSkins[source]) for source in self.getUsedSources()},
+            "toBeRemovedSkinsSpace": getSpaceUsageOfLocalSkinCatalog(self.toBeRemovedSkins),
+        }
+    
     def toString(self):
         returnString = ""
-        
-        for source in self.getUsedSources():
-            returnString += f"*********** {source} ***********\n"
-            returnString += "Missing skins:\n"
-            for skin in self.missingSkins[source]:
-                returnString += f"\t- {skin[getSourceParam(source, "name")]}\n"
 
-            returnString += "To be updated skins:\n"
-            for skin in self.toBeUpdatedSkins[source]:
-                returnString += f"\t- {skin[getSourceParam(source, "name")]}\n"
+        diskSpaceStats = self.getDiskUsageStats()
 
-        returnString += "To be removed skins:\n"
+        returnString += f"** To be removed skins: ({bytesToString(diskSpaceStats["toBeRemovedSkinsSpace"])})\n"
         for skin in self.toBeRemovedSkins:
             returnString += f"\t- {skin['name']}\n"
+        if len(self.toBeRemovedSkins) == 0:
+            returnString +="- None -\n"
+
+        for source in self.getUsedSources():
+            returnString += f"*********** {source} ***********\n"
+            returnString += f"** Missing skins: ({bytesToString(sum(diskSpaceStats["missingSkinsSpace"].values()))})\n"
+            for skin in self.missingSkins[source]:
+                returnString += f"\t- {skin[getSourceParam(source, "name")]}\n"
+            if len(self.missingSkins[source]) == 0:
+                returnString +="- None -\n"
+
+            returnString += f"** To be updated skins: ({bytesToString(sum(diskSpaceStats["toBeUpdatedSkinsSpace"].values()))})\n"
+            for skin in self.toBeUpdatedSkins[source]:
+                returnString += f"\t- {skin[getSourceParam(source, "name")]}\n"
+            if len(self.toBeUpdatedSkins[source]) == 0:
+                returnString +="- None -\n"
+
+        returnString += f"Total disk space usage : {bytesToString(sum(diskSpaceStats["subscribedSkinsSpace"].values()))}"
 
         return returnString
 
+def bytesToString(file_size_bytes: int):
+    file_size_kb = file_size_bytes / 1024
+
+    if file_size_kb < 1:
+        return f"{file_size_bytes} B"
+
+    file_size_mb = file_size_kb / 1024
+
+    if file_size_mb < 1:
+        return f"{file_size_kb:.2f} KB"
+    
+    file_size_gb = file_size_mb / 1024
+
+    if file_size_gb < 1:
+        return f"{file_size_mb:.2f} MB"
+    
+    return f"{file_size_gb:.2f} GB"
+
 def scanSkins():
     
+    scanResult = ScanResult()
+
     #get the local skins list in memory
     localSkinsCollection = localService.getSkinsList()
 
@@ -55,19 +95,18 @@ def scanSkins():
         if collection.source not in usedSource:
             usedSource.append(collection.source)
     
-    subscribedSkins = dict[str,list]()
     #  and get all the skins from each source matching with the subscriptions
     for source in usedSource:
-        subscribedSkins[source] = list()
+        scanResult.subscribedSkins[source] = list()
         for skin in remoteService.getSkinsCatalogFromSource(source):
             #check if the skin matches with a subcription
             for collection in subscribedCollectionList:
                 if collection.source == source and collection.match(skin):
-                    subscribedSkins[source].append(skin)
+                    scanResult.subscribedSkins[source].append(skin)
                     break #to avoid to add multiple times the same skin
     
         
-    scanResult = ScanResult()
+    
     
     #then, for each source, check if we can find the remote skin matching with the local skin
     for source in usedSource:
@@ -76,7 +115,7 @@ def scanSkins():
         scanResult.missingSkins[source] = list()
         scanResult.toBeUpdatedSkins[source] = list()
 
-        for remoteSkin in subscribedSkins[source]:
+        for remoteSkin in scanResult.subscribedSkins[source]:
             foundLocalSkin = None
             for localSkin in localSkinsCollection:
                 #not the same A/C, no match
@@ -128,7 +167,7 @@ def scanSkins():
         foundRemoteSkin = None
         #check in all sources
         for source in usedSource:
-            for remoteSkin in subscribedSkins[source]:
+            for remoteSkin in scanResult.subscribedSkins[source]:
                 if remoteSkin[getSourceParam(source, "aircraft")] == localSkin["aircraft"]: #prefiltering to optimize search
                     #TODO: Manage orphans skins
                     if remoteSkin[getSourceParam(source, "mainSkinFileName")] == localSkin["mainFileName"]:
