@@ -1,8 +1,9 @@
 import json
 import os
+import string
 
 # Path to the configuration file
-config_file = 'config.json'
+config_file = 'IS3-config.json'
 
 # Default values for the configuration file
 default_config = {
@@ -13,20 +14,22 @@ default_config = {
 # Global variable to hold the configuration in memory
 current_config = None
 
+def configurationFileExists():
+    return os.path.exists(config_file)
+
 # Function to load or create the configuration file
 def load_config():
     # Check if the configuration file exists
-    if not os.path.exists(config_file):
+    if not configurationFileExists():
         # If the file doesn't exist, create it with the default values
-        print(f"The file {config_file} does not exist, creating it with default values...")
-        with open(config_file, 'w') as f:
-            json.dump(default_config, f, indent=4)
-        return default_config
+        raise Exception(f"The configuration file {config_file} does not exist")
     else:
         # If the file exists, load it
         with open(config_file, 'r') as f:
             try:
-                return json.load(f)
+                global current_config
+                current_config = json.load(f)
+                return current_config
             except json.JSONDecodeError as e:
                 raise Exception(
                     f"Cannot read configuration file {config_file}.\n"
@@ -50,6 +53,8 @@ def getConf(param):
 def update_config_param(param, newValue):
     """ Update the in-memory configuration with new values and save it to the file. """
     global current_config
+    if current_config is None:
+        current_config = load_config()
     current_config[param] = newValue
 
     with open(config_file, 'w') as f:
@@ -61,7 +66,32 @@ def checkConfParamIsValid(param):
     match param:
         case "IL2GBGameDirectory":
             #skin directory is a good one if we can find the IL2.exe
-            return os.path.exists(os.path.join(getConf(param), "bin\\game\\Il-2.exe"))
+            return checkIL2InstallPath(getConf(param))
         
         case _:
             raise Exception(f"Unexpected param : {param}")
+        
+def generateConfFile():
+    with open(config_file, 'w') as f:
+        json.dump(default_config, f, indent=4)
+    return default_config
+
+def checkIL2InstallPath(IL2Path):
+    return os.path.exists(os.path.join(IL2Path, "bin\\game\\Il-2.exe"))
+
+def tryToFindIL2Path(exe_name='Il-2.exe'):
+    # Get the list of available drives (e.g., C:, D:, etc.)
+    drives = [drive + ':\\' for drive in string.ascii_uppercase if os.path.exists(drive + ':')]
+
+    for drive in drives:
+        # Traverse each drive looking for the IL2.exe file
+        for root, dirs, files in os.walk(drive, followlinks=True):
+            try:
+                if exe_name in files:
+                    # Return the parent directory of the found file
+                    return os.path.dirname(os.path.dirname(os.path.dirname(os.path.join(root, exe_name))))
+            except PermissionError:
+                # Ignore permission errors and continue with the next directories
+                continue
+    
+    return None  # Return None if the file was not found

@@ -2,5 +2,5 @@ venv
 build
 dist
 *.pyc
-config.json
+IS3-config.json
 *.spec

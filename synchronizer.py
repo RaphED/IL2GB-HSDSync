@@ -56,9 +56,9 @@ class ScanResult:
         returnString += f"********** Non-Sync skins ********** ({bytesToString(diskSpaceStats["toBeRemovedSkinsSpace"])}) -> "
         #if unregistered skins are not deleted, count them it the final space
         if getConf("autoRemoveUnregisteredSkins"):
-            returnString += "Will be removed after update"
+            returnString += "(will be removed from your disk)"
         else:
-            returnString += "Won't be removed after update"
+            returnString += "(will stay on your disk)"
             afterUpdateDiskSpace += diskSpaceStats["toBeRemovedSkinsSpace"]
 
         returnString += "\n"
