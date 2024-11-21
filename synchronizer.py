@@ -1,9 +1,10 @@
-import localService
-from localService import getSpaceUsageOfLocalSkinCatalog
-import remoteService
-from remoteService import getSourceParam, getSpaceUsageOfRemoteSkinCatalog
-import subscriptionService
-from configurationService import getConf
+import pythonServices.localService as localService
+from pythonServices.localService import getSpaceUsageOfLocalSkinCatalog
+import pythonServices.remoteService as remoteService
+from pythonServices.remoteService import getSourceParam, getSpaceUsageOfRemoteSkinCatalog
+
+import pythonServices.subscriptionService as subscriptionService
+from pythonServices.configurationService import getConf
 
 class ScanResult:
     def __init__(self):

@@ -2,7 +2,7 @@ import os
 import hashlib
 import shutil
 
-from configurationService import getConf
+from pythonServices.configurationService import getConf
 
 def getSkinDirectory():
     return os.path.join(getConf("IL2GBGameDirectory"), "data\\graphics\\skins")

@@ -1,6 +1,6 @@
 import synchronizer
-import configurationService
-from subscriptionService import isSubcriptionFolderEmpty
+import pythonServices.configurationService as configurationService
+from pythonServices.subscriptionService import isSubcriptionFolderEmpty
 
 def performPreExecutionChecks():
 

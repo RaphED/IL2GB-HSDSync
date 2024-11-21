@@ -1,7 +1,8 @@
 import os
 import json
 import re
-from remoteService import getSourceInfo 
+
+from pythonServices.remoteService import getSourceInfo 
 
 subscriptionPath = os.path.join(os.getcwd(),"Subscriptions")
 
