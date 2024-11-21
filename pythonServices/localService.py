@@ -7,6 +7,9 @@ from pythonServices.configurationService import getConf
 def getSkinDirectory():
     return os.path.join(getConf("IL2GBGameDirectory"), "data\\graphics\\skins")
 
+def getCockpitNotesDirectory():
+    return os.path.join(getConf("IL2GBGameDirectory"), "data\\graphics\\planes")
+
 def getSkinsList():
 
     skinList = []
@@ -99,3 +102,34 @@ def getSpaceUsageOfLocalSkinCatalog(skinList):
     
     return totalDiskSpace
 
+def getCockpitNotesList():
+    notesList = []
+    cockpitNotesDirectory = getCockpitNotesDirectory()
+    
+    for root, dirs, files in os.walk(cockpitNotesDirectory):
+        
+        #continue if no files
+        if len(files) == 0:
+            continue
+
+        #get only custom photos files
+        customPhotosfiles = [f for f in files if f.lower().endswith('custom_photo.dds')]
+
+        if len(customPhotosfiles) != 1:
+            continue
+        currentPhotoFile = customPhotosfiles[0]
+
+        #parent dir should be "textures"
+        if os.path.basename(os.path.normpath(root)) != "Textures":
+            print(f"Found unexpected custom photo at {root}")
+            continue
+
+        aircraft =  os.path.basename(os.path.normpath(os.path.dirname(root)))
+
+        notesList.append({
+            "aircraft": aircraft,
+            "FileName":  currentPhotoFile,
+            "md5": hashlib.md5(open(os.path.join(root,currentPhotoFile), "rb").read()).hexdigest()
+        })
+        
+    return notesList
