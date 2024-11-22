@@ -1,13 +1,14 @@
 import os
 import hashlib
 import shutil
+import json
 
 from pythonServices.configurationService import getConf
 
 def getSkinDirectory():
     return os.path.join(getConf("IL2GBGameDirectory"), "data\\graphics\\skins")
 
-def getCockpitNotesDirectory():
+def getCustomPhotosDirectory():
     return os.path.join(getConf("IL2GBGameDirectory"), "data\\graphics\\planes")
 
 def getSkinsList():
@@ -102,18 +103,22 @@ def getSpaceUsageOfLocalSkinCatalog(skinList):
     
     return totalDiskSpace
 
-def getCockpitNotesList():
+
+
+def getCustomPhotosList():
+    return getCustomPhotosListFromPath(getCustomPhotosDirectory())
+
+def getCustomPhotosListFromPath(path):
     notesList = []
-    cockpitNotesDirectory = getCockpitNotesDirectory()
     
-    for root, dirs, files in os.walk(cockpitNotesDirectory):
+    for root, dirs, files in os.walk(path):
         
         #continue if no files
         if len(files) == 0:
             continue
 
         #get only custom photos files
-        customPhotosfiles = [f for f in files if f.lower().endswith('custom_photo.dds')]
+        customPhotosfiles = [f for f in files if f == 'custom_photo.dds']
 
         if len(customPhotosfiles) != 1:
             continue
@@ -128,8 +133,21 @@ def getCockpitNotesList():
 
         notesList.append({
             "aircraft": aircraft,
-            "FileName":  currentPhotoFile,
             "md5": hashlib.md5(open(os.path.join(root,currentPhotoFile), "rb").read()).hexdigest()
         })
         
     return notesList
+
+def getAndGenerateCustomPhotosCatalogFromPath(parentPath, catalogName):
+    catalogPath = os.path.join(parentPath, catalogName)
+    cockpitNotesList = getCustomPhotosListFromPath(catalogPath)
+    generateCockpitNotesCatalogFileName = f"{catalogName}CustomPhotosManifest.json"
+    fullFilePath = os.path.join(parentPath, generateCockpitNotesCatalogFileName)
+    with open(fullFilePath, 'w') as f:
+        json.dump(cockpitNotesList, f, indent=4)
+
+    return cockpitNotesList
+
+def moveCustomPhotoFromPathToDestination(src_path, aircraft):
+    destinationPath = os.path.join(getCustomPhotosDirectory(), aircraft, "Textures")
+    return moveFile(src_path, destinationPath)

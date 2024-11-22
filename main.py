@@ -70,13 +70,38 @@ def printSuccess(text):
 try:
     performPreExecutionChecks()
 
+    #CUSTOM PHOTOS SECTION
+    cockpitNotesMode = configurationService.getConf("cockpitNotesMode")
+    if cockpitNotesMode != "noSync":
+        print(f"Custom photos scan mode : {cockpitNotesMode}")
+        printWarning("Photos scan launched. Please wait...")
+        scanResult = synchronizer.scanCustomPhotos()
+        if len(scanResult) > 0:
+            print("Some photos has to be updated :")
+            print([customPhoto["aircraft"] for customPhoto in scanResult])
+            while True:
+                answer = input("Do you want to perform the update ? (y) yes, (n) no : ").lower()
+                if answer == "y":
+                    print("Update started...")
+                    synchronizer.updateCustomPhotos(scanResult)
+                    print("Update done")
+                    break
+                elif answer == "n":
+                    print("ok no update")
+                    break
+                else:
+                    print("Invalid answer, try again")        
+        else:
+            printSuccess("All custom photos are up to date")
+
+    #SKINS SECTION
     if isSubcriptionFolderEmpty():
         printWarning("Subscription folder is empty.\nAdd .is3 file(s) to subscribe to any skins collection")
 
-    printWarning("SCAN launched. Please wait...")
+    printWarning("SKINS scan launched. Please wait...")
     #once the prec checks passed, perform the global scan
     scanResult = synchronizer.scanSkins()
-    printSuccess("SCAN finished")
+    printSuccess("SKINS scan finished")
     print(scanResult.toString())
     
 

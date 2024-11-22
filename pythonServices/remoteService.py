@@ -2,6 +2,9 @@ import requests
 import re
 import os
 import hashlib
+import json
+
+import pythonServices.configurationService as configurationService
 
 sourcesInfo = [
     {
@@ -92,10 +95,16 @@ def getSpaceUsageOfRemoteSkinCatalog(source, remoteSkinList):
 
 
 # Function to download a file from a URL and save it to a temporary directory
-def downloadFile(url, temp_dir, expectedMD5):
+def downloadFile(url, expectedMD5):
+    
+    tempDir = os.path.join(os.curdir, "temp")
+    #create the temp directory if not exist
+    if not os.path.exists(tempDir):
+        os.makedirs(tempDir)
+    
     response = requests.get(url, stream=True)
     response.raise_for_status()  # Raise an exception for HTTP errors
-    temp_file_path = os.path.join(temp_dir, os.path.basename(url))
+    temp_file_path = os.path.join(tempDir, os.path.basename(url))
 
     with open(temp_file_path, 'wb') as f:
         for chunk in response.iter_content(chunk_size=8192):#TODO : check the chunk size is a good one
@@ -109,11 +118,6 @@ def downloadFile(url, temp_dir, expectedMD5):
 
 def downloadSkinToTempDir(source, skinInfo):
 
-    tempDir = os.path.join(os.curdir, "temp")
-    #create the temp directory if not exist
-    if not os.path.exists(tempDir):
-        os.makedirs(tempDir)
-
     #build skin URL
     url = getSourceInfo(source)["skinsURL"]
     url = url.replace("[aircraft]", skinInfo[getSourceParam(source, "aircraft")])
@@ -121,7 +125,7 @@ def downloadSkinToTempDir(source, skinInfo):
 
     # Download the file(s) to the temporary folder
     downloadedFiles = []
-    downloadedFiles.append(downloadFile(url=urlMainSkin, temp_dir=tempDir, expectedMD5=skinInfo[getSourceParam(source, "mainFileMd5")]))
+    downloadedFiles.append(downloadFile(url=urlMainSkin, expectedMD5=skinInfo[getSourceParam(source, "mainFileMd5")]))
     
     #if there is a second skin file
     secondarySkinFileName = skinInfo.get(getSourceParam(source, "secondarySkinFileName"))
@@ -129,9 +133,49 @@ def downloadSkinToTempDir(source, skinInfo):
         #hack : works only for HSD, the #1 is replaced by %123 on the URL
         remoteFileName = skinInfo[getSourceParam(source, "secondarySkinFileName")].replace("#1", "%231")
         urlSecondarySkin = url.replace("[skinFileName]", remoteFileName)
-        downloadFileName = downloadFile(url=urlSecondarySkin, temp_dir=tempDir, expectedMD5=skinInfo[getSourceParam(source, "secondaryFileMd5")])
+        downloadFileName = downloadFile(url=urlSecondarySkin, expectedMD5=skinInfo[getSourceParam(source, "secondaryFileMd5")])
         properFileName = downloadFileName.replace("%231","#1")
         os.rename(downloadFileName, properFileName)
         downloadedFiles.append(properFileName)
     
     return downloadedFiles
+
+
+cockpitNotesModes = {
+    "noSync":{
+        "catalogURL": None,
+        "filesURL": None
+    },
+    "originalPhotos": {
+        "catalogURL": "https://www.lesirreductibles.com/irreskins/IRRE/CustomPhotos/originalPhotosCustomPhotosManifest.json",
+        "filesURL": "https://www.lesirreductibles.com/irreskins/IRRE/CustomPhotos/originalPhotos/[aircraft]/Textures/custom_photo.dds",
+    },
+    "officialNumbers": {
+        "catalogURL": "https://www.lesirreductibles.com/irreskins/IRRE/CustomPhotos/officialNumbersCustomPhotosManifest.json",
+        "filesURL": "https://www.lesirreductibles.com/irreskins/IRRE/CustomPhotos/officialNumbers/[aircraft]/Textures/custom_photo.dds",
+    },
+    "technochatNumbers": {
+        "catalogURL": "https://www.lesirreductibles.com/irreskins/IRRE/CustomPhotos/technochatNumbersCustomPhotosManifest.json",
+        "filesURL": "https://www.lesirreductibles.com/irreskins/IRRE/CustomPhotos/technochatNumbers/[aircraft]/Textures/custom_photo.dds",
+    }
+}
+
+def getCustomPhotosList():
+    #hard coded remote address for the cockpitNotesCatalog
+    catalogURL = cockpitNotesModes[configurationService.getConf("cockpitNotesMode")]["catalogURL"]
+    if catalogURL is None:
+        return []
+
+    response = requests.get(catalogURL)
+
+    # Check if the request was successful (status code 200)
+    if response.status_code == 200:
+        file_content = response.json()
+        return file_content
+    return []
+
+def downloadCustomPhoto(cockpitNotesMode, cockpitNote):
+    filesURL = cockpitNotesModes[cockpitNotesMode]["filesURL"]
+
+    targetURL = filesURL.replace("[aircraft]", cockpitNote["aircraft"])
+    return downloadFile(targetURL, cockpitNote["md5"])

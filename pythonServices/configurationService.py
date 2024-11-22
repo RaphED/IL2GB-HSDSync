@@ -2,14 +2,19 @@ import json
 import os
 import string
 
+from pythonServices.remoteService import cockpitNotesModes
+
 # Path to the configuration file
 config_file = 'IS3-config.json'
 
 # Default values for the configuration file
 default_config = {
     "IL2GBGameDirectory": "D:\\IL-2 Sturmovik Battle of Stalingrad",
-    "autoRemoveUnregisteredSkins": False
+    "autoRemoveUnregisteredSkins": False,
+    "cockpitNotesMode": "noSync"
 }
+
+
 
 # Global variable to hold the configuration in memory
 current_config = None
@@ -67,6 +72,9 @@ def checkConfParamIsValid(param):
         case "IL2GBGameDirectory":
             #skin directory is a good one if we can find the IL2.exe
             return checkIL2InstallPath(getConf(param))
+        
+        case "cockpitNotesMode":
+            return cockpitNotesModes.get(getConf(param)) is not None
         
         case _:
             raise Exception(f"Unexpected param : {param}")

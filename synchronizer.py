@@ -6,6 +6,8 @@ from pythonServices.remoteService import getSourceParam, getSpaceUsageOfRemoteSk
 import pythonServices.subscriptionService as subscriptionService
 from pythonServices.configurationService import getConf
 
+from requests.exceptions import HTTPError
+
 class ScanResult:
     def __init__(self):
         self.subscribedSkins = dict[str, list]()
@@ -243,3 +245,42 @@ def updateSingleSkinFromRemote(source, remoteSkin):
 def deleteSkinFromLocal(localSkinInfo):
     localService.removeSkin(localSkinInfo)
     print(f"Deleted skin : {localSkinInfo["name"]}")
+
+def scanCustomPhotos():
+    
+    localCustomPhotos = localService.getCustomPhotosList()
+    remoteCustomPhotos = remoteService.getCustomPhotosList()
+
+    toBeUpdatedPhotos = []
+
+    for remotePhoto in remoteCustomPhotos:
+        match = False
+        for localPhoto in localCustomPhotos:
+            if remotePhoto["aircraft"].lower() == localPhoto["aircraft"].lower():
+                #we have a match
+                if remotePhoto["md5"] != localPhoto["md5"]:
+                    #photo has to be updated
+                    toBeUpdatedPhotos.append(remotePhoto)
+                match = True
+                break
+        
+        if not match:
+            toBeUpdatedPhotos.append(remotePhoto)
+
+    return toBeUpdatedPhotos
+
+def updateCustomPhotos(toBeUpdatedPhotos):
+    cockpitMode = getConf("cockpitNotesMode")
+
+    for customPhoto in toBeUpdatedPhotos:
+        
+        try:
+            downloadedFile = remoteService.downloadCustomPhoto(cockpitMode, customPhoto)
+            
+            #Move the file to the target directory and replace existing file if any
+            localService.moveCustomPhotoFromPathToDestination(downloadedFile, customPhoto["aircraft"])
+            print(f"Custom photo {customPhoto["aircraft"]} updated")
+        
+        except HTTPError as httpError:
+            print(f"Custom photo {customPhoto["aircraft"]} download ERROR {httpError.args} ")
+        
