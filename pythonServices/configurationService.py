@@ -50,6 +50,11 @@ def getConf(param):
         current_config = load_config()
     
     value = current_config.get(param)
+    #if the value cannot be found, try to initialise it with the default value
+    if value is None:
+        value = default_config.get(param)
+    
+    #the value is not even in the default one which means it is not a proper one
     if value is None:
         raise Exception(f"Internal error : unexpected param {param}")
     
