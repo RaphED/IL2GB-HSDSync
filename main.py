@@ -8,7 +8,7 @@ from packaging.version import Version
 
 
 VERSION="1.0.0.0"
-API_URL = f"https://github.com/RaphED/IL2GB-inter-squadrons-skins-synchronizer"
+API_URL = f"https://github.com/RaphED/IL2GB-inter-squadrons-skins-synchronizer/releases/latest"
 
 def performPreExecutionChecks():
 
