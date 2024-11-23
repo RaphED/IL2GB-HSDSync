@@ -1,8 +1,8 @@
 # UTF-8
 VSVersionInfo(
     ffi=FixedFileInfo(
-        filevers=(1, 0, 0, 0),  # Major, Minor, Revision, Build
-        prodvers=(1, 0, 0, 0),  # Product version numbers
+        filevers=(2, 0, 0, 0),  # Major, Minor, Revision, Build
+        prodvers=(2, 0, 0, 0),  # Product version numbers
         mask=0x3f,
         flags=0x0,
         OS=0x40004,
@@ -18,12 +18,12 @@ VSVersionInfo(
                     [
                         StringStruct('CompanyName', 'IRRECORPS'),
                         StringStruct('FileDescription', 'Inter-Squadrons-Skins-Synchronizer'),
-                        StringStruct('FileVersion', '1.0.0.0'),
+                        StringStruct('FileVersion', '2.0.0.0'),
                         StringStruct('InternalName', 'ISSS'),
                         StringStruct('LegalCopyright', '© 2024 IRRECORPS'),
                         StringStruct('OriginalFilename', 'isss.exe'),
                         StringStruct('ProductName', 'ISSS Program'),
-                        StringStruct('ProductVersion', '1.0.0.0')
+                        StringStruct('ProductVersion', '2.0.0.0')
                     ]
                 )
             ]

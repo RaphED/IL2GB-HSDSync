@@ -7,8 +7,8 @@ from pythonServices.subscriptionService import isSubcriptionFolderEmpty
 from packaging.version import Version
 
 
-VERSION="1.0.0.0"
-API_URL = f"https://github.com/RaphED/IL2GB-inter-squadrons-skins-synchronizer/releases/latest"
+VERSION="2.0.0.0"
+API_URL = f"https://api.github.com/repos/RaphED/IL2GB-inter-squadrons-skins-synchronizer/releases/latest"
 
 def performPreExecutionChecks():
 
