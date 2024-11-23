@@ -5,3 +5,4 @@ Subscriptions
 *.pyc
 ISS-config.json
 *.spec
+iss.log

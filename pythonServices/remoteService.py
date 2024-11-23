@@ -2,7 +2,7 @@ import requests
 import re
 import os
 import hashlib
-import json
+import logging
 
 import pythonServices.configurationService as configurationService
 
@@ -71,7 +71,7 @@ def getSkinsCatalogFromSource(source):
                         key, value = line.split('=', 1)  # Split at the first '='
                         skin_info[key.strip()] = value.strip()  # Store the key-value pair
                     except ValueError:
-                        print(f"Formatting error on line: {line}")
+                        logging.error(f"Formatting error on line: {line}")
 
             # Add the skin information to the main dictionary
             skins[skin_id] = skin_info

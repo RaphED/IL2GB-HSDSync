@@ -14,8 +14,6 @@ default_config = {
     "cockpitNotesMode": "noSync"
 }
 
-
-
 # Global variable to hold the configuration in memory
 current_config = None
 
@@ -69,7 +67,6 @@ def update_config_param(param, newValue):
 
     with open(config_file, 'w') as f:
         json.dump(current_config, f, indent=4)
-    print("Configuration updated successfully.")
 
 
 def checkConfParamIsValid(param):

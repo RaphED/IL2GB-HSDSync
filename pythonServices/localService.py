@@ -2,6 +2,7 @@ import os
 import hashlib
 import shutil
 import json
+import logging
 
 from pythonServices.configurationService import getConf
 
@@ -32,7 +33,8 @@ def getSkinsList():
         
         #only manage 1 level skins (otherwise i suspect badly placed sinks)
         if parentDir != skinsDirectory:
-            print(f"Unexpected skin(s) {ddsfiles} placement at {root}. Not managed")
+            
+            logging.warning(f"Unexpected skin(s) {ddsfiles} placement at {root}. Not managed")
             continue
         
         aircraft =  os.path.basename(os.path.normpath(root))
@@ -126,7 +128,7 @@ def getCustomPhotosListFromPath(path):
 
         #parent dir should be "textures"
         if os.path.basename(os.path.normpath(root)) != "Textures":
-            print(f"Found unexpected custom photo at {root}")
+            logging.warning(f"Found unexpected custom photo at {root}")
             continue
 
         aircraft =  os.path.basename(os.path.normpath(os.path.dirname(root)))

@@ -5,7 +5,8 @@ import synchronizer
 import pythonServices.configurationService as configurationService
 from pythonServices.subscriptionService import isSubcriptionFolderEmpty, getAllSubscribedCollection
 from packaging.version import Version
-
+import pythonServices.loggingService
+import logging
 
 VERSION="2.0.0.0"
 API_URL = f"https://api.github.com/repos/RaphED/IL2GB-inter-squadrons-skins-synchronizer/releases/latest"
