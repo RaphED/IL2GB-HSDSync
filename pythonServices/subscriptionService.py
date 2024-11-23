@@ -9,7 +9,7 @@ subscriptionPath = os.path.join(os.getcwd(),"Subscriptions")
 class SubscribedCollection:
     def __init__(self, subcriptionName, source, criteria):
         
-        subcriptionName = subcriptionName
+        self.subcriptionName = subcriptionName
         #default source is HSD
         sourceName = "HSD"
         if source is not None:
@@ -36,7 +36,7 @@ def getSubscribedCollectionFromFile(subscriptionFilePath):
     for rawSubscription in rawJsonData:
         subscribedCollectionlist.append(
             SubscribedCollection(
-                subcriptionName=os.path.basename(subscriptionFilePath).replace("is3", ""),
+                subcriptionName=os.path.basename(subscriptionFilePath).replace(".is3", ""),
                 source=rawSubscription.get("source"),
                 criteria=rawSubscription["criteria"]
             )

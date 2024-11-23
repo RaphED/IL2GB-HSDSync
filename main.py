@@ -3,7 +3,7 @@ import sys
 import requests
 import synchronizer
 import pythonServices.configurationService as configurationService
-from pythonServices.subscriptionService import isSubcriptionFolderEmpty
+from pythonServices.subscriptionService import isSubcriptionFolderEmpty, getAllSubscribedCollection
 from packaging.version import Version
 
 
@@ -138,6 +138,11 @@ try:
     #SKINS SECTION
     if isSubcriptionFolderEmpty():
         printWarning("Subscription folder is empty.\nAdd .is3 file(s) to subscribe to any skins collection")
+
+    subscribedCollections = getAllSubscribedCollection()
+    print("Subscribed collections : ")
+    for collection in subscribedCollections:
+        print(f"\t-{collection.subcriptionName}")
 
     printWarning("SKINS scan launched. Please wait...")
     #once the prec checks passed, perform the global scan
