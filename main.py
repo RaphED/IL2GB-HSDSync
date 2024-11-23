@@ -1,14 +1,21 @@
+import os
+import shutil
 import subprocess
 import sys
+from tkinter import filedialog, messagebox, simpledialog
 import requests
+import tkinter as tk
+from tkinter import ttk
 import synchronizer
 import pythonServices.configurationService as configurationService
-from pythonServices.subscriptionService import isSubcriptionFolderEmpty, getAllSubscribedCollection
+from pythonServices.subscriptionService import SubscribedCollection, isSubcriptionFolderEmpty, getAllSubscribedCollection
 from packaging.version import Version
 
 
 VERSION="2.0.0.0"
 API_URL = f"https://api.github.com/repos/RaphED/IL2GB-inter-squadrons-skins-synchronizer/releases/latest"
+
+collectionByNameSubscribeFile=dict() #str,list[SubscribedCollection])
 
 def performPreExecutionChecks():
 
@@ -82,9 +89,109 @@ def get_latest_release_info():
     else:
         return None
     
+class MyApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("ISS")
+        self.root.geometry("400x300")
+
+        # Create and pack the Treeview widget
+        self.tree = ttk.Treeview(root)
+        self.tree.pack(fill="both", expand=True)
+
+        # Create buttons
+        button_frame = tk.Frame(root)
+        button_frame.pack(fill="x")
+
+        self.add_button = tk.Button(button_frame, text="Add", command=self.add_item)
+        self.add_button.pack(side="left", padx=5, pady=5)
+
+        self.delete_button = tk.Button(button_frame, text="Delete", command=self.delete_item)
+        self.delete_button.pack(side="left", padx=5, pady=5)
+
+        # Add hierarchical data to the Treeview
+        self.populate_tree()
+
+        # Bind a selection event to the Treeview
+        self.tree.bind("<<TreeviewSelect>>", self.on_item_selected)
+
     
+    def add_item(self):
+        file_path = filedialog.askopenfilename(
+            title="Select a File",
+            filetypes=[("Subscriptions","*.iss")]
+        )
+        if file_path:  # Ensure the user selected a file
+            # Ensure the 'Subscriptions' folder exists
+            subscriptions_folder = "Subscriptions"
+            os.makedirs(subscriptions_folder, exist_ok=True)
+
+            # Copy the selected file to the 'Subscriptions' folder
+            file_name = os.path.basename(file_path)  # Extract the file name
+            destination_path = os.path.join(subscriptions_folder, file_name)
+            shutil.copy(file_path, destination_path)
+
+            # Add the file name to the Treeview// refresh like a *turd*
+            for item in self.tree.get_children():
+                self.tree.delete(item)
+
+            self.populate_tree()
+
+    def delete_item(self):
+        selected_item = self.tree.selection()
+        if selected_item:  # Ensure something is selected
+            for item in selected_item:
+                parent = self.tree.parent(item)  # Get the parent of the selected item
+                if parent == "":  # Top-level items have an empty string as their parent
+                    answer = messagebox.askyesno(title='confirmation',
+                    message='Are you sure you want to remove this subscription ?')
+                    if answer:
+                        self.tree.delete(item)
+                        print(f"Deleted top-level item: {item}")
+                else:
+                    # TODO Thinking about planes you don't want and might have an exclusion list :)
+                    print(f"Cannot delete item: {item}. Only top-level items can be deleted.")
+        else:
+            print("No item selected to delete.")
+
+        for item in self.tree.get_children():
+            self.tree.delete(item)
+
+        self.populate_tree()
+
+    def on_item_selected(self, event):
+        """Handle the selection event."""
+        selected_item = self.tree.selection()
+        if selected_item:
+            print(f"Selected item: {self.tree.item(selected_item)['text']}")
+
+
+
+    def populate_tree(self):
+
+        collectionByNameSubscribeFile.clear()
+        """Populates the Treeview with nested data."""
+        subscribedCollectionList = getAllSubscribedCollection()
+
+
+        for collectionInSubscribes in subscribedCollectionList:
+            if collectionInSubscribes.subcriptionName not in collectionByNameSubscribeFile:
+                collectionByNameSubscribeFile[collectionInSubscribes.subcriptionName]=[]
+            collectionByNameSubscribeFile[collectionInSubscribes.subcriptionName].append(collectionInSubscribes)
+
+        sizePerSubscription = dict()
+        for key in collectionByNameSubscribeFile:
+            skinsLinkedCollectionBySubscribtionName=synchronizer.getSkinsFromSourceMatchingWithSubscribedCollections(collectionInSubscribes.source,collectionByNameSubscribeFile[key])
+
+            toto=synchronizer.getSpaceUsageOfRemoteSkinCatalog(collectionInSubscribes.source,skinsLinkedCollectionBySubscribtionName)
+            parent_id = self.tree.insert("", "end", text=key + " Size of total: " + synchronizer.bytesToString(toto))  # Add main item
+            for skin in skinsLinkedCollectionBySubscribtionName:
+                self.tree.insert(parent_id, "end", text=skin['Title'])  # Add sub-items
+        
+
+
 ######### MAIN ###############
-if __name__ == "__main__":
+if __name__ == "__main__":    
 
     release_info = get_latest_release_info()
     if release_info:
@@ -107,73 +214,77 @@ if __name__ == "__main__":
                         sys.exit()  # Close the main application
                 except Exception as e:
                     sys.exit(1)  # Exit with an error code    
+if(True):
+    root = tk.Tk()
+    app = MyApp(root)
+    root.mainloop() 
+else:
+    try:
+        performPreExecutionChecks()
 
-try:
-    performPreExecutionChecks()
+        #CUSTOM PHOTOS SECTION
+        cockpitNotesMode = configurationService.getConf("cockpitNotesMode")
+        if cockpitNotesMode != "noSync":
+            print(f"Custom photos scan mode : {cockpitNotesMode}")
+            printWarning("Photos scan launched. Please wait...")
+            scanResult = synchronizer.scanCustomPhotos()
+            if len(scanResult) > 0:
+                print("Some photos has to be updated :")
+                print([customPhoto["aircraft"] for customPhoto in scanResult])
+                while True:
+                    answer = input("Do you want to perform the update ? (y) yes, (n) no : ").lower()
+                    if answer == "y":
+                        print("Update started...")
+                        synchronizer.updateCustomPhotos(scanResult)
+                        print("Update done")
+                        break
+                    elif answer == "n":
+                        print("ok no update")
+                        break
+                    else:
+                        print("Invalid answer, try again")        
+            else:
+                printSuccess("All custom photos are up to date")
 
-    #CUSTOM PHOTOS SECTION
-    cockpitNotesMode = configurationService.getConf("cockpitNotesMode")
-    if cockpitNotesMode != "noSync":
-        print(f"Custom photos scan mode : {cockpitNotesMode}")
-        printWarning("Photos scan launched. Please wait...")
-        scanResult = synchronizer.scanCustomPhotos()
-        if len(scanResult) > 0:
-            print("Some photos has to be updated :")
-            print([customPhoto["aircraft"] for customPhoto in scanResult])
+        #SKINS SECTION
+        if isSubcriptionFolderEmpty():
+            printWarning("Subscription folder is empty.\nAdd .iss file(s) to subscribe to any skins collection")
+
+        subscribedCollections = getAllSubscribedCollection()
+        print("Subscribed collections : ")
+        for collection in subscribedCollections:
+            print(f"\t-{collection.subcriptionName}")
+
+        printWarning("SKINS scan launched. Please wait...")
+        #once the prec checks passed, perform the global scan
+        scanResult = synchronizer.scanSkins()
+        printSuccess("SKINS scan finished")
+        print(scanResult.toString())
+        
+
+        #then as the user for the update if any
+        if scanResult.IsSyncUpToDate():
+            printSuccess("All skins are up to date.")
+        else:
             while True:
+                
                 answer = input("Do you want to perform the update ? (y) yes, (n) no : ").lower()
+                
                 if answer == "y":
-                    print("Update started...")
-                    synchronizer.updateCustomPhotos(scanResult)
-                    print("Update done")
+                    printSuccess("||||||||| START SYNC ||||||||")
+                    synchronizer.updateAll(scanResult)
+                    printSuccess("|||||||||  END SYNC  ||||||||")
                     break
                 elif answer == "n":
-                    print("ok no update")
+                    print("No skin synchronization performed.")
                     break
                 else:
-                    print("Invalid answer, try again")        
-        else:
-            printSuccess("All custom photos are up to date")
+                    print("Invalid answer, try again")
 
-    #SKINS SECTION
-    if isSubcriptionFolderEmpty():
-        printWarning("Subscription folder is empty.\nAdd .iss file(s) to subscribe to any skins collection")
+        printSuccess("I3S ended properly.")
 
-    subscribedCollections = getAllSubscribedCollection()
-    print("Subscribed collections : ")
-    for collection in subscribedCollections:
-        print(f"\t-{collection.subcriptionName}")
+    except Exception as e:
+        printError(e)
+        printError("I3S ended with an error.")
 
-    printWarning("SKINS scan launched. Please wait...")
-    #once the prec checks passed, perform the global scan
-    scanResult = synchronizer.scanSkins()
-    printSuccess("SKINS scan finished")
-    print(scanResult.toString())
-    
-
-    #then as the user for the update if any
-    if scanResult.IsSyncUpToDate():
-        printSuccess("All skins are up to date.")
-    else:
-        while True:
-            
-            answer = input("Do you want to perform the update ? (y) yes, (n) no : ").lower()
-            
-            if answer == "y":
-                printSuccess("||||||||| START SYNC ||||||||")
-                synchronizer.updateAll(scanResult)
-                printSuccess("|||||||||  END SYNC  ||||||||")
-                break
-            elif answer == "n":
-                print("No skin synchronization performed.")
-                break
-            else:
-                print("Invalid answer, try again")
-
-    printSuccess("I3S ended properly.")
-
-except Exception as e:
-    printError(e)
-    printError("I3S ended with an error.")
-
-input("Press any key to quit program... ")
+    input("Press any key to quit program... ")
