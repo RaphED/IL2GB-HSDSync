@@ -6,7 +6,7 @@ import time
 from packaging.version import Version
 
 SAVE_PATH="ISSS.exe"
-API_URL = f"https://github.com/RaphED/IL2GB-inter-squadrons-skins-synchronizer/releases/latest"
+API_URL = f"https://api.github.com/repos/RaphED/IL2GB-inter-squadrons-skins-synchronizer/releases/latest"
 
 def get_latest_release_info():
     response = requests.get(API_URL)
