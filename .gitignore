@@ -1,6 +1,6 @@
 venv
 build
-dist
+release
 Subscriptions
 *.pyc
 ISS-config.json

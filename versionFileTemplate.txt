@@ -1,8 +1,8 @@
 # UTF-8
 VSVersionInfo(
     ffi=FixedFileInfo(
-        filevers=(2, 0, 0, 0),  # Major, Minor, Revision, Build
-        prodvers=(2, 0, 0, 0),  # Product version numbers
+        filevers=($VERSION, 0, 0, 0),  # Major, Minor, Revision, Build
+        prodvers=($VERSION, 0, 0, 0),  # Product version numbers
         mask=0x3f,
         flags=0x0,
         OS=0x40004,
@@ -17,13 +17,13 @@ VSVersionInfo(
                     '040904B0',
                     [
                         StringStruct('CompanyName', 'IRRECORPS'),
-                        StringStruct('FileDescription', 'Inter-Squadrons-Skins-Synchronizer'),
-                        StringStruct('FileVersion', '2.0.0.0'),
+                        StringStruct('FileDescription', 'Inter-squadron Skin Synchronizer'),
+                        StringStruct('FileVersion', '$VERSION.0.0.0'),
                         StringStruct('InternalName', 'ISS'),
                         StringStruct('LegalCopyright', '© 2024 IRRECORPS'),
-                        StringStruct('OriginalFilename', 'iss.exe'),
+                        StringStruct('OriginalFilename', '$FILENAME'),
                         StringStruct('ProductName', 'ISS Program'),
-                        StringStruct('ProductVersion', '2.0.0.0')
+                        StringStruct('ProductVersion', '$VERSION.0.0.0')
                     ]
                 )
             ]
