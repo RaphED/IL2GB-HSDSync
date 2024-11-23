@@ -41,8 +41,14 @@ function generate-exeFile{
     pyinstaller --onefile  ".\$pythonMainFile" --name $appName --distpath $DistDir --clean --specpath $BuildDir --version-file $appName"_versionFile"
 }
 
+#Creation of the two program exe
 generate-exeFile -appName "ISS" -pythonMain "main.py"
 generate-exeFile -appName "ISSUpdater" -pythonMain "ISSupdater.py"
+
+#add a Subscription folder with an example in it
+New-Item -Path "$DistDir\Subscriptions" -ItemType Directory
+Copy-Item -Path "SubscriptionExamples\Example.iss" -Destination "$DistDir\Subscriptions\Example.iss" -Recurse
+
 
 #create the zip with all files in the dist
 Compress-Archive -Path "$DistDir\*" -DestinationPath $DistDir"\"$zipFile
