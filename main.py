@@ -50,7 +50,7 @@ def generateConfFileWithConsole():
     
     configurationService.update_config_param("IL2GBGameDirectory", foundIL2Path)
 
-    print("IS3 provides two modes :\n - (a) keep all downloaded skins\n - (b) remove all skins and keep only the ones you are subscripted to.")
+    print("ISS provides two modes :\n - (a) keep all downloaded skins\n - (b) remove all skins and keep only the ones you are subscripted to.")
     deletionMode = input("What mode do you want ? (a) or (b) ? ").lower()
     while True:
         if deletionMode == "a":
@@ -99,7 +99,7 @@ if __name__ == "__main__":
                 try:
                         # Start the updater with the specified arguments
                         subprocess.Popen(
-                            ["updaterIsss.exe"],  # Arguments to the updater
+                            ["ISSupdater.exe"],  # Arguments to the updater
                             shell=False,            # Don't use a shell to avoid unnecessary dependencies
                             close_fds=True,         # Close file descriptors to detach from the parent process
                             creationflags=subprocess.DETACHED_PROCESS if sys.platform == "win32" else 0  # Detach process on Windows
@@ -137,7 +137,7 @@ try:
 
     #SKINS SECTION
     if isSubcriptionFolderEmpty():
-        printWarning("Subscription folder is empty.\nAdd .is3 file(s) to subscribe to any skins collection")
+        printWarning("Subscription folder is empty.\nAdd .iss file(s) to subscribe to any skins collection")
 
     subscribedCollections = getAllSubscribedCollection()
     print("Subscribed collections : ")

@@ -9,9 +9,4 @@ IRRE_Fantome
 
 Acknowledgment :
 That program is based on an idea and on a previous program, IRRESkin developped by IRRE_Biluf, originally made for that same objective. 
-
-
-
-
-Build :
-pyinstaller --onefile --version-file .\versionfile.txt .\yinkerr.py
+Big thanks also to HSD team for providing us a centralised storage solution and for their support to our project.

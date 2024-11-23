@@ -1,6 +1,7 @@
 venv
 build
 dist
+Subscriptions
 *.pyc
-IS3-config.json
+ISS-config.json
 *.spec

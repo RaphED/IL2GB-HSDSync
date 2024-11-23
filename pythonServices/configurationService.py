@@ -5,7 +5,7 @@ import string
 from pythonServices.remoteService import cockpitNotesModes
 
 # Path to the configuration file
-config_file = 'IS3-config.json'
+config_file = 'ISS-config.json'
 
 # Default values for the configuration file
 default_config = {

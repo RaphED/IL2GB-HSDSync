@@ -36,7 +36,7 @@ def getSubscribedCollectionFromFile(subscriptionFilePath):
     for rawSubscription in rawJsonData:
         subscribedCollectionlist.append(
             SubscribedCollection(
-                subcriptionName=os.path.basename(subscriptionFilePath).replace(".is3", ""),
+                subcriptionName=os.path.basename(subscriptionFilePath).replace(".iss", ""),
                 source=rawSubscription.get("source"),
                 criteria=rawSubscription["criteria"]
             )
@@ -53,7 +53,7 @@ def getAllSubscribedCollection() -> list[SubscribedCollection]:
     
     for root, dirs, files in os.walk(subscriptionPath):
         for file in files:
-            if file.endswith(".is3"): #We only consider files with is3 extension
+            if file.endswith(".iss"): #We only consider files with iss extension
                 returnedCollections += getSubscribedCollectionFromFile(os.path.join(root,file))
     
     return returnedCollections
@@ -61,7 +61,7 @@ def getAllSubscribedCollection() -> list[SubscribedCollection]:
 def isSubcriptionFolderEmpty():
     for root, dirs, files in os.walk(subscriptionPath):
         for file in files:
-            if file.endswith(".is3"): #We only consider files with is3 extension
+            if file.endswith(".iss"): #We only consider files with iss extension
                 return False
     
     return True
