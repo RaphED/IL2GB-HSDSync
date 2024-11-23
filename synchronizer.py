@@ -104,6 +104,16 @@ def bytesToString(file_size_bytes: int):
     
     return f"{file_size_gb:.2f} GB"
 
+def getSkinsFromSourceMatchingWithSubscribedCollections(source, subscribedCollectionList: list[subscriptionService.SubscribedCollection]):
+    subscribedSkins = list()
+    for skin in remoteService.getSkinsCatalogFromSource(source):
+        #check if the skin matches with a subcription
+        for collection in subscribedCollectionList:
+            if collection.source == source and collection.match(skin):
+                subscribedSkins.append(skin)
+                break #to avoid to add multiple times the same skin
+    return subscribedSkins
+
 def scanSkins():
     
     scanResult = ScanResult()
@@ -122,16 +132,7 @@ def scanSkins():
     
     #  and get all the skins from each source matching with the subscriptions
     for source in usedSource:
-        scanResult.subscribedSkins[source] = list()
-        for skin in remoteService.getSkinsCatalogFromSource(source):
-            #check if the skin matches with a subcription
-            for collection in subscribedCollectionList:
-                if collection.source == source and collection.match(skin):
-                    scanResult.subscribedSkins[source].append(skin)
-                    break #to avoid to add multiple times the same skin
-    
-        
-    
+        scanResult.subscribedSkins[source] = getSkinsFromSourceMatchingWithSubscribedCollections(source, subscribedCollectionList)
     
     #then, for each source, check if we can find the remote skin matching with the local skin
     for source in usedSource:
