@@ -118,6 +118,30 @@ class MyApp:
         # Bind a selection event to the Treeview
         self.tree.bind("<<TreeviewSelect>>", self.on_item_selected)
 
+        self.open_terminal_button = tk.Button(button_frame, text="StartSync !", command=self.open_terminal, background="#95de97")
+        self.open_terminal_button.pack(side="left", padx=5, pady=5)
+
+    def open_terminal(self):
+        """Open a new window with terminal-like functionality."""
+        terminal = tk.Toplevel(self.root)  # Create a new Toplevel window
+        terminal.title("Syncro des skins :")
+        terminal.geometry("400x300")
+
+        # Create a Text widget for displaying terminal output
+        text_widget = tk.Text(terminal, wrap="word", height=15, width=50)
+        text_widget.pack(expand=True, fill="both")
+        text_widget.config(state=tk.DISABLED)  # Disable editing
+
+        # Simulate terminal output
+        self.print_to_terminal(text_widget, f"Début de la syncro!")
+
+    def print_to_terminal(self, text_widget, text):
+        """Add text to the terminal output in the Text widget."""
+        text_widget.config(state=tk.NORMAL)  # Enable editing
+        text_widget.insert(tk.END, text + "\n")  # Insert text
+        text_widget.yview(tk.END)  # Auto-scroll to the end
+        text_widget.config(state=tk.DISABLED)  # Disable editing again
+
     def switch_state(self):
         selected_item = self.tree.selection()
         if selected_item:  # Ensure something is selected
