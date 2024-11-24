@@ -93,7 +93,11 @@ class MyApp:
     def __init__(self, root):
         self.root = root
         self.root.title("ISS")
-        self.root.geometry("400x300")
+        self.root.geometry("400x350")
+
+        # Create a Label widget to display text above the Treeview
+        self.label = tk.Label(root, text="Subscriptions files .iss and .iss.disabled", font=("Arial", 10))
+        self.label.pack(pady=5)  # Add some padding above the Treeview
 
         # Set up the style for the Treeview
         self.style = ttk.Style()
@@ -101,14 +105,19 @@ class MyApp:
 
         # Create and pack the Treeview widget with the custom style
         self.tree = ttk.Treeview(root, style="Custom.Treeview")
-        self.tree.pack(fill="both", padx=5, pady=5)
+        self.tree.pack(fill="both",  padx=5, pady=5)
+        
+        # Add hierarchical data to the Treeview
+        self.populate_tree()
+        # Bind a selection event to the Treeview
+        self.tree.bind("<<TreeviewSelect>>", self.on_item_selected)
 
         # Create buttons in a frame
         button_frame = tk.Frame(root, bg="lightgreen")
         button_frame.pack(fill="x", pady=5)
 
         # Add background color to the button frame for visibility
-        self.add_button = tk.Button(button_frame, text="Add", command=self.add_item)
+        self.add_button = tk.Button(button_frame, text="Import", command=self.add_item)
         self.add_button.pack(side="left", padx=5, pady=5)
 
         self.delete_button = tk.Button(button_frame, text="Delete", command=self.delete_item)
@@ -120,11 +129,7 @@ class MyApp:
         self.open_terminal_button = tk.Button(button_frame, text="StartSync !", command=self.open_terminal, background="#95de97")
         self.open_terminal_button.pack(side="left", padx=5, pady=5)
         
-        # Add hierarchical data to the Treeview
-        self.populate_tree()
 
-        # Bind a selection event to the Treeview
-        self.tree.bind("<<TreeviewSelect>>", self.on_item_selected)
 
 
 
@@ -141,6 +146,88 @@ class MyApp:
 
         # Simulate terminal output
         self.print_to_terminal(text_widget, f"Début de la syncro!")
+
+        #The main core function :
+        try:
+            performPreExecutionChecks()
+
+            #CUSTOM PHOTOS SECTION
+            cockpitNotesMode = configurationService.getConf("cockpitNotesMode")
+            if cockpitNotesMode != "noSync":
+                self.print_to_terminal(text_widget,f"Custom photos scan mode : {cockpitNotesMode}")
+                self.print_to_terminal(text_widget,"Photos scan launched. Please wait...")
+                scanResult = synchronizer.scanCustomPhotos()
+                if len(scanResult) > 0:
+                    self.print_to_terminal(text_widget,"Some photos has to be updated :")
+                    self.print_to_terminal(text_widget,[customPhoto["aircraft"] for customPhoto in scanResult])
+                    
+                    answer = messagebox.askyesno(title='confirmation',
+                    message='Do you want to perform the update ?')                    
+                    if answer:
+                        self.print_to_terminal(text_widget,"Update started...")
+                        synchronizer.updateCustomPhotos(scanResult)
+                        self.print_to_terminal(text_widget,"Update done")
+                    elif answer:
+                        self.print_to_terminal(text_widget,"ok no update")
+                else:
+                    printSuccess("All custom photos are up to date")
+
+            #SKINS SECTION
+            if isSubcriptionFolderEmpty():
+                printWarning("Subscription folder is empty.\nAdd .iss file(s) to subscribe to any skins collection")
+
+            subscribedCollections = getAllSubscribedCollection()
+            self.print_to_terminal(text_widget,"Subscribed collections : ")
+            for collection in subscribedCollections:
+                self.print_to_terminal(text_widget,f"\t-{collection.subcriptionName}")
+
+            printWarning("SKINS scan launched. Please wait...")
+            #once the prec checks passed, perform the global scan
+            scanResult = synchronizer.scanSkins()
+            printSuccess("SKINS scan finished")
+            self.print_to_terminal(text_widget,scanResult.toString())
+            
+
+            #then as the user for the update if any
+            if scanResult.IsSyncUpToDate():
+                printSuccess("All skins are up to date.")
+            else:
+                answer = messagebox.askyesno(title='confirmation',
+                message='Do you want to perform the update ?')
+                if answer:
+                    printSuccess("||||||||| START SYNC ||||||||")
+                    synchronizer.updateAll(scanResult)
+                    printSuccess("|||||||||  END SYNC  ||||||||")
+                else:
+                    self.print_to_terminal(text_widget,"No skin synchronization performed.")
+
+            printSuccess("I3S ended properly.")
+
+        except Exception as e:
+            printError(e)
+            printError("I3S ended with an error.")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     def print_to_terminal(self, text_widget, text):
         """Add text to the terminal output in the Text widget."""
@@ -294,77 +381,11 @@ if __name__ == "__main__":
                         sys.exit()  # Close the main application
                 except Exception as e:
                     sys.exit(1)  # Exit with an error code    
-if(True):
-    root = tk.Tk()
-    app = MyApp(root)
-    root.mainloop() 
-else:
-    try:
-        performPreExecutionChecks()
 
-        #CUSTOM PHOTOS SECTION
-        cockpitNotesMode = configurationService.getConf("cockpitNotesMode")
-        if cockpitNotesMode != "noSync":
-            print(f"Custom photos scan mode : {cockpitNotesMode}")
-            printWarning("Photos scan launched. Please wait...")
-            scanResult = synchronizer.scanCustomPhotos()
-            if len(scanResult) > 0:
-                print("Some photos has to be updated :")
-                print([customPhoto["aircraft"] for customPhoto in scanResult])
-                while True:
-                    answer = input("Do you want to perform the update ? (y) yes, (n) no : ").lower()
-                    if answer == "y":
-                        print("Update started...")
-                        synchronizer.updateCustomPhotos(scanResult)
-                        print("Update done")
-                        break
-                    elif answer == "n":
-                        print("ok no update")
-                        break
-                    else:
-                        print("Invalid answer, try again")        
-            else:
-                printSuccess("All custom photos are up to date")
 
-        #SKINS SECTION
-        if isSubcriptionFolderEmpty():
-            printWarning("Subscription folder is empty.\nAdd .iss file(s) to subscribe to any skins collection")
+#If we passed updater :
+performPreExecutionChecks()
 
-        subscribedCollections = getAllSubscribedCollection()
-        print("Subscribed collections : ")
-        for collection in subscribedCollections:
-            print(f"\t-{collection.subcriptionName}")
-
-        printWarning("SKINS scan launched. Please wait...")
-        #once the prec checks passed, perform the global scan
-        scanResult = synchronizer.scanSkins()
-        printSuccess("SKINS scan finished")
-        print(scanResult.toString())
-        
-
-        #then as the user for the update if any
-        if scanResult.IsSyncUpToDate():
-            printSuccess("All skins are up to date.")
-        else:
-            while True:
-                
-                answer = input("Do you want to perform the update ? (y) yes, (n) no : ").lower()
-                
-                if answer == "y":
-                    printSuccess("||||||||| START SYNC ||||||||")
-                    synchronizer.updateAll(scanResult)
-                    printSuccess("|||||||||  END SYNC  ||||||||")
-                    break
-                elif answer == "n":
-                    print("No skin synchronization performed.")
-                    break
-                else:
-                    print("Invalid answer, try again")
-
-        printSuccess("I3S ended properly.")
-
-    except Exception as e:
-        printError(e)
-        printError("I3S ended with an error.")
-
-    input("Press any key to quit program... ")
+root = tk.Tk()
+app = MyApp(root)
+root.mainloop() 
