@@ -109,13 +109,42 @@ class MyApp:
         self.delete_button = tk.Button(button_frame, text="Delete", command=self.delete_item)
         self.delete_button.pack(side="left", padx=5, pady=5)
 
+        self.switch_state_button = tk.Button(button_frame, text="Activer/Desactiver", command=self.switch_state)
+        self.switch_state_button.pack(side="left", padx=5, pady=5)
+
         # Add hierarchical data to the Treeview
         self.populate_tree()
 
         # Bind a selection event to the Treeview
         self.tree.bind("<<TreeviewSelect>>", self.on_item_selected)
 
-    
+    def switch_state(self):
+        selected_item = self.tree.selection()
+        if selected_item:  # Ensure something is selected
+            for item in selected_item:
+                parent = self.tree.parent(item)  # Get the parent of the selected item
+                if parent == "":  # Top-level items have an empty string as their parent
+                    file_name = self.tree.item(item, 'text') 
+                    if file_name.find(" Size of total:") == -1:
+                        file_name=file_name[:file_name.find(" DISABLED")]
+                        file_path = os.path.join("Subscriptions", file_name+'.iss.disabled')
+                        new_path= os.path.join("Subscriptions", file_name+'.iss')
+                    else :
+                        file_name=file_name[:file_name.find(" Size of total:")]
+                        file_path = os.path.join("Subscriptions", file_name+'.iss')
+                        new_path= os.path.join("Subscriptions", file_name+'.iss.disabled')
+
+                    if os.path.exists(file_path):
+                        os.rename(file_path,new_path)
+                        for item in self.tree.get_children():
+                            self.tree.delete(item)
+
+                        self.populate_tree()
+                    else:
+                        print(f"File not found: {file_path}")
+
+
+
     def add_item(self):
         file_path = filedialog.askopenfilename(
             title="Select a File",
@@ -144,20 +173,26 @@ class MyApp:
                 parent = self.tree.parent(item)  # Get the parent of the selected item
                 if parent == "":  # Top-level items have an empty string as their parent
                     answer = messagebox.askyesno(title='confirmation',
-                    message='Are you sure you want to remove this subscription ?')
+                    message='Are you sure you want to delete this subscription ?')
                     if answer:
-                        self.tree.delete(item)
-                        print(f"Deleted top-level item: {item}")
+                        file_name = self.tree.item(item, 'text') 
+                        file_name=file_name[:file_name.find(" Size of total:")]
+                        file_path = os.path.join("Subscriptions", file_name+'.iss')  # Path to the file in Subscriptions
+                        if os.path.exists(file_path):
+                            os.remove(file_path)
+                            for item in self.tree.get_children():
+                                self.tree.delete(item)
+
+                            self.populate_tree()
+                        else:
+                            print(f"File not found: {file_path}")
                 else:
                     # TODO Thinking about planes you don't want and might have an exclusion list :)
                     print(f"Cannot delete item: {item}. Only top-level items can be deleted.")
         else:
             print("No item selected to delete.")
 
-        for item in self.tree.get_children():
-            self.tree.delete(item)
 
-        self.populate_tree()
 
     def on_item_selected(self, event):
         """Handle the selection event."""
@@ -166,7 +201,8 @@ class MyApp:
             print(f"Selected item: {self.tree.item(selected_item)['text']}")
 
 
-
+            
+            
     def populate_tree(self):
 
         collectionByNameSubscribeFile.clear()
@@ -187,8 +223,21 @@ class MyApp:
             parent_id = self.tree.insert("", "end", text=key + " Size of total: " + synchronizer.bytesToString(toto))  # Add main item
             for skin in skinsLinkedCollectionBySubscribtionName:
                 self.tree.insert(parent_id, "end", text=skin['Title'])  # Add sub-items
-        
 
+        subscriptionPath = os.path.join(os.getcwd(),"Subscriptions")
+
+        disabledElements = list()
+        #create subsciption path of not exists
+        for root, dirs, files in os.walk(subscriptionPath):
+            for file in files:
+                if file.endswith(".iss.disabled"): #We only consider files with iss extension
+                    disabledElements.append( file[:file.find(".iss.disabled")]+ " DISABLED")
+
+        for disabledElement in disabledElements:
+            self.tree.insert("", "end", text=disabledElement)
+                             
+
+   
 
 ######### MAIN ###############
 if __name__ == "__main__":    
