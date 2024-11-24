@@ -2,8 +2,6 @@ import json
 import os
 import string
 
-from pythonServices.remoteService import cockpitNotesModes
-
 # Path to the configuration file
 config_file = 'ISS-config.json'
 
@@ -13,6 +11,9 @@ default_config = {
     "autoRemoveUnregisteredSkins": False,
     "cockpitNotesMode": "noSync"
 }
+
+allowedCockpitNotesModes = ["noSync", "originalPhotos", "officialNumbers", "technochatNumbers"]
+
 
 # Global variable to hold the configuration in memory
 current_config = None
@@ -76,7 +77,7 @@ def checkConfParamIsValid(param):
             return checkIL2InstallPath(getConf(param))
         
         case "cockpitNotesMode":
-            return cockpitNotesModes.get(getConf(param)) is not None
+            return getConf(param) in allowedCockpitNotesModes
         
         case _:
             raise Exception(f"Unexpected param : {param}")

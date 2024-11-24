@@ -4,7 +4,7 @@ import os
 import hashlib
 import logging
 
-import pythonServices.configurationService as configurationService
+from pythonServices.configurationService import getConf
 
 sourcesInfo = [
     {
@@ -95,7 +95,7 @@ def getSpaceUsageOfRemoteSkinCatalog(source, remoteSkinList):
 
 
 # Function to download a file from a URL and save it to a temporary directory
-def downloadFile(url, expectedMD5):
+def downloadFile(url, expectedMD5 = None):
     
     tempDir = os.path.join(os.curdir, "temp")
     #create the temp directory if not exist
@@ -110,7 +110,7 @@ def downloadFile(url, expectedMD5):
         for chunk in response.iter_content(chunk_size=8192):#TODO : check the chunk size is a good one
             f.write(chunk)
     
-    if hashlib.md5(open(temp_file_path, "rb").read()).hexdigest() != expectedMD5:
+    if expectedMD5 is not None and hashlib.md5(open(temp_file_path, "rb").read()).hexdigest() != expectedMD5:
         #TODO, retry
         raise Exception(f"Bad file download {temp_file_path}")
     
@@ -141,28 +141,28 @@ def downloadSkinToTempDir(source, skinInfo):
     return downloadedFiles
 
 
-cockpitNotesModes = {
-    "noSync":{
-        "catalogURL": None,
-        "filesURL": None
-    },
-    "originalPhotos": {
-        "catalogURL": "https://www.lesirreductibles.com/irreskins/IRRE/CustomPhotos/originalPhotosCustomPhotosManifest.json",
-        "filesURL": "https://www.lesirreductibles.com/irreskins/IRRE/CustomPhotos/originalPhotos/[aircraft]/Textures/custom_photo.dds",
-    },
-    "officialNumbers": {
-        "catalogURL": "https://www.lesirreductibles.com/irreskins/IRRE/CustomPhotos/officialNumbersCustomPhotosManifest.json",
-        "filesURL": "https://www.lesirreductibles.com/irreskins/IRRE/CustomPhotos/officialNumbers/[aircraft]/Textures/custom_photo.dds",
-    },
-    "technochatNumbers": {
-        "catalogURL": "https://www.lesirreductibles.com/irreskins/IRRE/CustomPhotos/technochatNumbersCustomPhotosManifest.json",
-        "filesURL": "https://www.lesirreductibles.com/irreskins/IRRE/CustomPhotos/technochatNumbers/[aircraft]/Textures/custom_photo.dds",
-    }
-}
+customPhotosCatalogURL = "https://www.lesirreductibles.com/irreskins/IRRE/CustomPhotos/[mode]CustomPhotosManifest.json"
+customPhotosFilesURL = "https://www.lesirreductibles.com/irreskins/IRRE/CustomPhotos/[mode]/[aircraft]/Textures/custom_photo.dds"
+
+
+def getCockpitNotesModeInfo(mode):
+    match mode:
+        case "noSync":
+            return {
+                "catalogURL": None,
+                "filesURL": None
+            }
+        case "originalPhotos" | "officialNumbers" | "technochatNumbers":
+            return {
+                "catalogURL": customPhotosCatalogURL.replace("[mode]", mode),
+                "filesURL": customPhotosFilesURL.replace("[mode]", mode),
+            }
+        case _:
+            raise Exception(f"Unexpected cockpitNotesModes {mode}")
 
 def getCustomPhotosList():
     #hard coded remote address for the cockpitNotesCatalog
-    catalogURL = cockpitNotesModes[configurationService.getConf("cockpitNotesMode")]["catalogURL"]
+    catalogURL = getCockpitNotesModeInfo(getConf("cockpitNotesMode"))["catalogURL"]
     if catalogURL is None:
         return []
 
@@ -175,7 +175,7 @@ def getCustomPhotosList():
     return []
 
 def downloadCustomPhoto(cockpitNotesMode, cockpitNote):
-    filesURL = cockpitNotesModes[cockpitNotesMode]["filesURL"]
+    filesURL = getCockpitNotesModeInfo(cockpitNotesMode)["filesURL"]
 
     targetURL = filesURL.replace("[aircraft]", cockpitNote["aircraft"])
     return downloadFile(targetURL, cockpitNote["md5"])
