@@ -1,65 +1,59 @@
-import requests
-import os
 import subprocess
 import sys
 import time
-from packaging.version import Version
+import os
 
-SAVE_PATH="ISS.exe"
-API_URL = f"https://api.github.com/repos/RaphED/IL2GB-inter-squadrons-skins-synchronizer/releases/latest"
-
-def get_latest_release_info():
-    response = requests.get(API_URL)
-    if response.status_code == 200:
-        return response.json()
-    else:
-        print("Failed to fetch release information.")
-        return None
+from pythonServices.remoteService import downloadFile
+from pythonServices.localService import moveFile
+from versionManager import isCurrentVersionUpToDate, get_latest_release_info
 
 
-def update_application(download_url):
-    try:
-        # Send a GET request to download the file in streaming mode
-        response = requests.get(download_url, stream=True)
-        response.raise_for_status()  # Raise an error for bad status codes (4xx, 5xx)
+def downloadLastReleaseFile(fileName):
+    release_info = get_latest_release_info()
+    for asset in release_info["assets"]:
+        if asset["name"] == fileName:
+            return downloadFile(asset["browser_download_url"])
+            
+    #file not found
+    raise Exception(f"Cannot find {fileName} in last release")
+
+def checkAndPerformAutoUpdate():
+    if not isCurrentVersionUpToDate():
         
-        # Open the target file in binary write mode and write chunks to it
-        with open(SAVE_PATH, "wb") as file:
-            for chunk in response.iter_content(chunk_size=8192):  # Download in chunks
-                if chunk:  # Only write non-empty chunks
-                    file.write(chunk)
+        #download the last updater
+        updaterPath = downloadLastReleaseFile("ISSUpdater.exe")
 
-        print(f"Executable saved successfully to: {SAVE_PATH}")
-    except requests.exceptions.RequestException as e:
-        print(f"Error downloading the file: {e}")
-    except IOError as e:
-        print(f"Error saving the file: {e}")
-    
-    print("Application updated successfully.")
+        #run the last updater in an independant process
+        runNewProcess(updaterPath)
 
+        #KILL CURRENT PROCESS !
+        sys.exit()
+
+    #TODO : delete the installer file after update
+
+def runNewProcess(filePath):
+    subprocess.Popen(
+        [filePath],  # Arguments to the updater
+        shell=False,            # Don't use a shell to avoid unnecessary dependencies
+        close_fds=True,         # Close file descriptors to detach from the parent process
+        creationflags=subprocess.DETACHED_PROCESS if sys.platform == "win32" else 0  # Detach process on Windows
+    )
 
 if __name__ == "__main__":
-   
-    release_info = get_latest_release_info()
-    if release_info:
-        # Assuming the first asset is what we want
-        assets = release_info.get("assets", [])
-        if assets:
-            download_url = assets[0]["browser_download_url"]
-            update_application(download_url) 
-            
-            # Restart new updated application
-            time.sleep(5)
-            try:
-                    # Start the updater with the specified arguments
-                    subprocess.Popen(
-                        [SAVE_PATH],  # Arguments to the updater
-                        shell=False,            # Don't use a shell to avoid unnecessary dependencies
-                        close_fds=True,         # Close file descriptors to detach from the parent process
-                        creationflags=subprocess.DETACHED_PROCESS if sys.platform == "win32" else 0  # Detach process on Windows
-                    )
-                    print("Updater launched successfully. Closing main application...")
-                    sys.exit()  # Close the main application
-            except Exception as e:
-                print(f"Failed to launch updater: {e}")
-                sys.exit(1)  # Exit with an error code              
+
+    try:
+        #download the last exe
+        newExePath = downloadLastReleaseFile("ISS.exe")
+
+        #add a timer to make sure previous main exe is stopped
+        #TODO : perform a while checker
+        time.sleep(5)
+
+        #replace with the last 
+        newExePath = moveFile(newExePath, os.path.curdir)
+
+        #then run !
+        runNewProcess(newExePath)
+
+    except Exception as e:
+        print(e)

@@ -1,10 +1,9 @@
-#VERSIONNING
-$VERSION = 3
+
 
 #Build global parameters
 $BuildDir = "build"
 $DistDir = "release"
-$zipFile = "ISS-v$VERSION.zip"
+$zipFile = "ISS.zip"
 
 #clear build folder
 Remove-Item -Path $BuildDir -Recurse -Force
@@ -16,6 +15,9 @@ New-Item -Path $DistDir -ItemType Directory
 
 #Activate the venv
 .\venv\Scripts\Activate.ps1
+
+#VERSIONNING
+$VERSION = python versionManager.py
 
 #Script to generate version files from the template
 function generate-versionFile{
