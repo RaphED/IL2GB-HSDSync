@@ -95,14 +95,19 @@ class MyApp:
         self.root.title("ISS")
         self.root.geometry("400x300")
 
-        # Create and pack the Treeview widget
-        self.tree = ttk.Treeview(root)
-        self.tree.pack(fill="both", expand=True)
+        # Set up the style for the Treeview
+        self.style = ttk.Style()
+        self.style.configure("Custom.Treeview", background="lightblue", fieldbackground="lightblue")
 
-        # Create buttons
-        button_frame = tk.Frame(root)
-        button_frame.pack(fill="x")
+        # Create and pack the Treeview widget with the custom style
+        self.tree = ttk.Treeview(root, style="Custom.Treeview")
+        self.tree.pack(fill="both", padx=5, pady=5)
 
+        # Create buttons in a frame
+        button_frame = tk.Frame(root, bg="lightgreen")
+        button_frame.pack(fill="x", pady=5)
+
+        # Add background color to the button frame for visibility
         self.add_button = tk.Button(button_frame, text="Add", command=self.add_item)
         self.add_button.pack(side="left", padx=5, pady=5)
 
@@ -111,15 +116,17 @@ class MyApp:
 
         self.switch_state_button = tk.Button(button_frame, text="Activer/Desactiver", command=self.switch_state)
         self.switch_state_button.pack(side="left", padx=5, pady=5)
-
+        
+        self.open_terminal_button = tk.Button(button_frame, text="StartSync !", command=self.open_terminal, background="#95de97")
+        self.open_terminal_button.pack(side="left", padx=5, pady=5)
+        
         # Add hierarchical data to the Treeview
         self.populate_tree()
 
         # Bind a selection event to the Treeview
         self.tree.bind("<<TreeviewSelect>>", self.on_item_selected)
 
-        self.open_terminal_button = tk.Button(button_frame, text="StartSync !", command=self.open_terminal, background="#95de97")
-        self.open_terminal_button.pack(side="left", padx=5, pady=5)
+
 
     def open_terminal(self):
         """Open a new window with terminal-like functionality."""
