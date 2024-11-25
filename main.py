@@ -11,7 +11,8 @@ from pythonServices.subscriptionService import isSubcriptionFolderEmpty, getAllS
 from pythonServices.subscriptionService import isSubcriptionFolderEmpty, getAllSubscribedCollection
 import pythonServices.loggingService
 import logging
-from ISSupdater import checkAndPerformAutoUpdate
+from versionManager import isCurrentVersionUpToDate
+from ISSupdater import performAutoUpdate
 
 collectionByNameSubscribeFile=dict() 
 
@@ -80,7 +81,10 @@ def syncronize_main():
 
 def performAtProgramLauchChecks():
 
-    checkAndPerformAutoUpdate()
+    if not isCurrentVersionUpToDate():
+        printError("A new version of ISS has been found")
+        printWarning("Please wait for the update and the automatic restart...")
+        performAutoUpdate()
 
      #check conf file is generated
     if not configurationService.configurationFileExists():

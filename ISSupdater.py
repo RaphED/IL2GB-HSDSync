@@ -17,17 +17,16 @@ def downloadLastReleaseFile(fileName):
     #file not found
     raise Exception(f"Cannot find {fileName} in last release")
 
-def checkAndPerformAutoUpdate():
-    if not isCurrentVersionUpToDate():
-        
-        #download the last updater
-        updaterPath = downloadLastReleaseFile("ISSUpdater.exe")
+def performAutoUpdate():
+    
+    #download the last updater
+    updaterPath = downloadLastReleaseFile("ISSUpdater.exe")
 
-        #run the last updater in an independant process
-        runNewProcess(updaterPath)
+    #run the last updater in an independant process
+    runNewProcess(updaterPath)
 
-        #KILL CURRENT PROCESS !
-        sys.exit()
+    #KILL CURRENT PROCESS !
+    sys.exit()
 
     #TODO : delete the installer file after update
 
@@ -39,9 +38,21 @@ def runNewProcess(filePath):
         creationflags=subprocess.DETACHED_PROCESS if sys.platform == "win32" else 0  # Detach process on Windows
     )
 
+
+def printError(text):
+    print("\033[91m{}\033[00m".format(text))
+
+def printWarning(text):
+    print("\033[93m{}\033[00m".format(text))
+
+def printSuccess(text):
+    print("\033[92m{}\033[00m".format(text))
+
+
 if __name__ == "__main__":
 
     try:
+        printWarning("ISS autoupdater is running. Please wait for the program to restart...")
         #download the last exe
         newExePath = downloadLastReleaseFile("ISS.exe")
 
