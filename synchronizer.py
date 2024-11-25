@@ -16,6 +16,7 @@ class ScanResult:
         self.missingSkins = dict[str, list]()
         self.toBeUpdatedSkins = dict[str, list]()
         self.toBeRemovedSkins= list()
+        self.previouslyInstalledSkins = list()
 
     def appendMissingSkin(self, source, remoteSkinInfo):
         self.missingSkins[source].append(remoteSkinInfo)
@@ -34,7 +35,8 @@ class ScanResult:
             "subscribedSkinsSpace":{source:getSpaceUsageOfRemoteSkinCatalog(source, self.subscribedSkins[source]) for source in self.getUsedSources()},
             "missingSkinsSpace": {source:getSpaceUsageOfRemoteSkinCatalog(source, self.missingSkins[source]) for source in self.getUsedSources()},
             "toBeUpdatedSkinsSpace": {source:getSpaceUsageOfRemoteSkinCatalog(source, self.toBeUpdatedSkins[source]) for source in self.getUsedSources()},
-            "toBeRemovedSkinsSpace": getSpaceUsageOfLocalSkinCatalog(self.toBeRemovedSkins)
+            "toBeRemovedSkinsSpace": getSpaceUsageOfLocalSkinCatalog(self.toBeRemovedSkins),
+            "previouslyInstalledSkinsSpace": getSpaceUsageOfLocalSkinCatalog(self.previouslyInstalledSkins)
         }
     
     def toString(self):
@@ -74,8 +76,11 @@ class ScanResult:
             returnString +="- None -\n"
 
         returnString += "*************************************\n"
-
-        returnString += f"After update total disk space : {bytesToString(afterUpdateDiskSpace)}\n"
+        beforeUpdateDiskSpace = diskSpaceStats["previouslyInstalledSkinsSpace"]
+        returnString += f"Current total disk space : {bytesToString(beforeUpdateDiskSpace)}\n"
+        if not self.IsSyncUpToDate():
+            spaceDelta = afterUpdateDiskSpace - beforeUpdateDiskSpace
+            returnString += f"After update total disk space : {bytesToString(afterUpdateDiskSpace)} ({bytesToString(spaceDelta, forceSign=True)})\n"
 
         return returnString
     
@@ -88,23 +93,32 @@ class ScanResult:
             return False
         return True
 
-def bytesToString(file_size_bytes: int):
+def bytesToString(bytesSize: int, forceSign: bool = False):
+    
+    file_size_bytes = abs(bytesSize)
+    sign = "" 
+    if bytesSize < 0:
+        sign = "-"
+    elif bytesSize > 0 and forceSign:
+        sign = "+"
+
+
     file_size_kb = file_size_bytes / 1024
 
     if file_size_kb < 1:
-        return f"{file_size_bytes} B"
+        return f"{sign}{file_size_bytes} B"
 
     file_size_mb = file_size_kb / 1024
 
     if file_size_mb < 1:
-        return f"{file_size_kb:.2f} KB"
+        return f"{sign}{file_size_kb:.2f} KB"
     
     file_size_gb = file_size_mb / 1024
 
     if file_size_gb < 1:
-        return f"{file_size_mb:.2f} MB"
+        return f"{sign}{file_size_mb:.2f} MB"
     
-    return f"{file_size_gb:.2f} GB"
+    return f"{sign}{file_size_gb:.2f} GB"
 
 def getSkinsFromSourceMatchingWithSubscribedCollections(source, subscribedCollectionList: list[subscriptionService.SubscribedCollection]):
     subscribedSkins = list()
@@ -121,7 +135,8 @@ def scanSkins():
     scanResult = ScanResult()
 
     #get the local skins list in memory
-    localSkinsCollection = localService.getSkinsList()
+    scanResult.previouslyInstalledSkins = localService.getSkinsList()
+
 
     #load all subscriptions
     subscribedCollectionList = subscriptionService.getAllSubscribedCollection()
@@ -147,7 +162,7 @@ def scanSkins():
 
         for remoteSkin in scanResult.subscribedSkins[source]:
             foundLocalSkin = None
-            for localSkin in localSkinsCollection:
+            for localSkin in scanResult.previouslyInstalledSkins:
                 #not the same A/C, no match
                 if remoteSkin[getSourceParam(source, "aircraft")] != localSkin["aircraft"]:
                     continue
@@ -193,7 +208,7 @@ def scanSkins():
                 scanResult.appendMissingSkin(source, remoteSkin)
 
     #Then list all local skins not present in the remote skins
-    for localSkin in localSkinsCollection:
+    for localSkin in scanResult.previouslyInstalledSkins:
         foundRemoteSkin = None
         #check in all sources
         for source in usedSource:
