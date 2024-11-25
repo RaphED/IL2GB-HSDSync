@@ -5,6 +5,7 @@ import json
 import logging
 
 from pythonServices.configurationService import getConf
+from pythonServices.FileService import moveFile
 
 def getSkinDirectory():
     return os.path.join(getConf("IL2GBGameDirectory"), "data\\graphics\\skins")
@@ -66,21 +67,6 @@ def getSkinsList():
                     #TODO: manage the case of an orphan secondary file
     
     return skinList
-
-# Function to move the file and replace if necessary
-def moveFile(src_path, dest_dir):
-    if not os.path.exists(dest_dir):
-        os.makedirs(dest_dir)
-
-    dest_path = os.path.join(dest_dir, os.path.basename(src_path))
-    
-    # Remove the destination file if it exists
-    if os.path.exists(dest_path):
-        os.remove(dest_path)
-
-    # Move the file
-    shutil.move(src_path, dest_path)
-    return dest_path
 
 def moveSkinFromPathToDestination(src_path, aircraft):
     return moveFile(src_path, os.path.join(getSkinDirectory(), aircraft))
@@ -153,3 +139,4 @@ def getAndGenerateCustomPhotosCatalogFromPath(parentPath, catalogName):
 def moveCustomPhotoFromPathToDestination(src_path, aircraft):
     destinationPath = os.path.join(getCustomPhotosDirectory(), aircraft, "Textures")
     return moveFile(src_path, destinationPath)
+

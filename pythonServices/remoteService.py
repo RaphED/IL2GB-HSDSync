@@ -5,6 +5,7 @@ import hashlib
 import logging
 
 from pythonServices.configurationService import getConf
+from pythonServices.FileService import downloadFile
 
 sourcesInfo = [
     {
@@ -92,29 +93,6 @@ def getSpaceUsageOfRemoteSkinCatalog(source, remoteSkinList):
             totalDiskSpace += int(secondaryFileSpace)
     
     return totalDiskSpace
-
-
-# Function to download a file from a URL and save it to a temporary directory
-def downloadFile(url, expectedMD5 = None):
-    
-    tempDir = os.path.join(os.curdir, "temp")
-    #create the temp directory if not exist
-    if not os.path.exists(tempDir):
-        os.makedirs(tempDir)
-    
-    response = requests.get(url, stream=True)
-    response.raise_for_status()  # Raise an exception for HTTP errors
-    temp_file_path = os.path.join(tempDir, os.path.basename(url))
-
-    with open(temp_file_path, 'wb') as f:
-        for chunk in response.iter_content(chunk_size=8192):#TODO : check the chunk size is a good one
-            f.write(chunk)
-    
-    if expectedMD5 is not None and hashlib.md5(open(temp_file_path, "rb").read()).hexdigest() != expectedMD5:
-        #TODO, retry
-        raise Exception(f"Bad file download {temp_file_path}")
-    
-    return temp_file_path
 
 def downloadSkinToTempDir(source, skinInfo):
 

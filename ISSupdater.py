@@ -3,9 +3,8 @@ import sys
 import time
 import os
 
-from pythonServices.remoteService import downloadFile
-from pythonServices.localService import moveFile
-from versionManager import isCurrentVersionUpToDate, get_latest_release_info
+from pythonServices.FileService import downloadFile, moveFile
+from versionManager import get_latest_release_info
 
 
 def downloadLastReleaseFile(fileName):
