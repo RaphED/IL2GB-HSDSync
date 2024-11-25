@@ -9,10 +9,12 @@ import synchronizer
 import pythonServices.configurationService as configurationService
 from pythonServices.subscriptionService import isSubcriptionFolderEmpty, getAllSubscribedCollection
 from pythonServices.subscriptionService import isSubcriptionFolderEmpty, getAllSubscribedCollection
+from pythonServices.FileService import cleanTemporaryFolder
 import pythonServices.loggingService
 import logging
 from versionManager import isCurrentVersionUpToDate
 from ISSupdater import performAutoUpdate
+
 
 collectionByNameSubscribeFile=dict() 
 
@@ -80,6 +82,9 @@ def syncronize_main():
     print("**********************************************")
 
 def performAtProgramLauchChecks():
+
+    #make sure the temporary folder is clean
+    cleanTemporaryFolder()
 
     if not isCurrentVersionUpToDate():
         printError("A new version of ISS has been found")
