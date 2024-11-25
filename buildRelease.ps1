@@ -20,7 +20,7 @@ New-Item -Path $DistDir -ItemType Directory
 $VERSION = python versionManager.py
 
 #Script to generate version files from the template
-function generate-versionFile{
+function generate-versionFile {
     param(
         [string]$version,
         [string]$exeFileName,
@@ -33,14 +33,14 @@ function generate-versionFile{
     Set-Content -Path "$BuildDir\$targetVersionFileName" -Value $fileContent
 }
 
-function generate-exeFile{
+function generate-exeFile {
     param(
         [string]$appName,
         [string]$pythonMainFile
     )
 
-    generate-versionFile -version $VERSION -exeFileName "$appName.exe" -targetVersionFileName $appName"_versionFile"
-    pyinstaller --onefile  ".\$pythonMainFile" --name $appName --distpath $DistDir --clean --specpath $BuildDir --version-file $appName"_versionFile"
+    generate-versionFile -version $VERSION -exeFileName "$appName.exe" -targetVersionFileName $appName"_versionFile" --icon="..\\icon.ico"
+    pyinstaller --onefile  ".\$pythonMainFile" --name $appName --distpath $DistDir --clean --specpath $BuildDir --version-file $appName"_versionFile" 
 }
 
 #Creation of the main EXE

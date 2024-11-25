@@ -4,7 +4,6 @@ from threading import Thread
 from tkinter import filedialog, messagebox
 import tkinter as tk
 from tkinter import ttk
-import sv_ttk
 import synchronizer
 import pythonServices.configurationService as configurationService
 from pythonServices.subscriptionService import isSubcriptionFolderEmpty, getAllSubscribedCollection
@@ -161,6 +160,13 @@ def printSuccess(text):
 class MyApp:
     g_text_widget=None
     def __init__(self, root):
+        style = ttk.Style(root)
+        
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        tcl_path = os.path.join(current_dir, "forest-light.tcl")
+        root.tk.call("source",tcl_path)
+
+        style.theme_use("forest-light")
         self.root = root
         self.root.title("InterSquadron Skin Synchronizer")
         self.root.geometry("500x540")
@@ -185,13 +191,13 @@ class MyApp:
         button_frame.pack(fill="both", pady=2)
 
         # Add background color to the button frame for visibility
-        self.add_button = tk.Button(button_frame, text="Import", command=self.add_item)
+        self.add_button = ttk.Button(button_frame, text="Import", command=self.add_item)
         self.add_button.pack(side="left", padx=10, pady=5)
 
-        self.delete_button = tk.Button(button_frame, text="Delete", command=self.delete_item)
+        self.delete_button = ttk.Button(button_frame, text="Delete", command=self.delete_item)
         self.delete_button.pack(side="left", padx=5, pady=5)
 
-        self.switch_state_button = tk.Button(button_frame, text="Activate/Disable", command=self.switch_state)
+        self.switch_state_button = ttk.Button(button_frame, text="Activate/Disable", command=self.switch_state)
         self.switch_state_button.pack(side="left", padx=5, pady=5)
         
 
@@ -207,7 +213,7 @@ class MyApp:
         path_frame.pack(fill="x", pady=5)
         self.path_label = tk.Label(path_frame, text=self.short_path(configurationService.getConf("IL2GBGameDirectory")), anchor="w")
         self.path_label.pack(side="left", fill="x", expand=True, padx=5)
-        self.path_button = tk.Button(path_frame, text="Modify", command=self.modify_path)
+        self.path_button = ttk.Button(path_frame, text="Modify", command=self.modify_path)
         self.path_button.pack(side="right", padx=5)
 
         # Toggle Switch
@@ -232,10 +238,12 @@ class MyApp:
         self.dropdown.pack(side="right", padx=5)
         self.dropdown.bind("<<ComboboxSelected>>", self.on_dropdown_change)
 
-        self.start_sync_button = tk.Button(root, text="StartSync !", command=self.start_sync,background="#1b5c14")
+        button2_frame = ttk.Frame(root)
+        button2_frame.pack(fill="both", pady=2)
+        self.start_sync_button = ttk.Button(button2_frame, text="StartSync !", style="Accent.TButton", command=self.start_sync)
         self.start_sync_button.pack(padx=10, pady=10)
 
-    def short_path(self,fullPath, maxLength = 70):
+    def short_path(self,fullPath, maxLength = 40):
         if len(fullPath) > maxLength:
             return f"{fullPath[:maxLength]}..."
         return fullPath
@@ -422,9 +430,9 @@ if __name__ == "__main__":
     performAtProgramLauchChecks()
 
     root = tk.Tk()
-    
+    root.iconbitmap("icon.ico")
+
     app = MyApp(root)
-    sv_ttk.use_dark_theme()
 
     root.mainloop()
 
