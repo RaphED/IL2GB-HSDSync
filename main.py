@@ -1,7 +1,7 @@
 import os
 import shutil
 from threading import Thread
-from tkinter import filedialog, messagebox, simpledialog
+from tkinter import filedialog, messagebox, simpledialog, font
 import tkinter as tk
 from tkinter import ttk
 import sv_ttk
@@ -31,7 +31,7 @@ def syncronize_main():
                 print([customPhoto["aircraft"] for customPhoto in scanResult])
                 
                 answer = messagebox.askyesno(title='confirmation',
-                message='Do you want to perform the update ?')                    
+                message='Do you want to perform the update on photos?')                    
                 if answer:
                     print("Update started...")
                     synchronizer.updateCustomPhotos(scanResult)
@@ -144,11 +144,13 @@ class MyApp:
     def __init__(self, root):
         self.root = root
         self.root.title("ISS")
-        self.root.geometry("400x350")
+        self.root.geometry("400x540")
 
         # Create a Label widget to display text above the Treeview
-        self.label = tk.Label(root, text="Subscriptions files .iss and .iss.disabled", font=("Arial", 10))
-        self.label.pack(pady=5)  # Add some padding above the Treeview
+        subscription_label_frame = tk.Frame(root)
+        subscription_label_frame.pack(fill="both",padx=2, pady=2)
+        self.label = tk.Label(subscription_label_frame, text="Subscriptions :", font=("Arial", 10,"bold","underline"))
+        self.label.pack(side="left", fill="x",padx=5)  # Add some padding above the Treeview
 
         # Create and pack the Treeview widget with the custom style
         self.tree = ttk.Treeview(root, show="tree" )#, style="Custom.Treeview")
@@ -161,11 +163,11 @@ class MyApp:
 
         # Create buttons in a frame
         button_frame = tk.Frame(root)
-        button_frame.pack(fill="x", pady=5)
+        button_frame.pack(fill="both", pady=2)
 
         # Add background color to the button frame for visibility
         self.add_button = tk.Button(button_frame, text="Import", command=self.add_item)
-        self.add_button.pack(side="left", padx=5, pady=5)
+        self.add_button.pack(side="left", padx=10, pady=5)
 
         self.delete_button = tk.Button(button_frame, text="Delete", command=self.delete_item)
         self.delete_button.pack(side="left", padx=5, pady=5)
@@ -173,8 +175,68 @@ class MyApp:
         self.switch_state_button = tk.Button(button_frame, text="Activate/Disable", command=self.switch_state)
         self.switch_state_button.pack(side="left", padx=5, pady=5)
         
-        self.start_sync_button = tk.Button(button_frame, text="StartSync !", command=self.start_sync)
-        self.start_sync_button.pack(side="left", padx=5, pady=5)
+
+
+
+        #Part of params :
+        params_label_frame = tk.Frame(root)
+        params_label_frame.pack(fill="both",padx=2, pady=2)
+        self.param_label = tk.Label(params_label_frame, text="Parameters :", font=("Arial", 10,"bold","underline"))
+        self.param_label.pack(side="left", fill="x",padx=5)  # Add some padding above the Treeview
+
+        path_frame = tk.Frame(self.root)
+        path_frame.pack(fill="x", pady=5)
+        self.path_label = tk.Label(path_frame, text=self.short_path(configurationService.getConf("IL2GBGameDirectory")), anchor="w")
+        self.path_label.pack(side="left", fill="x", expand=True, padx=5)
+        self.path_button = tk.Button(path_frame, text="Modify", command=self.modify_path)
+        self.path_button.pack(side="right", padx=5)
+
+        # Toggle Switch
+        toggle_frame = tk.Frame(self.root)
+        toggle_frame.pack(fill="x", pady=5)
+        tk.Label(toggle_frame, text="Auto remove unregistered skins", anchor="w").pack(side="left", padx=5)
+        self.toggle_var = tk.BooleanVar(value=configurationService.getConf("autoRemoveUnregisteredSkins"))
+        self.toggle_button = ttk.Checkbutton(toggle_frame, variable=self.toggle_var, onvalue=True, offvalue=False, command=self.modify_auto_remove)
+        self.toggle_button.pack(side="right", padx=5)
+
+        # Dropdown Menu
+        dropdown_frame = tk.Frame(self.root)
+        dropdown_frame.pack(fill="x", pady=5)
+        tk.Label(dropdown_frame, text="Cockpit Photo", anchor="w").pack(side="left", padx=5)
+        self.dropdown_var = tk.StringVar(value=configurationService.getConf("cockpitNotesMode"))
+        self.dropdown = ttk.Combobox(
+            dropdown_frame,
+            textvariable=self.dropdown_var,
+            values=configurationService.allowedCockpitNotesModes,
+            state="readonly",
+        )
+        self.dropdown.pack(side="right", padx=5)
+        self.dropdown.bind("<<ComboboxSelected>>", self.on_dropdown_change)
+
+        self.start_sync_button = tk.Button(root, text="StartSync !", command=self.start_sync,background="#1b5c14")
+        self.start_sync_button.pack(padx=10, pady=10)
+
+    def short_path(self,fullPath):
+        return fullPath[:3]+"[...]"+fullPath[fullPath.rfind("\\"):]
+    
+    def modify_path(self):
+        file_path = filedialog.askdirectory(
+            initialdir=configurationService.getConf("IL2GBGameDirectory"),
+            title="Select a folder"
+        )
+        if len(file_path)>0:
+            configurationService.update_config_param("IL2GBGameDirectory",file_path)
+            self.path_label.config(text=self.short_path(file_path))
+
+    def modify_auto_remove(self):
+        lebooleanquejeveux=self.toggle_var.get()
+        configurationService.update_config_param("autoRemoveUnregisteredSkins", lebooleanquejeveux)
+
+    def on_dropdown_change(self, event):
+        """Handle dropdown value change."""
+        selected_value = self.dropdown_var.get()
+        configurationService.update_config_param("cockpitNotesMode", selected_value)
+
         
 
     def start_sync(self):
@@ -285,15 +347,9 @@ class MyApp:
             print("No item selected to delete.")
 
 
-
     def on_item_selected(self, event):
         """Handle the selection event."""
-        selected_item = self.tree.selection()
-        if selected_item:
-            print(f"Selected item: {self.tree.item(selected_item)['text']}")
-
-
-            
+        selected_item = self.tree.selection()            
             
     def populate_tree(self):
 
