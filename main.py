@@ -1,14 +1,13 @@
 import os
 import shutil
 from threading import Thread
-from tkinter import filedialog, messagebox, simpledialog, font
+from tkinter import filedialog, messagebox
 import tkinter as tk
 from tkinter import ttk
 import sv_ttk
 import synchronizer
 import pythonServices.configurationService as configurationService
-from pythonServices.subscriptionService import SubscribedCollection, isSubcriptionFolderEmpty, getAllSubscribedCollection
-from packaging.version import Version
+from pythonServices.subscriptionService import isSubcriptionFolderEmpty, getAllSubscribedCollection
 from pythonServices.subscriptionService import isSubcriptionFolderEmpty, getAllSubscribedCollection
 import pythonServices.loggingService
 import logging
@@ -18,7 +17,7 @@ collectionByNameSubscribeFile=dict()
 
 def syncronize_main():
     try:
-        performPreExecutionChecks()
+        performPreScanChecks()
 
         print("**********************************************")
         print("**************** SYNC STARTED ****************")
@@ -79,19 +78,25 @@ def syncronize_main():
     print("***************** SYNC ENDED *****************")
     print("**********************************************")
 
-def performPreExecutionChecks():
+def performAtProgramLauchChecks():
 
-    #check conf file is generated
+    checkAndPerformAutoUpdate()
+
+     #check conf file is generated
     if not configurationService.configurationFileExists():
-        printWarning("No configuration file found")
+        printError("No configuration file found")
         #and help the user to generate a new one
         generateConfFileWithConsole()
+
+
+def performPreScanChecks():
 
     #check the game directory is properly parametered
     if not configurationService.checkConfParamIsValid("IL2GBGameDirectory"):
         raise Exception(
             f"Bad IL2 Game directory, current game path is set to : {configurationService.getConf("IL2GBGameDirectory")}\n"
-            f"Change value in configuration file {configurationService.config_file}"
+            f"Directory must be the main game directory, generally named 'IL-2 Sturmovik Battle of Stalingrad' and containing two folders 'bin' and 'data'\n"
+            f"Change value in the GUI 'Parameters' section"
         )
     
 def generateConfFileWithConsole():
@@ -100,7 +105,7 @@ def generateConfFileWithConsole():
     newConf = configurationService.generateConfFile()
 
     
-    print("Please wait while trying to find IL2 directory on your HDDs...")
+    printWarning("Please wait while trying to find IL2 directory on your HDDs...")
     foundIL2Path = configurationService.tryToFindIL2Path()
     #foundIL2Path = None
     if foundIL2Path is None:
@@ -120,8 +125,9 @@ def generateConfFileWithConsole():
     configurationService.update_config_param("IL2GBGameDirectory", foundIL2Path)
 
     print("ISS provides two modes :\n - (a) keep all downloaded skins\n - (b) remove all skins and keep only the ones you are subscripted to.")
-    deletionMode = input("What mode do you want ? (a) or (b) ? ").lower()
+    
     while True:
+        deletionMode = input("What mode do you want ? (a) or (b) ? ").lower()
         if deletionMode == "a":
             configurationService.update_config_param("autoRemoveUnregisteredSkins", False)
             break
@@ -131,7 +137,7 @@ def generateConfFileWithConsole():
         else:
             printError("Unknown anwser. Please anwser a or b")
 
-    printSuccess("Configuration performed with success")
+    printSuccess("Configuration initialized with success")
     
 def printError(text):
     print("\033[91m{}\033[00m".format(text))
@@ -147,8 +153,8 @@ class MyApp:
     g_text_widget=None
     def __init__(self, root):
         self.root = root
-        self.root.title("ISS")
-        self.root.geometry("400x540")
+        self.root.title("InterSquadron Skin Synchronizer")
+        self.root.geometry("500x540")
 
         # Create a Label widget to display text above the Treeview
         subscription_label_frame = tk.Frame(root)
@@ -220,8 +226,10 @@ class MyApp:
         self.start_sync_button = tk.Button(root, text="StartSync !", command=self.start_sync,background="#1b5c14")
         self.start_sync_button.pack(padx=10, pady=10)
 
-    def short_path(self,fullPath):
-        return fullPath[:3]+"[...]"+fullPath[fullPath.rfind("\\"):]
+    def short_path(self,fullPath, maxLength = 70):
+        if len(fullPath) > maxLength:
+            return f"{fullPath[:maxLength]}..."
+        return fullPath
     
     def modify_path(self):
         file_path = filedialog.askdirectory(
@@ -394,9 +402,7 @@ class MyApp:
 app=None
 if __name__ == "__main__":
     
-    checkAndPerformAutoUpdate()
-
-    performPreExecutionChecks()
+    performAtProgramLauchChecks()
 
     root = tk.Tk()
     
