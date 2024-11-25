@@ -26,6 +26,9 @@ class SubscribedCollection:
             if not re.match(matchingRegExp,remoteSkinInfo[criterion]):
                 return False
         return True
+    
+    def toString(self):
+        return f"{self.subcriptionName} - source is {self.source} - {self.criteria}" 
 
 def getSubscribedCollectionFromFile(subscriptionFilePath):
     file = open(subscriptionFilePath, "r")

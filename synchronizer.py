@@ -8,6 +8,8 @@ from pythonServices.configurationService import getConf
 
 from requests.exceptions import HTTPError
 
+import logging
+
 class ScanResult:
     def __init__(self):
         self.subscribedSkins = dict[str, list]()
@@ -32,7 +34,7 @@ class ScanResult:
             "subscribedSkinsSpace":{source:getSpaceUsageOfRemoteSkinCatalog(source, self.subscribedSkins[source]) for source in self.getUsedSources()},
             "missingSkinsSpace": {source:getSpaceUsageOfRemoteSkinCatalog(source, self.missingSkins[source]) for source in self.getUsedSources()},
             "toBeUpdatedSkinsSpace": {source:getSpaceUsageOfRemoteSkinCatalog(source, self.toBeUpdatedSkins[source]) for source in self.getUsedSources()},
-            "toBeRemovedSkinsSpace": getSpaceUsageOfLocalSkinCatalog(self.toBeRemovedSkins),
+            "toBeRemovedSkinsSpace": getSpaceUsageOfLocalSkinCatalog(self.toBeRemovedSkins)
         }
     
     def toString(self):
@@ -115,7 +117,7 @@ def getSkinsFromSourceMatchingWithSubscribedCollections(source, subscribedCollec
     return subscribedSkins
 
 def scanSkins():
-    
+    logging.info("START SCAN")
     scanResult = ScanResult()
 
     #get the local skins list in memory
@@ -123,6 +125,8 @@ def scanSkins():
 
     #load all subscriptions
     subscribedCollectionList = subscriptionService.getAllSubscribedCollection()
+    for collection in subscribedCollectionList:
+        logging.info(f"Subscribed collection : {collection.toString()}")
 
     #identify the used sources
     usedSource = []
@@ -205,6 +209,7 @@ def scanSkins():
         if foundRemoteSkin is None:
             scanResult.appendToBeRemovedSkin(localSkin)
 
+    logging.info("END SCAN")
     return scanResult
 
 

@@ -20,60 +20,64 @@ def syncronize_main():
     try:
         performPreExecutionChecks()
 
+        print("**********************************************")
+        print("**************** SYNC STARTED ****************")
+        print("**********************************************\n")
         #CUSTOM PHOTOS SECTION
+        print("\tSTEP 1/2 - CUSTOM PHOTOS SYNC\n")
         cockpitNotesMode = configurationService.getConf("cockpitNotesMode")
-        if cockpitNotesMode != "noSync":
+        if cockpitNotesMode == "noSync":
+            print("No synchronization parametered\nMove on the next step")
+        else:
             print(f"Custom photos scan mode : {cockpitNotesMode}")
-            print("Photos scan launched. Please wait...")
+            printWarning("Photos scan launched. Please wait...")
             scanResult = synchronizer.scanCustomPhotos()
             if len(scanResult) > 0:
-                print("Some photos has to be updated :")
+                printWarning(f"{len(scanResult)} custom photos has to be updated :")
                 print([customPhoto["aircraft"] for customPhoto in scanResult])
                 
-                answer = messagebox.askyesno(title='confirmation',
-                message='Do you want to perform the update on photos?')                    
+                answer = messagebox.askyesno(title='Synchronisation action',
+                message=f'Do you want to perform the update on these {len(scanResult)} custom photos?')                
                 if answer:
-                    print("Update started...")
+                    printWarning("UPDATE STARTED...")
                     synchronizer.updateCustomPhotos(scanResult)
-                    print("Update done")
-                elif answer:
-                    print("ok no update")
+                    printSuccess("UPDATE DONE")
+                else:
+                    printWarning("NO UPDATE PERFORMED")
             else:
-                printSuccess("All custom photos are up to date")
+                printSuccess("All custom photos are already up to date")
 
         #SKINS SECTION
+        print("\n\tSTEP 2/2 - SKINS SYNC\n")
+        
         if isSubcriptionFolderEmpty():
-            printWarning("Subscription folder is empty.\nAdd .iss file(s) to subscribe to any skins collection")
+            printWarning("There are no subscriptions.\nPlease import or activate .iss file(s) to subscribe to any skins collection")
 
-        subscribedCollections = getAllSubscribedCollection()
-        print("Subscribed collections : ")
-        for collection in subscribedCollections:
-            print(f"\t-{collection.subcriptionName}")
-
-        printWarning("SKINS scan launched. Please wait...")
+        printWarning("Skins scan launched. Please wait...")
         #once the prec checks passed, perform the global scan
         scanResult = synchronizer.scanSkins()
-        printSuccess("SKINS scan finished")
         print(scanResult.toString())
 
         #then as the user for the update if any
         if scanResult.IsSyncUpToDate():
             printSuccess("All skins are up to date.")
         else:
-            answer = messagebox.askyesno(title='confirmation',
+            answer = messagebox.askyesno(title='Synchronisation action',
             message='Do you want to perform the update ?')
             if answer:
-                printSuccess("||||||||| START SYNC ||||||||")
+                printWarning("UPDATE STARTED...")
                 synchronizer.updateAll(scanResult)
-                printSuccess("|||||||||  END SYNC  ||||||||")
+                printSuccess("UPDATE DONE")
             else:
-                print("No skin synchronization performed.")
+                printWarning("NO UPDATE PERFORMED")
 
-        printSuccess("I3S ended properly.")
 
     except Exception as e:
         printError(e)
-        printError("I3S ended with an error.")
+
+    print("**********************************************")
+    print("***************** SYNC ENDED *****************")
+    print("**********************************************")
 
 def performPreExecutionChecks():
 
