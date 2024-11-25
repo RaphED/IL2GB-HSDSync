@@ -295,25 +295,20 @@ class MyApp:
             for item in selected_item:
                 parent = self.tree.parent(item)  # Get the parent of the selected item
                 if parent == "":  # Top-level items have an empty string as their parent
-                    file_name = self.tree.item(item, 'text') 
-                    if file_name.find(" Size of total:") == -1:
-                        file_name=file_name[:file_name.find(" DISABLED")]
-                        file_path = os.path.join("Subscriptions", file_name+'.iss.disabled')
-                        new_path= os.path.join("Subscriptions", file_name+'.iss')
-                    else :
-                        file_name=file_name[:file_name.find(" Size of total:")]
-                        file_path = os.path.join("Subscriptions", file_name+'.iss')
-                        new_path= os.path.join("Subscriptions", file_name+'.iss.disabled')
-
-                    if os.path.exists(file_path):
-                        os.rename(file_path,new_path)
-                        for item in self.tree.get_children():
-                            self.tree.delete(item)
-
-                        self.populate_tree()
+                    colelctionLabel = self.tree.item(item, 'text') 
+                    collectionName = MyApp.getCollectionNameFromTreeLabel(colelctionLabel)
+                    isDisabled = colelctionLabel.endswith("DISABLED")
+                    withoutExtensionFileName = os.path.join("Subscriptions", collectionName)
+                    if isDisabled:
+                        os.rename(withoutExtensionFileName+'.iss.disabled',withoutExtensionFileName+'.iss')
                     else:
-                        print(f"File not found: {file_path}")
+                        os.rename(withoutExtensionFileName+'.iss',withoutExtensionFileName+'.iss.disabled')
 
+                    for item in self.tree.get_children():
+                        self.tree.delete(item)
+
+                    self.populate_tree()
+                    
 
 
     def add_item(self):
@@ -346,21 +341,20 @@ class MyApp:
                     answer = messagebox.askyesno(title='confirmation',
                     message='Are you sure you want to delete this subscription ?')
                     if answer:
-                        file_name = self.tree.item(item, 'text') 
-                        if file_name.find(" Size of total:")!= -1:
-                            file_name=file_name[:file_name.find(" Size of total:")]
-                            file_path = os.path.join("Subscriptions", file_name+'.iss')  # Path to the file in Subscriptions
+                        file_name = self.tree.item(item, 'text')
+                        colelctionLabel = self.tree.item(item, 'text') 
+                        collectionName = MyApp.getCollectionNameFromTreeLabel(colelctionLabel)
+                        isDisabled = colelctionLabel.endswith("DISABLED")
+                        withoutExtensionFileName = os.path.join("Subscriptions", collectionName)
+                        if isDisabled:
+                            os.remove(withoutExtensionFileName + ".iss.disabled")
                         else:
-                            file_name=file_name[:file_name.find(" DISABLED")]
-                            file_path = os.path.join("Subscriptions", file_name+'.iss.disabled')  # Path to the file in Subscriptions
-                        if os.path.exists(file_path):
-                            os.remove(file_path)
-                            for item in self.tree.get_children():
-                                self.tree.delete(item)
+                            os.remove(withoutExtensionFileName + ".iss")
 
-                            self.populate_tree()
-                        else:
-                            print(f"File not found: {file_path}")
+                        for item in self.tree.get_children():
+                            self.tree.delete(item)
+
+                        self.populate_tree()
                 else:
                     # TODO Thinking about planes you don't want and might have an exclusion list :)
                     print(f"Cannot delete item: {item}. Only top-level items can be deleted.")
@@ -371,7 +365,20 @@ class MyApp:
     def on_item_selected(self, event):
         """Handle the selection event."""
         selected_item = self.tree.selection()            
-            
+
+    #TODO : Quite temporary solution before handling properly objects instead of strings and titles
+    treeLabelSeparator = "\t\t"
+    def buildCollectionTreeLabel(catalogName,catalogSize = 0, isDisabled = False ):
+        if isDisabled:
+            return f"{catalogName}{MyApp.treeLabelSeparator}DISABLED"
+        else:
+            return f"{catalogName}{MyApp.treeLabelSeparator}({synchronizer.bytesToString(catalogSize)})"
+
+    def getCollectionNameFromTreeLabel(treeLabel: str):
+        splits = treeLabel.split(f"{MyApp.treeLabelSeparator}")
+        collectionName = splits[0]
+        return collectionName
+
     def populate_tree(self):
 
         collectionByNameSubscribeFile.clear()
@@ -388,8 +395,9 @@ class MyApp:
         for key in collectionByNameSubscribeFile:
             skinsLinkedCollectionBySubscribtionName=synchronizer.getSkinsFromSourceMatchingWithSubscribedCollections(collectionInSubscribes.source,collectionByNameSubscribeFile[key])
 
-            toto=synchronizer.getSpaceUsageOfRemoteSkinCatalog(collectionInSubscribes.source,skinsLinkedCollectionBySubscribtionName)
-            parent_id = self.tree.insert("", "end", text=key + " Size of total: " + synchronizer.bytesToString(toto))  # Add main item
+            catalogSize=synchronizer.getSpaceUsageOfRemoteSkinCatalog(collectionInSubscribes.source,skinsLinkedCollectionBySubscribtionName)
+            #parent_id = self.tree.insert("", "end", text=key + "\t\t(" + synchronizer.bytesToString(catalogSize) + ")")  # Add main item
+            parent_id = self.tree.insert("", "end", text=MyApp.buildCollectionTreeLabel(key, catalogSize=catalogSize))  # Add main item
             for skin in skinsLinkedCollectionBySubscribtionName:
                 self.tree.insert(parent_id, "end", text=skin['Title'])  # Add sub-items
 
@@ -400,10 +408,10 @@ class MyApp:
         for root, dirs, files in os.walk(subscriptionPath):
             for file in files:
                 if file.endswith(".iss.disabled"): #We only consider files with iss extension
-                    disabledElements.append( file[:file.find(".iss.disabled")]+ " DISABLED")
+                    disabledElements.append( file[:file.find(".iss.disabled")])
 
         for disabledElement in disabledElements:
-            self.tree.insert("", "end", text=disabledElement)
+            self.tree.insert("", "end", text=MyApp.buildCollectionTreeLabel(disabledElement, isDisabled=True))
                              
 
  
