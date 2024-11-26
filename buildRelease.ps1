@@ -20,7 +20,7 @@ New-Item -Path $DistDir -ItemType Directory
 $VERSION = python versionManager.py
 
 #Script to generate version files from the template
-function generate-versionFile {
+function New-VersionFile {
     param(
         [string]$version,
         [string]$exeFileName,
@@ -33,18 +33,18 @@ function generate-versionFile {
     Set-Content -Path "$BuildDir\$targetVersionFileName" -Value $fileContent
 }
 
-function generate-exeFile {
+function New-exeFile {
     param(
         [string]$appName,
         [string]$pythonMainFile
     )
 
-    generate-versionFile -version $VERSION -exeFileName "$appName.exe" -targetVersionFileName $appName"_versionFile" --icon="..\\icon.ico"
+    New-VersionFile -version $VERSION -exeFileName "$appName.exe" -targetVersionFileName $appName"_versionFile" --icon="..\\icon.ico"
     pyinstaller --onefile  ".\$pythonMainFile" --name $appName --distpath $DistDir --clean --specpath $BuildDir --version-file $appName"_versionFile" 
 }
 
 #Creation of the main EXE
-generate-exeFile -appName "ISS" -pythonMain "main.py"
+New-exeFile -appName "ISS" -pythonMain "main.py"
 
 #add a Subscription folder with an example in it
 New-Item -Path "$DistDir\Subscriptions" -ItemType Directory
@@ -54,5 +54,5 @@ Copy-Item -Path "SubscriptionExamples\IRRE Full.iss" -Destination "$DistDir\Subs
 Compress-Archive -Path "$DistDir\*" -DestinationPath $DistDir"\"$zipFile
 
 #Create the updater exe
-generate-exeFile -appName "ISSUpdater" -pythonMain "ISSupdater.py"
+New-exeFile -appName "ISSUpdater" -pythonMain "ISSupdater.py"
 
