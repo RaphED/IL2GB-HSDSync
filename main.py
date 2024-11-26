@@ -243,7 +243,7 @@ class MyApp:
         self.start_sync_button = ttk.Button(button2_frame, text="StartSync !", style="Accent.TButton", command=self.start_sync)
         self.start_sync_button.pack(padx=10, pady=10)
 
-    def short_path(self,fullPath, maxLength = 40):
+    def short_path(self,fullPath, maxLength = 50):
         if len(fullPath) > maxLength:
             return f"{fullPath[:maxLength]}..."
         return fullPath
