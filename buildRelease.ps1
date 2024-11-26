@@ -48,7 +48,7 @@ generate-exeFile -appName "ISS" -pythonMain "main.py"
 
 #add a Subscription folder with an example in it
 New-Item -Path "$DistDir\Subscriptions" -ItemType Directory
-Copy-Item -Path "SubscriptionExamples\Example.iss" -Destination "$DistDir\Subscriptions\Example.iss" -Recurse
+Copy-Item -Path "SubscriptionExamples\IRRE Full.iss" -Destination "$DistDir\Subscriptions\IRRE Full.iss" -Recurse
 
 #create the zip with all files in the dist
 Compress-Archive -Path "$DistDir\*" -DestinationPath $DistDir"\"$zipFile
