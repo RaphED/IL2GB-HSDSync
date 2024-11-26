@@ -2,6 +2,7 @@ import os
 import shutil
 import requests
 import hashlib
+import logging
 
 temporaryFolder = "temp"
 
@@ -56,3 +57,10 @@ def moveFile(src_path, dest_dir):
     # Move the file
     shutil.move(src_path, dest_path)
     return dest_path
+
+
+def deleteFile(filePath):
+    if os.path.exists(filePath):
+        os.remove(filePath)
+    else:
+        logging.error(f"Cannot delete unfindable file {filePath}" )

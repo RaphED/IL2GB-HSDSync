@@ -5,7 +5,7 @@ import json
 import logging
 
 from pythonServices.configurationService import getConf
-from pythonServices.FileService import moveFile
+from pythonServices.FileService import moveFile, deleteFile
 
 def getSkinDirectory():
     return os.path.join(getConf("IL2GBGameDirectory"), "data\\graphics\\skins")
@@ -73,12 +73,12 @@ def moveSkinFromPathToDestination(src_path, aircraft):
 
 def removeSkin(localSkinInfo):
     filePath = os.path.join(getSkinDirectory(), localSkinInfo["aircraft"], localSkinInfo["mainFileName"])
-    os.remove(filePath)
+    deleteFile(filePath)
 
     if localSkinInfo.get("secondaryFileName") is not None and  localSkinInfo["secondaryFileName"] != "":
         #there is a secondary file
         secondaryFilePath = os.path.join(getSkinDirectory(), localSkinInfo["aircraft"], localSkinInfo["secondaryFileName"])
-        os.remove(secondaryFilePath)
+        deleteFile(secondaryFilePath)
 
 def getSpaceUsageOfLocalSkinCatalog(skinList):
     totalDiskSpace = 0
