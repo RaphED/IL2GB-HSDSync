@@ -56,6 +56,14 @@ def getSubscribedCollectionFromFile(subscriptionFilePath):
 def getAllSubscribedCollection() -> list[SubscribedCollection]:
 
     returnedCollections = []
+    subscriptionDictionary = getAllSubscribedCollectionByFileName()
+    for fileName in subscriptionDictionary.keys():
+        returnedCollections += subscriptionDictionary[fileName]
+        
+    return returnedCollections
+
+def getAllSubscribedCollectionByFileName() -> dict[str, list[SubscribedCollection]]:
+    returnedCollections = dict[str, list[SubscribedCollection]]()
     #create subsciption path of not exists
     if not os.path.exists(subscriptionPath):
         os.makedirs(subscriptionPath)
@@ -63,7 +71,7 @@ def getAllSubscribedCollection() -> list[SubscribedCollection]:
     for root, dirs, files in os.walk(subscriptionPath):
         for file in files:
             if file.endswith(".iss"): #We only consider files with iss extension
-                returnedCollections += getSubscribedCollectionFromFile(os.path.join(root,file))
+                returnedCollections[file[:-4]] = getSubscribedCollectionFromFile(os.path.join(root,file))
     
     return returnedCollections
 

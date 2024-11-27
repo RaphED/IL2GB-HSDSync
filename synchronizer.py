@@ -120,6 +120,13 @@ def bytesToString(bytesSize: int, forceSign: bool = False):
     
     return f"{sign}{file_size_gb:.2f} GB"
 
+def getSkinsMatchingWithSubscribedCollection(subscribedCollection : subscriptionService.SubscribedCollection):
+    subscribedSkins = list()
+    for skin in remoteService.getSkinsCatalogFromSource(subscribedCollection.source):
+        if subscribedCollection.match(skin):
+            subscribedSkins.append(skin)
+    return subscribedSkins
+
 def getSkinsFromSourceMatchingWithSubscribedCollections(source, subscribedCollectionList: list[subscriptionService.SubscribedCollection]):
     subscribedSkins = list()
     for skin in remoteService.getSkinsCatalogFromSource(source):
