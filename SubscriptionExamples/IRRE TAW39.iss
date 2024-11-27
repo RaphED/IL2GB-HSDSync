@@ -16,5 +16,11 @@
             "IL2Group": "IRRE",
             "Title":"*NormandieNiemen*"
         }
+    },
+    {
+        "criteria":{
+            "IL2Group": "IRRE",
+            "Title":"*Tundra*"
+        }
     }
 ]
