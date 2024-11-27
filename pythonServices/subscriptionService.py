@@ -1,6 +1,7 @@
 import os
 import json
 import re
+import logging
 
 from pythonServices.remoteService import getSourceInfo 
 
@@ -31,19 +32,24 @@ class SubscribedCollection:
         return f"{self.subcriptionName} - source is {self.source} - {self.criteria}" 
 
 def getSubscribedCollectionFromFile(subscriptionFilePath):
-    file = open(subscriptionFilePath, "r")
-    rawJsonData: list = json.load(file)
-
+    
     subscribedCollectionlist = []
-    #raw data should be a list
-    for rawSubscription in rawJsonData:
-        subscribedCollectionlist.append(
-            SubscribedCollection(
-                subcriptionName=os.path.basename(subscriptionFilePath).replace(".iss", ""),
-                source=rawSubscription.get("source"),
-                criteria=rawSubscription["criteria"]
+    try:
+        file = open(subscriptionFilePath, "r")
+        rawJsonData: list = json.load(file)
+
+        #raw data should be a list
+        for rawSubscription in rawJsonData:
+            subscribedCollectionlist.append(
+                SubscribedCollection(
+                    subcriptionName=os.path.basename(subscriptionFilePath).replace(".iss", ""),
+                    source=rawSubscription.get("source"),
+                    criteria=rawSubscription["criteria"]
+                )
             )
-        )
+
+    except Exception as e:
+        logging.error(f"Error at loading subscription file {subscriptionFilePath}. Error detail : {e}")
     
     return subscribedCollectionlist
 
