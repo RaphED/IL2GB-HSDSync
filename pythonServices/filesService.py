@@ -41,6 +41,7 @@ def downloadFile(url, expectedMD5 = None):
         #TODO, retry
         raise Exception(f"Bad file download {temp_file_path}")
     
+    logging.info(f"File Downloaded : {temp_file_path}")
     return temp_file_path
 
 
@@ -59,6 +60,10 @@ def moveFile(src_path, dest_dir):
     shutil.move(src_path, dest_path)
     return dest_path
 
+def copyFile(srcFilePath, destFilePath):
+    if not os.path.exists(srcFilePath):
+        raise Exception(f"Cannot copy unfindable file at {srcFilePath}")
+    shutil.copy(srcFilePath, destFilePath)
 
 def deleteFile(filePath):
     if os.path.exists(filePath):

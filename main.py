@@ -1,3 +1,4 @@
+import sys
 from tkinter import messagebox
 import synchronizer
 import pythonServices.configurationService as configurationService
@@ -6,7 +7,7 @@ from pythonServices.filesService import cleanTemporaryFolder
 import pythonServices.loggingService
 import logging
 from versionManager import isCurrentVersionUpToDate
-from ISSupdater import performAutoUpdate
+import ISSupdater
 
 from GUI.mainGUI import mainGUI
 
@@ -76,13 +77,8 @@ def syncronize_main():
 
 def performAtProgramLauchChecks():
 
-    #make sure the temporary folder is clean
+    #make sure the temporary folder is clean ->x do not o that due to update !
     cleanTemporaryFolder()
-
-    if not isCurrentVersionUpToDate():
-        printError("A new version of ISS has been found")
-        printWarning("Please wait for the update and the automatic restart...")
-        performAutoUpdate()
 
      #check conf file is generated
     if not configurationService.configurationFileExists():
@@ -150,14 +146,39 @@ def printWarning(text):
 def printSuccess(text):
     print("\033[92m{}\033[00m".format(text))
 
- 
 ######### MAIN ###############
 if __name__ == "__main__":
+
+    force_update = False
+    updater_mode = False
+    console_mode = False #TODO : Not implemented yet
+    debug_mode = False #TODO : Not implemented yet
+
+    for arg in sys.argv[1:]:
+        if arg == '-updater':
+            updater_mode = True
+        elif arg == '-console':
+            console_mode = True
+        elif arg == '-force-update':
+            force_update = True
+        elif arg == '-console':
+            debug_mode = True
     
+    #Check if an update has to be launched
+    if not isCurrentVersionUpToDate() or force_update:
+        printError("A new version of ISS has been found")
+        printWarning("Please wait for the update and the automatic restart...")
+        ISSupdater.downloadAndRunUpdater()
+        sys.exit()
+    
+    
+    if updater_mode:
+        ISSupdater.replaceAndLaunchMainExe()
+        sys.exit()
+
+    #NORMAL RUN
     performAtProgramLauchChecks()
 
     mainGUI = mainGUI(syncronize_main)
     mainGUI.run()
-
-
-
+    

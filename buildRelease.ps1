@@ -47,10 +47,7 @@ function New-exeFile {
         --name $appName `
         --distpath $DistDir `
         --specpath $BuildDir `
-        --version-file $appName"_versionFile" `
-        --icon "Ressources\iss.ico" `
-        --add-data="Ressources/*:Ressources" `
-        --add-data="Ressources/forest-light/*:Ressources/forest-light"
+        --version-file $appName"_versionFile"
 }
 
 function New-exeFileFromSpecFile {
@@ -64,11 +61,7 @@ function New-exeFileFromSpecFile {
     pyinstaller --clean "$appName.spec" --distpath $DistDir
 }
 
-#Copy ressources to the build folder
-#Copy-Item -Path ".\Ressources"  -Destination ".\$BuildDir\Ressources" -Recurse
-
 #Creation of the main EXE
-#New-exeFile -appName "ISS" -pythonMain "main.py"
 New-exeFileFromSpecFile -appName "ISS"
 
 #add a Subscription folder with an example in it
