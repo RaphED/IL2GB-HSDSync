@@ -1,4 +1,4 @@
-
+import time
 from tkinter import ttk
 import tkinter as tk
 from threading import Thread
@@ -35,10 +35,16 @@ class mainGUI:
         self.subscriptionsPanel = SubscriptionPanel(self.root)
         self.parametersPanel = ParametersPanel(self.root)
 
-        button2_frame = ttk.Frame(self.root)
-        button2_frame.pack(fill="both", pady=2)
-        self.start_sync_button = ttk.Button(button2_frame, text="StartSync !", style="Accent.TButton", command=self.start_sync)
-        self.start_sync_button.pack(padx=10, pady=10)
+        # Create buttons in a frame
+        button_frame = tk.Frame(self.root)
+        button_frame.pack(fill="both", pady=2)
+
+        self.ScanButton = ttk.Button(button_frame, text="Scan", style="Accent.TButton", command=self.start_sync)
+        self.ScanButton.pack(side="left", padx=10, pady=5)
+
+        self.SyncButton = ttk.Button(button_frame, text="Synchronize", style="Accent.TButton", command=self.start_sync)
+        self.SyncButton.pack(side="left", padx=10, pady=5)
+        self.SyncButton["state"] = "disabled"
 
         self.consolePanel = ConsolePanel(self.root)
         self.consolePanel.addLine("TEST LINE !!!!!")
@@ -65,17 +71,14 @@ class mainGUI:
 
         # #The main core function :
 
-        Thread(target=self.synchronizeMainCallBack(), daemon=True).start()
-
-    # TODO ERIC faire plus propre
-    # def print_to_terminal(self, text):
-    #     global g_text_widget
-    #     text_widget = g_text_widget
-    #     """Add text to the terminal output in the Text widget."""
-    #     text_widget.config(state=tk.NORMAL)  # Enable editing
-    #     text_widget.insert(tk.END, text + "\n")  # Insert text
-    #     text_widget.yview(tk.END)  # Auto-scroll to the end
-    #     text_widget.config(state=tk.DISABLED)  # Disable editing again
+        self.consolePanel.addLine("TEST LINE 2")
+        time.sleep(2)
+        self.consolePanel.addLine("TEST LINE 3")
+        time.sleep(2)
+        self.consolePanel.addLine("TEST LINE 4")
+        time.sleep(2)
+        self.consolePanel.addLine("TEST LINE 5")
+        #Thread(target=self.synchronizeMainCallBack(), daemon=True).start()
 
     
                 
