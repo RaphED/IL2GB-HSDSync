@@ -39,12 +39,37 @@ function New-exeFile {
         [string]$pythonMainFile
     )
 
-    New-VersionFile -version $VERSION -exeFileName "$appName.exe" -targetVersionFileName $appName"_versionFile" --icon="..\\icon.ico"
-    pyinstaller --onefile  ".\$pythonMainFile" --name $appName --distpath $DistDir --clean --specpath $BuildDir --version-file $appName"_versionFile" 
+    #generate the version file for that exe
+    New-VersionFile -version $VERSION -exeFileName "$appName.exe" -targetVersionFileName $appName"_versionFile"
+    
+    
+    pyinstaller --onefile --clean ".\$pythonMainFile" `
+        --name $appName `
+        --distpath $DistDir `
+        --specpath $BuildDir `
+        --version-file $appName"_versionFile" `
+        --icon "Ressources\iss.ico" `
+        --add-data="Ressources/*:Ressources" `
+        --add-data="Ressources/forest-light/*:Ressources/forest-light"
 }
 
+function New-exeFileFromSpecFile {
+    param(
+        [string]$appName
+    )
+
+    #generate the version file for that exe
+    New-VersionFile -version $VERSION -exeFileName "$appName.exe" -targetVersionFileName $appName"_versionFile"
+
+    pyinstaller --clean "$appName.spec" --distpath $DistDir
+}
+
+#Copy ressources to the build folder
+#Copy-Item -Path ".\Ressources"  -Destination ".\$BuildDir\Ressources" -Recurse
+
 #Creation of the main EXE
-New-exeFile -appName "ISS" -pythonMain "main.py"
+#New-exeFile -appName "ISS" -pythonMain "main.py"
+New-exeFileFromSpecFile -appName "ISS"
 
 #add a Subscription folder with an example in it
 New-Item -Path "$DistDir\Subscriptions" -ItemType Directory
