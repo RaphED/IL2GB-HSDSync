@@ -13,13 +13,14 @@
             "type": "debugpy",
             "request": "launch",
             "program": "main.py",
+			"args": ["-prerelease"],
             "console": "integratedTerminal"
 		},{
 			"name": "Updater",
             "type": "debugpy",
             "request": "launch",
             "program": "main.py",
-			"args": ["-updater"],
+			"args": ["-updater", "-prerelease"],
             "console": "integratedTerminal"
 		}
 		]

@@ -4,12 +4,13 @@ import time
 import os
 import logging
 
-from pythonServices.filesService import downloadFile, getTempFolderFullPath, copyFile, moveFile
-from versionManager import get_latest_release_info
+from pythonServices.filesService import downloadFile, getTempFolderFullPath, copyFile
+from versionManager import getLastRelease
+import pythonServices.loggingService
 
 
-def downloadLastReleaseFile(fileName):
-    release_info = get_latest_release_info()
+def downloadLastReleaseFile(fileName, prerelease = False):
+    release_info = getLastRelease(prerelease = prerelease)
     for asset in release_info["assets"]:
         if asset["name"] == fileName:
             return downloadFile(asset["browser_download_url"])
@@ -37,15 +38,15 @@ def printWarning(text):
 def printSuccess(text):
     print("\033[92m{}\033[00m".format(text))
 
-def downloadAndRunUpdater():
+def downloadAndRunUpdater(prerelease = False):
     
     logging.info("Updater : Start download And Run updater")
     #download the last EXE
-    newExePath = downloadLastReleaseFile("ISS.exe")
+    newExePath = downloadLastReleaseFile("ISS.exe", prerelease = prerelease)
     #run the last updater in an independant process
     runNewIndependantProcess([newExePath, "-updater"])
 
-def replaceAndLaunchMainExe():
+def replaceAndLaunchMainExe(prerelease = False):
     logging.info("Updater : Replace and Launch Main Exe")
 
     try:
@@ -55,7 +56,7 @@ def replaceAndLaunchMainExe():
         #HACK : if the new exe is not there, rerun the download
         if not os.path.exists(newExeFilePath):
             logging.warning(f"Autoupdater Cannot find the last exe file at {newExeFilePath}")
-            return downloadAndRunUpdater()
+            return downloadAndRunUpdater(prerelease = prerelease)
             
         #add a timer to make sure previous main exe is stopped
         #TODO : perform a while checker

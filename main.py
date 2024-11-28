@@ -151,29 +151,32 @@ if __name__ == "__main__":
 
     force_update = False
     updater_mode = False
+    update_withPrerelease = False
     console_mode = False #TODO : Not implemented yet
     debug_mode = False #TODO : Not implemented yet
 
     for arg in sys.argv[1:]:
         if arg == '-updater':
             updater_mode = True
-        elif arg == '-console':
-            console_mode = True
         elif arg == '-force-update':
             force_update = True
+        elif arg == '-prerelease':
+            update_withPrerelease = True
         elif arg == '-console':
+            console_mode = True
+        elif arg == '-debug':
             debug_mode = True
     
     #Check if an update has to be launched
-    if not isCurrentVersionUpToDate() or force_update:
+    if not isCurrentVersionUpToDate(prerelease = update_withPrerelease) or force_update:
         printError("A new version of ISS has been found")
         printWarning("Please wait for the update and the automatic restart...")
-        ISSupdater.downloadAndRunUpdater()
+        ISSupdater.downloadAndRunUpdater(prerelease = update_withPrerelease)
         sys.exit()
     
     
     if updater_mode:
-        ISSupdater.replaceAndLaunchMainExe()
+        ISSupdater.replaceAndLaunchMainExe(prerelease = update_withPrerelease)
         sys.exit()
 
     #NORMAL RUN

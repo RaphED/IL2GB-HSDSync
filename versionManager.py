@@ -4,22 +4,37 @@ from packaging.version import Version
 
 #This is THE reference for the current ISS version
 #Change version here when preparing a new release
-currentVersion = 0
+currentVersion = 1
 
 GITHUB_REPO_URL = "https://api.github.com/repos/RaphED/IL2GB-inter-squadrons-skins-synchronizer"
 
 def getCurrentVersion():
     return currentVersion
 
-def get_latest_release_info():
-    response = requests.get(f"{GITHUB_REPO_URL}/releases/latest")
+def getReleases():
+    response = requests.get(f"{GITHUB_REPO_URL}/releases")
     if response.status_code == 200:
         return response.json()
     else:
         raise Exception ("Cannot get current version information")
     
-def isCurrentVersionUpToDate():
-    release_info = get_latest_release_info()
+def getLastRelease(draft = False, prerelease = False):
+    lastRelease = None
+    for release in getReleases():
+        if release["draft"] and not draft:
+            continue
+        if release["prerelease"] and not prerelease:
+            continue
+        if lastRelease is None:
+            lastRelease = release
+        else:
+            if Version(release["tag_name"]) > Version(lastRelease["tag_name"]):
+                lastRelease = release
+
+    return lastRelease
+    
+def isCurrentVersionUpToDate(draft = False, prerelease = False):
+    release_info = getLastRelease(draft, prerelease)
     latest_version = release_info["tag_name"]
     current_version = Version(f"{getCurrentVersion()}")
     remote_version = Version(latest_version)
