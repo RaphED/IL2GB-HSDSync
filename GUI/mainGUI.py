@@ -7,6 +7,7 @@ from pythonServices.filesService import getRessourcePath
 
 from GUI.SubscriptionsPanel import SubscriptionPanel
 from GUI.parametersPanel import ParametersPanel
+from GUI.consolePanel import ConsolePanel
 
 class mainGUI:
     
@@ -28,18 +29,19 @@ class mainGUI:
         style.theme_use("forest-light")
 
         self.root.title("InterSquadron Skin Synchronizer")
-        self.root.geometry("500x540")
+        self.root.geometry("500x700")
 
         #Initialization of the main components
         self.subscriptionsPanel = SubscriptionPanel(self.root)
         self.parametersPanel = ParametersPanel(self.root)
 
-        
-
         button2_frame = ttk.Frame(self.root)
         button2_frame.pack(fill="both", pady=2)
         self.start_sync_button = ttk.Button(button2_frame, text="StartSync !", style="Accent.TButton", command=self.start_sync)
         self.start_sync_button.pack(padx=10, pady=10)
+
+        self.consolePanel = ConsolePanel(self.root)
+        self.consolePanel.addLine("TEST LINE !!!!!")
 
     def run(self):
         return self.root.mainloop()
