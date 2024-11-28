@@ -5,7 +5,7 @@ import hashlib
 import logging
 
 from pythonServices.configurationService import getConf
-from pythonServices.FileService import downloadFile
+from pythonServices.filesService import downloadFile
 
 sourcesInfo = [
     {

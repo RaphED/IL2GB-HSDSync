@@ -7,6 +7,7 @@ from threading import Thread
 
 from pythonServices.configurationService import getConf, update_config_param, allowedCockpitNotesModes
 from pythonServices.subscriptionService import getAllSubscribedCollectionByFileName
+from pythonServices.filesService import getRessourcePath
 from synchronizer import getSkinsMatchingWithSubscribedCollection, getSpaceUsageOfRemoteSkinCatalog, bytesToString
 
 class mainGUI:
@@ -19,15 +20,14 @@ class mainGUI:
 
         #initialise tinker compotent (why root ??)
         self.root = tk.Tk()
-        self.root.iconbitmap("icon.ico")
+
+        self.root.iconbitmap(getRessourcePath("iss.ico"))
 
         style = ttk.Style(self.root)
         
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        tcl_path = os.path.join(current_dir, "forest-light.tcl")
-        self.root.tk.call("source",tcl_path)
-
+        self.root.tk.call("source",getRessourcePath("forest-light.tcl"))
         style.theme_use("forest-light")
+
         self.root.title("InterSquadron Skin Synchronizer")
         self.root.geometry("500x540")
 

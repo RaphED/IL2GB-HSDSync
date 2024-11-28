@@ -1,4 +1,5 @@
 import os
+import sys
 import shutil
 import requests
 import hashlib
@@ -64,3 +65,8 @@ def deleteFile(filePath):
         os.remove(filePath)
     else:
         logging.error(f"Cannot delete unfindable file {filePath}" )
+
+#access to ressources 
+def getRessourcePath(relativePath):
+    base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.curdir))
+    return os.path.join(base_path, "Ressources", relativePath)

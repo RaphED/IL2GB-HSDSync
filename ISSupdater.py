@@ -3,7 +3,7 @@ import sys
 import time
 import os
 
-from pythonServices.FileService import downloadFile, moveFile
+from pythonServices.filesService import downloadFile, moveFile
 from versionManager import get_latest_release_info
 
 

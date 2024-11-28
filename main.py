@@ -2,7 +2,7 @@ from tkinter import messagebox
 import synchronizer
 import pythonServices.configurationService as configurationService
 from pythonServices.subscriptionService import isSubcriptionFolderEmpty
-from pythonServices.FileService import cleanTemporaryFolder
+from pythonServices.filesService import cleanTemporaryFolder
 import pythonServices.loggingService
 import logging
 from versionManager import isCurrentVersionUpToDate
