@@ -38,6 +38,14 @@ class ScanResult:
     def toString(self):
         returnString = ""
 
+        if customPhotoSyncIsActive():
+            returnString += f"Cockpit notes selected mode : {getConf("cockpitNotesMode")}\n"
+            if len(self.toBeUpdatedCockpitNotes) == 0:
+                returnString += "All custom photos are up to date\n"
+            else:
+                returnString += f"{len(self.toBeUpdatedCockpitNotes)} custom photos are to be updated\n"
+
+
         diskSpaceStats = self.getDiskUsageStats()
 
         for source in self.getUsedSources():
@@ -86,6 +94,8 @@ class ScanResult:
         if sum([len(self.toBeUpdatedSkins[source]) for source in self.toBeUpdatedSkins.keys()]) != 0:
             return False
         if getConf("autoRemoveUnregisteredSkins") and len(self.toBeRemovedSkins) != 0:
+            return False
+        if len(self.toBeUpdatedCockpitNotes) > 0:
             return False
         return True
 
@@ -253,7 +263,7 @@ def scanCustomPhotos():
 
     return toBeUpdatedPhotos
 
-def ScanAll():
+def scanAll():
     scanResult = scanSkins()
     if customPhotoSyncIsActive():
         scanResult.toBeUpdatedCockpitNotes = scanCustomPhotos()

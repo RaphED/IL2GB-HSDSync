@@ -28,7 +28,7 @@ class mainGUI:
         style.theme_use("forest-light")
 
         self.root.title("InterSquadron Skin Synchronizer")
-        self.root.geometry("800x700")
+        self.root.geometry("900x800")
 
         #Initialization of the main components
         self.subscriptionsPanel = SubscriptionPanel(self.root)
@@ -73,7 +73,7 @@ class mainGUI:
 
     def start_scan(self):
         self.updateScanResult(None)
-        scanResult = ISSScanner.scanSkins()
+        scanResult = ISSScanner.scanAll()
         self.updateScanResult(scanResult)
         self.consolePanel.updateFromMessageBus()
         
@@ -85,6 +85,8 @@ class mainGUI:
             return
         
         ISSsynchronizer.updateAll(self.currentScanResult)
+        MessageBus.emitMessage("SYNCHRONIZATION FINISHED")
+
         self.consolePanel.updateFromMessageBus()
         #once sync done, lock it
         self.lockSyncButton()
