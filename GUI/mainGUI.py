@@ -10,7 +10,8 @@ from GUI.SubscriptionsPanel import SubscriptionPanel
 from GUI.parametersPanel import ParametersPanel
 from GUI.consolePanel import ConsolePanel
 
-import synchronizer
+import ISSsynchronizer
+import ISSScanner
 
 class mainGUI:
     
@@ -46,7 +47,7 @@ class mainGUI:
 
         self.consolePanel = ConsolePanel(self.root)
 
-        self.currentScanResult: synchronizer.ScanResult = None
+        self.currentScanResult: ISSsynchronizer.ScanResult = None
 
     def lockSyncButton(self):
         self.SyncButton["state"] = "disabled"
@@ -57,7 +58,7 @@ class mainGUI:
     def run(self):
         return self.root.mainloop()
     
-    def updateScanResult(self, scanResult: synchronizer.ScanResult):
+    def updateScanResult(self, scanResult: ISSsynchronizer.ScanResult):
         self.currentScanResult = scanResult
 
         if scanResult is None:
@@ -72,7 +73,7 @@ class mainGUI:
 
     def start_scan(self):
         self.updateScanResult(None)
-        scanResult = synchronizer.scanSkins()
+        scanResult = ISSScanner.scanSkins()
         self.updateScanResult(scanResult)
         self.consolePanel.updateFromMessageBus()
         
@@ -83,7 +84,7 @@ class mainGUI:
             logging.error("Sync launched with no scan result")
             return
         
-        synchronizer.updateAll(self.currentScanResult)
+        ISSsynchronizer.updateAll(self.currentScanResult)
         self.consolePanel.updateFromMessageBus()
         #once sync done, lock it
         self.lockSyncButton()

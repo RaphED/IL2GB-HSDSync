@@ -106,3 +106,6 @@ def tryToFindIL2Path(exe_name='Il-2.exe'):
                 continue
     
     return None  # Return None if the file was not found
+
+def customPhotoSyncIsActive():
+    return getConf("autoRemoveUnregisteredSkins") != "noSync"

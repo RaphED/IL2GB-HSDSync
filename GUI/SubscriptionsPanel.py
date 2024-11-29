@@ -4,7 +4,8 @@ import os
 import shutil
 
 from pythonServices.subscriptionService import getAllSubscribedCollectionByFileName
-from synchronizer import getSkinsMatchingWithSubscribedCollection, getSpaceUsageOfRemoteSkinCatalog, bytesToString
+from pythonServices.remoteService import getSpaceUsageOfRemoteSkinCatalog
+from ISSScanner import getSkinsMatchingWithSubscribedCollection, bytesToString
 
 class SubscriptionPanel:
 

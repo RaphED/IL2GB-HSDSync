@@ -1,13 +1,7 @@
+from pythonServices.configurationService import getConf, customPhotoSyncIsActive
 import pythonServices.localService as localService
-from pythonServices.localService import getSpaceUsageOfLocalSkinCatalog
 import pythonServices.remoteService as remoteService
-from pythonServices.remoteService import getSourceParam, getSpaceUsageOfRemoteSkinCatalog
-from pythonServices.messageBus import MessageBus
-
-import pythonServices.subscriptionService as subscriptionService
-from pythonServices.configurationService import getConf
-
-from requests.exceptions import HTTPError
+from pythonServices.subscriptionService import SubscribedCollection, getAllSubscribedCollection
 
 import logging
 
@@ -34,11 +28,11 @@ class ScanResult:
     
     def getDiskUsageStats(self):
         return {
-            "subscribedSkinsSpace":{source:getSpaceUsageOfRemoteSkinCatalog(source, self.subscribedSkins[source]) for source in self.getUsedSources()},
-            "missingSkinsSpace": {source:getSpaceUsageOfRemoteSkinCatalog(source, self.missingSkins[source]) for source in self.getUsedSources()},
-            "toBeUpdatedSkinsSpace": {source:getSpaceUsageOfRemoteSkinCatalog(source, self.toBeUpdatedSkins[source]) for source in self.getUsedSources()},
-            "toBeRemovedSkinsSpace": getSpaceUsageOfLocalSkinCatalog(self.toBeRemovedSkins),
-            "previouslyInstalledSkinsSpace": getSpaceUsageOfLocalSkinCatalog(self.previouslyInstalledSkins)
+            "subscribedSkinsSpace":{source:remoteService.getSpaceUsageOfRemoteSkinCatalog(source, self.subscribedSkins[source]) for source in self.getUsedSources()},
+            "missingSkinsSpace": {source:remoteService.getSpaceUsageOfRemoteSkinCatalog(source, self.missingSkins[source]) for source in self.getUsedSources()},
+            "toBeUpdatedSkinsSpace": {source:remoteService.getSpaceUsageOfRemoteSkinCatalog(source, self.toBeUpdatedSkins[source]) for source in self.getUsedSources()},
+            "toBeRemovedSkinsSpace": localService.getSpaceUsageOfLocalSkinCatalog(self.toBeRemovedSkins),
+            "previouslyInstalledSkinsSpace": localService.getSpaceUsageOfLocalSkinCatalog(self.previouslyInstalledSkins)
         }
     
     def toString(self):
@@ -50,13 +44,13 @@ class ScanResult:
             returnString += f"*********** Sync with {source} ***********\n"
             returnString += f"** Missing skins: ({bytesToString(sum(diskSpaceStats["missingSkinsSpace"].values()))})\n"
             for skin in self.missingSkins[source]:
-                returnString += f"\t- {skin[getSourceParam(source, "name")]}\n"
+                returnString += f"\t- {skin[remoteService.getSourceParam(source, "name")]}\n"
             if len(self.missingSkins[source]) == 0:
                 returnString +="- None -\n"
 
             returnString += f"** To be updated skins: ({bytesToString(sum(diskSpaceStats["toBeUpdatedSkinsSpace"].values()))})\n"
             for skin in self.toBeUpdatedSkins[source]:
-                returnString += f"\t- {skin[getSourceParam(source, "name")]}\n"
+                returnString += f"\t- {skin[remoteService.getSourceParam(source, "name")]}\n"
             if len(self.toBeUpdatedSkins[source]) == 0:
                 returnString +="- None -\n"
 
@@ -121,14 +115,15 @@ def bytesToString(bytesSize: int, forceSign: bool = False):
     
     return f"{sign}{file_size_gb:.2f} GB"
 
-def getSkinsMatchingWithSubscribedCollection(subscribedCollection : subscriptionService.SubscribedCollection):
+
+def getSkinsMatchingWithSubscribedCollection(subscribedCollection : SubscribedCollection):
     subscribedSkins = list()
     for skin in remoteService.getSkinsCatalogFromSource(subscribedCollection.source):
         if subscribedCollection.match(skin):
             subscribedSkins.append(skin)
     return subscribedSkins
 
-def getSkinsFromSourceMatchingWithSubscribedCollections(source, subscribedCollectionList: list[subscriptionService.SubscribedCollection]):
+def getSkinsFromSourceMatchingWithSubscribedCollections(source, subscribedCollectionList: list[SubscribedCollection]):
     subscribedSkins = list()
     for skin in remoteService.getSkinsCatalogFromSource(source):
         #check if the skin matches with a subcription
@@ -146,7 +141,7 @@ def scanSkins():
     scanResult.previouslyInstalledSkins = localService.getSkinsList()
 
     #load all subscriptions
-    subscribedCollectionList = subscriptionService.getAllSubscribedCollection()
+    subscribedCollectionList = getAllSubscribedCollection()
     for collection in subscribedCollectionList:
         logging.info(f"Subscribed collection : {collection.toString()}")
 
@@ -171,11 +166,11 @@ def scanSkins():
             foundLocalSkin = None
             for localSkin in scanResult.previouslyInstalledSkins:
                 #not the same A/C, no match
-                if remoteSkin[getSourceParam(source, "aircraft")] != localSkin["aircraft"]:
+                if remoteSkin[remoteService.getSourceParam(source, "aircraft")] != localSkin["aircraft"]:
                     continue
                 
                 #not the same skin main file, no match
-                if remoteSkin[getSourceParam(source, "mainSkinFileName")] != localSkin["mainFileName"]:
+                if remoteSkin[remoteService.getSourceParam(source, "mainSkinFileName")] != localSkin["mainFileName"]:
                     continue
                 
                 #there is a match !
@@ -185,11 +180,11 @@ def scanSkins():
                 skinAsToBeUpdated = False
 
                 #check main file md5
-                if remoteSkin[getSourceParam(source, "mainFileMd5")] != localSkin["mainFileMd5"]:
+                if remoteSkin[remoteService.getSourceParam(source, "mainFileMd5")] != localSkin["mainFileMd5"]:
                     skinAsToBeUpdated = True
                 else:
                     #the main file is the same, but we have to look at the secondary file if any
-                    secondarySkinFileName = remoteSkin.get(getSourceParam(source, "secondarySkinFileName"))
+                    secondarySkinFileName = remoteSkin.get(remoteService.getSourceParam(source, "secondarySkinFileName"))
                     
                     #if there is a secondary file declared on the remote
                     if secondarySkinFileName is not None and secondarySkinFileName != "":
@@ -198,10 +193,10 @@ def scanSkins():
                         if localSkin.get("secondaryFileName") is None:
                             skinAsToBeUpdated = True
                         #we have a secondary file, check the name is the same one (should always be)
-                        elif remoteSkin[getSourceParam(source, "secondarySkinFileName")] != localSkin["secondaryFileName"]:
+                        elif remoteSkin[remoteService.getSourceParam(source, "secondarySkinFileName")] != localSkin["secondaryFileName"]:
                             skinAsToBeUpdated = True
                         #check the md5 is the proper one
-                        elif remoteSkin[getSourceParam(source, "secondaryFileMd5")] != localSkin["secondaryFileMd5"]:
+                        elif remoteSkin[remoteService.getSourceParam(source, "secondaryFileMd5")] != localSkin["secondaryFileMd5"]:
                             skinAsToBeUpdated = True
                 
                 #if any modification has to be made, put the skin in the list to be updated
@@ -220,9 +215,9 @@ def scanSkins():
         #check in all sources
         for source in usedSource:
             for remoteSkin in scanResult.subscribedSkins[source]:
-                if remoteSkin[getSourceParam(source, "aircraft")] == localSkin["aircraft"]: #prefiltering to optimize search
+                if remoteSkin[remoteService.getSourceParam(source, "aircraft")] == localSkin["aircraft"]: #prefiltering to optimize search
                     #TODO: Manage orphans skins
-                    if remoteSkin[getSourceParam(source, "mainSkinFileName")] == localSkin["mainFileName"]:
+                    if remoteSkin[remoteService.getSourceParam(source, "mainSkinFileName")] == localSkin["mainFileName"]:
                         foundRemoteSkin = remoteSkin
                         break
             if foundRemoteSkin is not None:
@@ -234,43 +229,6 @@ def scanSkins():
     logging.info("END SCAN")
     return scanResult
 
-
-def updateRegisteredSkins(scanResult: ScanResult):
-    
-    for source in scanResult.getUsedSources():
-        #import all missings skins
-        for skin in scanResult.missingSkins[source]:
-            updateSingleSkinFromRemote(source, skin)
-
-        #import all to be updated skins
-        for skin in scanResult.toBeUpdatedSkins[source]:
-            updateSingleSkinFromRemote(source, skin)
-
-
-def deleteUnregisteredSkins(scanResult: ScanResult):
-    for skin in scanResult.toBeRemovedSkins:
-        deleteSkinFromLocal(skin)
-
-def updateSingleSkinFromRemote(source, remoteSkin):
-
-    MessageBus.emitMessage(f"Downloading {remoteSkin[getSourceParam(source, "name")]}...")
-
-    #download to temp the skin
-    downloadedFiles = remoteService.downloadSkinToTempDir(source, remoteSkin)
-
-    for file in downloadedFiles:
-    
-        #Move the file to the target directory and replace existing file if any
-        final_path = localService.moveSkinFromPathToDestination(file, remoteSkin[getSourceParam(source, "aircraft")])
-
-        MessageBus.emitMessage(f"Downloaded to {final_path}")
-
-def deleteSkinFromLocal(localSkinInfo):
-    localService.removeSkin(localSkinInfo)
-    MessageBus.emitMessage(f"Deleted skin : {localSkinInfo["name"]}")
-
-def customPhotoSyncIsActive():
-    return getConf("autoRemoveUnregisteredSkins") != "noSync"
 
 def scanCustomPhotos():
     
@@ -295,34 +253,8 @@ def scanCustomPhotos():
 
     return toBeUpdatedPhotos
 
-def updateCustomPhotos(toBeUpdatedPhotos):
-    cockpitMode = getConf("cockpitNotesMode")
-
-    for customPhoto in toBeUpdatedPhotos:
-        
-        try:
-            downloadedFile = remoteService.downloadCustomPhoto(cockpitMode, customPhoto)
-            
-            #Move the file to the target directory and replace existing file if any
-            localService.moveCustomPhotoFromPathToDestination(downloadedFile, customPhoto["aircraft"])
-            MessageBus.emitMessage(f"Custom photo {customPhoto["aircraft"]} updated")
-        
-        except HTTPError as httpError:
-            MessageBus.emitMessage(f"Custom photo {customPhoto["aircraft"]} download ERROR {httpError.args} ")
-
 def ScanAll():
     scanResult = scanSkins()
     if customPhotoSyncIsActive():
         scanResult.toBeUpdatedCockpitNotes = scanCustomPhotos()
     return scanResult
-
-
-
-def updateAll(scanResult: ScanResult):
-    if customPhotoSyncIsActive():
-        updateCustomPhotos(scanResult.toBeUpdatedCockpitNotes)
-    
-    if getConf("autoRemoveUnregisteredSkins"):
-        deleteUnregisteredSkins(scanResult)
-    
-    updateRegisteredSkins(scanResult)

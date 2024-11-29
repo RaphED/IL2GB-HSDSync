@@ -1,7 +1,6 @@
 import requests
 import re
 import os
-import hashlib
 import logging
 
 from pythonServices.configurationService import getConf

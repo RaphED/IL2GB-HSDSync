@@ -1,6 +1,6 @@
 import sys
 from tkinter import messagebox
-import synchronizer
+import ISSsynchronizer
 import pythonServices.configurationService as configurationService
 from pythonServices.subscriptionService import isSubcriptionFolderEmpty
 from pythonServices.filesService import cleanTemporaryFolder
@@ -10,6 +10,7 @@ import pythonServices.loggingService
 import logging
 from versionManager import isCurrentVersionUpToDate
 import ISSupdater
+import ISSScanner
 
 from GUI.mainGUI import mainGUI
 
@@ -26,7 +27,7 @@ def runMainConsole():
         if isSubcriptionFolderEmpty():
             printWarning("There are no subscriptions.\nPlease import or activate .iss file(s) to subscribe to any skins collection")
         printWarning("Skins scan launched. Please wait...")
-        scanResult = synchronizer.ScanAll()
+        scanResult = ISSScanner.ScanAll()
         print(scanResult.toString())
 
         #then as the user for the update if any
@@ -38,7 +39,7 @@ def runMainConsole():
                 deletionMode = input("Do you want to perform the update ? yes (y) or no (n) ? ").lower()
                 if deletionMode == "y":
                     printWarning("UPDATE STARTED...")
-                    synchronizer.updateAll(scanResult)
+                    ISSsynchronizer.updateAll(scanResult)
                     printMessageBus()
                     printSuccess("UPDATE DONE")
                     break
