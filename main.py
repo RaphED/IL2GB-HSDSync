@@ -182,6 +182,6 @@ if __name__ == "__main__":
     #NORMAL RUN
     performAtProgramLauchChecks()
 
-    mainGUI = mainGUI(syncronize_main)
+    mainGUI = mainGUI()
     mainGUI.run()
     

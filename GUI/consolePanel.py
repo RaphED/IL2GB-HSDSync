@@ -15,3 +15,6 @@ class ConsolePanel:
         self.text_widget.insert(tk.END, text + "\n")  # Insert text
         self.text_widget.yview(tk.END)  # Auto-scroll to the end
         self.text_widget.config(state=tk.DISABLED)  # Disable editing again
+
+    def clearPanel(self):
+        self.text_widget.delete("1.0",tk.END)

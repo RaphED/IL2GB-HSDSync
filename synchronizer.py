@@ -102,7 +102,6 @@ def bytesToString(bytesSize: int, forceSign: bool = False):
     elif bytesSize > 0 and forceSign:
         sign = "+"
 
-
     file_size_kb = file_size_bytes / 1024
 
     if file_size_kb < 1:
@@ -143,7 +142,6 @@ def scanSkins():
 
     #get the local skins list in memory
     scanResult.previouslyInstalledSkins = localService.getSkinsList()
-
 
     #load all subscriptions
     subscribedCollectionList = subscriptionService.getAllSubscribedCollection()
