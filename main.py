@@ -179,6 +179,9 @@ if __name__ == "__main__":
         ISSupdater.replaceAndLaunchMainExe(prerelease = update_withPrerelease)
         sys.exit()
 
+    if console_mode:
+        syncronize_main()
+
     #NORMAL RUN
     performAtProgramLauchChecks()
 

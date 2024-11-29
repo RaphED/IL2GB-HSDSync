@@ -1,10 +1,10 @@
 import time
 from tkinter import ttk
 import tkinter as tk
-from threading import Thread
 import logging
 
 from pythonServices.filesService import getRessourcePath
+from pythonServices.messageBus import MessageBus
 
 from GUI.SubscriptionsPanel import SubscriptionPanel
 from GUI.parametersPanel import ParametersPanel
@@ -14,7 +14,6 @@ import synchronizer
 
 class mainGUI:
     
-    #g_text_widget=None
     def __init__(self):
 
         #initialise tinker compotent (why root ??)
@@ -28,7 +27,7 @@ class mainGUI:
         style.theme_use("forest-light")
 
         self.root.title("InterSquadron Skin Synchronizer")
-        self.root.geometry("500x700")
+        self.root.geometry("800x700")
 
         #Initialization of the main components
         self.subscriptionsPanel = SubscriptionPanel(self.root)
@@ -65,20 +64,17 @@ class mainGUI:
             self.consolePanel.clearPanel()
             self.lockSyncButton()
         else:
-            self.consolePanel.addLine(scanResult.toString())
+            MessageBus.emitMessage(scanResult.toString(), scanResult)
             if scanResult.IsSyncUpToDate():
                 self.lockSyncButton()
             else:
                 self.unlockSyncButton()
 
-            
-
-
     def start_scan(self):
-        
         self.updateScanResult(None)
         scanResult = synchronizer.scanSkins()
         self.updateScanResult(scanResult)
+        self.consolePanel.updateFromMessageBus()
         
         
     
@@ -88,11 +84,9 @@ class mainGUI:
             return
         
         synchronizer.updateAll(self.currentScanResult)
-        self.consolePanel.addLine("SYNCHRONIZATION FINISHED")
+        self.consolePanel.updateFromMessageBus()
         #once sync done, lock it
         self.lockSyncButton()
-
-        #Thread(target=self.synchronizeMainCallBack(), daemon=True).start()
 
     
                 

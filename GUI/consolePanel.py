@@ -1,5 +1,7 @@
 import tkinter as tk
 
+from pythonServices.messageBus import MessageBus
+
 class ConsolePanel:
 
     def __init__(self, root: tk):
@@ -17,4 +19,11 @@ class ConsolePanel:
         self.text_widget.config(state=tk.DISABLED)  # Disable editing again
 
     def clearPanel(self):
-        self.text_widget.delete("1.0",tk.END)
+        self.text_widget.delete(1.0,tk.END)
+
+    def updateFromMessageBus(self):
+        #TODO : manage a proper way to display only the wanted messages and not everything always
+        self.clearPanel()
+        messages = MessageBus.readMessages()
+        for message in messages:
+            self.addLine(message.text)

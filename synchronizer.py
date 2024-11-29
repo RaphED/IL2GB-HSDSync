@@ -2,6 +2,7 @@ import pythonServices.localService as localService
 from pythonServices.localService import getSpaceUsageOfLocalSkinCatalog
 import pythonServices.remoteService as remoteService
 from pythonServices.remoteService import getSourceParam, getSpaceUsageOfRemoteSkinCatalog
+from pythonServices.messageBus import MessageBus
 
 import pythonServices.subscriptionService as subscriptionService
 from pythonServices.configurationService import getConf
@@ -256,7 +257,7 @@ def updateAll(scanResult: ScanResult):
 
 def updateSingleSkinFromRemote(source, remoteSkin):
 
-    print(f"Downloading {remoteSkin[getSourceParam(source, "name")]}...")
+    MessageBus.emitMessage(f"Downloading {remoteSkin[getSourceParam(source, "name")]}...")
 
     #download to temp the skin
     downloadedFiles = remoteService.downloadSkinToTempDir(source, remoteSkin)
@@ -266,11 +267,11 @@ def updateSingleSkinFromRemote(source, remoteSkin):
         #Move the file to the target directory and replace existing file if any
         final_path = localService.moveSkinFromPathToDestination(file, remoteSkin[getSourceParam(source, "aircraft")])
 
-        print(f"Downloaded to {final_path}")
+        MessageBus.emitMessage(f"Downloaded to {final_path}")
 
 def deleteSkinFromLocal(localSkinInfo):
     localService.removeSkin(localSkinInfo)
-    print(f"Deleted skin : {localSkinInfo["name"]}")
+    MessageBus.emitMessage(f"Deleted skin : {localSkinInfo["name"]}")
 
 def scanCustomPhotos():
     
@@ -305,8 +306,8 @@ def updateCustomPhotos(toBeUpdatedPhotos):
             
             #Move the file to the target directory and replace existing file if any
             localService.moveCustomPhotoFromPathToDestination(downloadedFile, customPhoto["aircraft"])
-            print(f"Custom photo {customPhoto["aircraft"]} updated")
+            MessageBus.emitMessage(f"Custom photo {customPhoto["aircraft"]} updated")
         
         except HTTPError as httpError:
-            print(f"Custom photo {customPhoto["aircraft"]} download ERROR {httpError.args} ")
+            MessageBus.emitMessage(f"Custom photo {customPhoto["aircraft"]} download ERROR {httpError.args} ")
         
