@@ -3,7 +3,7 @@ import json
 import re
 import logging
 
-from pythonServices.remoteService import getSourceInfo 
+from pythonServices.remoteService import getSourceInfo, RemoteSkin
 
 subscriptionPath = os.path.join(os.getcwd(),"Subscriptions")
 
@@ -20,11 +20,11 @@ class SubscribedCollection:
         self.criteria: dict[str,str]= criteria
         
 
-    def match(self, remoteSkinInfo):
+    def match(self, remoteSkinInfo: RemoteSkin):
         for criterion in self.criteria.keys():
             #transform * in .*
             matchingRegExp =self.criteria[criterion].replace("*", ".*") 
-            if not re.match(matchingRegExp,remoteSkinInfo[criterion]):
+            if not re.match(matchingRegExp,remoteSkinInfo.infos[criterion]):
                 return False
         return True
     

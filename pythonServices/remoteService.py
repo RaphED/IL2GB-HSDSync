@@ -12,14 +12,26 @@ sourcesInfo = [
         "catalogURL": "https://skins.combatbox.net/Info.txt",
         "skinsURL": "https://skins.combatbox.net/[aircraft]/[skinFileName]",
         "params":{
-            "aircraft": "Plane",
-            "name": "Title",
-            "mainSkinFileName": "Skin0",
-            "mainFileMd5": "HashDDS0",
-            "mainFileSize":"Filesize0",
-            "secondarySkinFileName": "Skin01",
-            "secondaryFileMd5": "HashDDS01",
-            "secondaryFileSize":"Filesize01",
+            "censored":{
+                "aircraft": "Plane",
+                "name": "Title",
+                "mainSkinFileName": "Skin0",
+                "mainFileMd5": "HashDDS0",
+                "mainFileSize":"Filesize0",
+                "secondarySkinFileName": "Skin01",
+                "secondaryFileMd5": "HashDDS01",
+                "secondaryFileSize":"Filesize01"
+            },
+            "uncensored":{
+                "aircraft": "Plane",
+                "name": "Title",
+                "mainSkinFileName": "Skin1",
+                "mainFileMd5": "HashDDS1",
+                "mainFileSize":"Filesize1",
+                "secondarySkinFileName": "Skin11",
+                "secondaryFileMd5": "HashDDS11",
+                "secondaryFileSize":"Filesize11"
+            }
         }
     }
 ]
@@ -30,10 +42,38 @@ def getSourceInfo(source):
             return sourceIter
     raise Exception(f"Caanot find source {source}!")
 
-def getSourceParam(source, param):
-    return getSourceInfo(source)["params"][param]
+def getSourceParam(source, param, censored):
+    if censored:
+        return getSourceInfo(source)["params"]["censored"][param]
+    else:
+        return getSourceInfo(source)["params"]["uncensored"][param]
+    
 
-def getSkinsCatalogFromSource(source):
+class RemoteSkin:
+    def __init__(self, source) -> None:
+        self.source = source
+        self.infos = dict()
+
+    def addRawData(self, key, value) -> None:
+        self.infos[key] = value
+
+    def getValue(self, param: str):
+        #TODO : make Censorship a param
+        applyCensorship = getConf("applyCensorship")
+
+        if applyCensorship:
+            return self.infos.get(getSourceParam(self.source, param, censored=True))
+        else:
+            #take the uncensored value, and if value is None or "", then take censored
+            uncensored_value = self.infos.get(getSourceParam(self.source, param, censored=True))
+            if uncensored_value is not None and uncensored_value != "":
+                return uncensored_value
+            else:
+                return self.infos.get(getSourceParam(self.source, param, censored=True))
+
+
+
+def getSkinsCatalogFromSource(source) -> list[RemoteSkin]:
 
     # Download the content of the file
     sourceInfo = getSourceInfo(source)
@@ -61,7 +101,7 @@ def getSkinsCatalogFromSource(source):
             skin_id = i
 
             # Dictionary to store the skin information
-            skin_info = {}
+            remoteSkin = RemoteSkin(source)
 
             # Loop through each line of the section
             for line in section.splitlines():
@@ -69,12 +109,12 @@ def getSkinsCatalogFromSource(source):
                 if line.strip() and not line.startswith("#"):
                     try:
                         key, value = line.split('=', 1)  # Split at the first '='
-                        skin_info[key.strip()] = value.strip()  # Store the key-value pair
+                        remoteSkin.addRawData(key=key.strip(), value=value.strip())# Store the key-value pair
                     except ValueError:
                         logging.error(f"Formatting error on line: {line}")
 
             # Add the skin information to the main dictionary
-            skins[skin_id] = skin_info
+            skins[skin_id] = remoteSkin
 
         # return only the values (we do not need skins ids)
         return skins.values()
@@ -82,35 +122,37 @@ def getSkinsCatalogFromSource(source):
     else:
         raise Exception(f"Error downloading the file. Status code: {response.status_code}")
 
-def getSpaceUsageOfRemoteSkinCatalog(source, remoteSkinList):
+def getSpaceUsageOfRemoteSkinCatalog(source, remoteSkinList: list[RemoteSkin]):
     totalDiskSpace = 0
     for skin in remoteSkinList:
-        totalDiskSpace += int(skin[getSourceParam(source, "mainFileSize")])
+        primaryFileSpace = skin.getValue("mainFileSize")
+        if primaryFileSpace is not None and primaryFileSpace != "":
+            totalDiskSpace += int(primaryFileSpace)
         
-        secondaryFileSpace = skin[getSourceParam(source, "secondaryFileSize")]
+        secondaryFileSpace = skin.getValue("secondaryFileSize")
         if secondaryFileSpace is not None and secondaryFileSpace != "":
             totalDiskSpace += int(secondaryFileSpace)
     
     return totalDiskSpace
 
-def downloadSkinToTempDir(source, skinInfo):
+def downloadSkinToTempDir(source, skinInfo: RemoteSkin):
 
     #build skin URL
     url = getSourceInfo(source)["skinsURL"]
-    url = url.replace("[aircraft]", skinInfo[getSourceParam(source, "aircraft")])
-    urlMainSkin = url.replace("[skinFileName]", skinInfo[getSourceParam(source, "mainSkinFileName")])
+    url = url.replace("[aircraft]", skinInfo.getValue("aircraft"))
+    urlMainSkin = url.replace("[skinFileName]", skinInfo.getValue("mainSkinFileName"))
 
     # Download the file(s) to the temporary folder
     downloadedFiles = []
-    downloadedFiles.append(downloadFile(url=urlMainSkin, expectedMD5=skinInfo[getSourceParam(source, "mainFileMd5")]))
+    downloadedFiles.append(downloadFile(url=urlMainSkin, expectedMD5=skinInfo.getValue("mainFileMd5")))
     
     #if there is a second skin file
-    secondarySkinFileName = skinInfo.get(getSourceParam(source, "secondarySkinFileName"))
+    secondarySkinFileName = skinInfo.getValue("secondarySkinFileName")
     if secondarySkinFileName is not None and secondarySkinFileName != "":
         #hack : works only for HSD, the #1 is replaced by %123 on the URL
-        remoteFileName = skinInfo[getSourceParam(source, "secondarySkinFileName")].replace("#1", "%231")
+        remoteFileName = skinInfo.getValue("secondarySkinFileName").replace("#1", "%231")
         urlSecondarySkin = url.replace("[skinFileName]", remoteFileName)
-        downloadFileName = downloadFile(url=urlSecondarySkin, expectedMD5=skinInfo[getSourceParam(source, "secondaryFileMd5")])
+        downloadFileName = downloadFile(url=urlSecondarySkin, expectedMD5=skinInfo.getValue("secondaryFileMd5"))
         properFileName = downloadFileName.replace("%231","#1")
         os.rename(downloadFileName, properFileName)
         downloadedFiles.append(properFileName)

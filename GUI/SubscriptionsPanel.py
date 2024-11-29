@@ -4,7 +4,7 @@ import os
 import shutil
 
 from pythonServices.subscriptionService import getAllSubscribedCollectionByFileName
-from pythonServices.remoteService import getSpaceUsageOfRemoteSkinCatalog
+from pythonServices.remoteService import getSpaceUsageOfRemoteSkinCatalog, RemoteSkin
 from ISSScanner import getSkinsMatchingWithSubscribedCollection, bytesToString
 
 class SubscriptionPanel:
@@ -48,7 +48,7 @@ class SubscriptionPanel:
         collectionByNameSubscribeFile = getAllSubscribedCollectionByFileName()
         """Populates the Treeview with nested data."""
         for ISSFile in collectionByNameSubscribeFile.keys():
-            skinCollection = []
+            skinCollection = list[RemoteSkin]()
             for collection in collectionByNameSubscribeFile[ISSFile]:
                 skinCollection += getSkinsMatchingWithSubscribedCollection(collection)
             
@@ -57,7 +57,7 @@ class SubscriptionPanel:
             #parent_id = self.tree.insert("", "end", text=key + "\t\t(" + synchronizer.bytesToString(catalogSize) + ")")  # Add main item
             parent_id = self.tree.insert("", "end", text=buildCollectionTreeLabel(ISSFile, catalogSize=catalogSize))  # Add main item
             for skin in skinCollection:
-                self.tree.insert(parent_id, "end", text=skin['Title'])  # Add sub-items
+                self.tree.insert(parent_id, "end", text=skin.getValue('name'))  # Add sub-items
 
         subscriptionPath = os.path.join(os.getcwd(),"Subscriptions")
 

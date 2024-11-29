@@ -7,17 +7,17 @@ import logging
 
 class ScanResult:
     def __init__(self):
-        self.subscribedSkins = dict[str, list]()
-        self.missingSkins = dict[str, list]()
-        self.toBeUpdatedSkins = dict[str, list]()
+        self.subscribedSkins = dict[str, list[remoteService.RemoteSkin]]()
+        self.missingSkins = dict[str, list[remoteService.RemoteSkin]]()
+        self.toBeUpdatedSkins = dict[str, list[remoteService.RemoteSkin]]()
         self.toBeRemovedSkins= list()
         self.previouslyInstalledSkins = list()
         self.toBeUpdatedCockpitNotes = list()
 
-    def appendMissingSkin(self, source, remoteSkinInfo):
+    def appendMissingSkin(self, source, remoteSkinInfo: remoteService.RemoteSkin):
         self.missingSkins[source].append(remoteSkinInfo)
 
-    def appendToBeUpdateSkin(self, source, remoteSkinInfo):
+    def appendToBeUpdateSkin(self, source, remoteSkinInfo: remoteService.RemoteSkin):
         self.toBeUpdatedSkins[source].append(remoteSkinInfo)
 
     def appendToBeRemovedSkin(self, localSkinInfo):
@@ -52,13 +52,13 @@ class ScanResult:
             returnString += f"*********** Sync with {source} ***********\n"
             returnString += f"** Missing skins: ({bytesToString(sum(diskSpaceStats["missingSkinsSpace"].values()))})\n"
             for skin in self.missingSkins[source]:
-                returnString += f"\t- {skin[remoteService.getSourceParam(source, "name")]}\n"
+                returnString += f"\t- {skin.getValue("name")}\n"
             if len(self.missingSkins[source]) == 0:
                 returnString +="- None -\n"
 
             returnString += f"** To be updated skins: ({bytesToString(sum(diskSpaceStats["toBeUpdatedSkinsSpace"].values()))})\n"
             for skin in self.toBeUpdatedSkins[source]:
-                returnString += f"\t- {skin[remoteService.getSourceParam(source, "name")]}\n"
+                returnString += f"\t- {skin.getValue("name")}\n"
             if len(self.toBeUpdatedSkins[source]) == 0:
                 returnString +="- None -\n"
 
@@ -126,8 +126,8 @@ def bytesToString(bytesSize: int, forceSign: bool = False):
     return f"{sign}{file_size_gb:.2f} GB"
 
 
-def getSkinsMatchingWithSubscribedCollection(subscribedCollection : SubscribedCollection):
-    subscribedSkins = list()
+def getSkinsMatchingWithSubscribedCollection(subscribedCollection : SubscribedCollection) -> list[remoteService.RemoteSkin]:
+    subscribedSkins = list[remoteService.RemoteSkin]()
     for skin in remoteService.getSkinsCatalogFromSource(subscribedCollection.source):
         if subscribedCollection.match(skin):
             subscribedSkins.append(skin)
@@ -176,11 +176,11 @@ def scanSkins():
             foundLocalSkin = None
             for localSkin in scanResult.previouslyInstalledSkins:
                 #not the same A/C, no match
-                if remoteSkin[remoteService.getSourceParam(source, "aircraft")] != localSkin["aircraft"]:
+                if remoteSkin.getValue("aircraft") != localSkin["aircraft"]:
                     continue
                 
                 #not the same skin main file, no match
-                if remoteSkin[remoteService.getSourceParam(source, "mainSkinFileName")] != localSkin["mainFileName"]:
+                if remoteSkin.getValue("mainSkinFileName") != localSkin["mainFileName"]:
                     continue
                 
                 #there is a match !
@@ -190,11 +190,11 @@ def scanSkins():
                 skinAsToBeUpdated = False
 
                 #check main file md5
-                if remoteSkin[remoteService.getSourceParam(source, "mainFileMd5")] != localSkin["mainFileMd5"]:
+                if remoteSkin.getValue("mainFileMd5") != localSkin["mainFileMd5"]:
                     skinAsToBeUpdated = True
                 else:
                     #the main file is the same, but we have to look at the secondary file if any
-                    secondarySkinFileName = remoteSkin.get(remoteService.getSourceParam(source, "secondarySkinFileName"))
+                    secondarySkinFileName = remoteSkin.getValue("secondarySkinFileName")
                     
                     #if there is a secondary file declared on the remote
                     if secondarySkinFileName is not None and secondarySkinFileName != "":
@@ -203,10 +203,10 @@ def scanSkins():
                         if localSkin.get("secondaryFileName") is None:
                             skinAsToBeUpdated = True
                         #we have a secondary file, check the name is the same one (should always be)
-                        elif remoteSkin[remoteService.getSourceParam(source, "secondarySkinFileName")] != localSkin["secondaryFileName"]:
+                        elif remoteSkin.getValue("secondarySkinFileName") != localSkin["secondaryFileName"]:
                             skinAsToBeUpdated = True
                         #check the md5 is the proper one
-                        elif remoteSkin[remoteService.getSourceParam(source, "secondaryFileMd5")] != localSkin["secondaryFileMd5"]:
+                        elif remoteSkin.getValue("secondaryFileMd5") != localSkin["secondaryFileMd5"]:
                             skinAsToBeUpdated = True
                 
                 #if any modification has to be made, put the skin in the list to be updated
@@ -225,9 +225,9 @@ def scanSkins():
         #check in all sources
         for source in usedSource:
             for remoteSkin in scanResult.subscribedSkins[source]:
-                if remoteSkin[remoteService.getSourceParam(source, "aircraft")] == localSkin["aircraft"]: #prefiltering to optimize search
+                if remoteSkin.getValue("aircraft") == localSkin["aircraft"]: #prefiltering to optimize search
                     #TODO: Manage orphans skins
-                    if remoteSkin[remoteService.getSourceParam(source, "mainSkinFileName")] == localSkin["mainFileName"]:
+                    if remoteSkin.getValue("mainSkinFileName") == localSkin["mainFileName"]:
                         foundRemoteSkin = remoteSkin
                         break
             if foundRemoteSkin is not None:

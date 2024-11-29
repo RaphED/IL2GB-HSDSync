@@ -9,7 +9,8 @@ config_file = 'ISS-config.json'
 default_config = {
     "IL2GBGameDirectory": "D:\\IL-2 Sturmovik Battle of Stalingrad",
     "autoRemoveUnregisteredSkins": False,
-    "cockpitNotesMode": "noSync"
+    "cockpitNotesMode": "noSync",
+    "applyCensorship": False
 }
 
 allowedCockpitNotesModes = ["noSync", "originalPhotos", "officialNumbers", "technochatNumbers"]

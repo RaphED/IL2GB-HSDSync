@@ -27,9 +27,9 @@ def deleteUnregisteredSkins(scanResult: ScanResult):
     for skin in scanResult.toBeRemovedSkins:
         deleteSkinFromLocal(skin)
 
-def updateSingleSkinFromRemote(source, remoteSkin):
+def updateSingleSkinFromRemote(source, remoteSkin: remoteService.RemoteSkin):
 
-    MessageBus.emitMessage(f"Downloading {remoteSkin[remoteService.getSourceParam(source, "name")]}...")
+    MessageBus.emitMessage(f"Downloading {remoteSkin.getValue("name")}...")
 
     #download to temp the skin
     downloadedFiles = remoteService.downloadSkinToTempDir(source, remoteSkin)
@@ -37,7 +37,7 @@ def updateSingleSkinFromRemote(source, remoteSkin):
     for file in downloadedFiles:
     
         #Move the file to the target directory and replace existing file if any
-        final_path = localService.moveSkinFromPathToDestination(file, remoteSkin[remoteService.getSourceParam(source, "aircraft")])
+        final_path = localService.moveSkinFromPathToDestination(file, remoteSkin.getValue("aircraft"))
 
         MessageBus.emitMessage(f"Downloaded to {final_path}")
 
