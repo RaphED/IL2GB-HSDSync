@@ -4,6 +4,8 @@ import synchronizer
 import pythonServices.configurationService as configurationService
 from pythonServices.subscriptionService import isSubcriptionFolderEmpty
 from pythonServices.filesService import cleanTemporaryFolder
+from pythonServices.messageBus import MessageBus
+
 import pythonServices.loggingService
 import logging
 from versionManager import isCurrentVersionUpToDate
@@ -37,6 +39,7 @@ def runMainConsole():
                 if deletionMode == "y":
                     printWarning("UPDATE STARTED...")
                     synchronizer.updateAll(scanResult)
+                    printMessageBus()
                     printSuccess("UPDATE DONE")
                     break
                 elif deletionMode == "n":
@@ -124,6 +127,12 @@ def printWarning(text):
 
 def printSuccess(text):
     print("\033[92m{}\033[00m".format(text))
+
+def printMessageBus():
+    #TODO : make it async
+    messages = MessageBus.readMessages()
+    for message in messages:
+        print(message.text)
 
 ######### MAIN ###############
 if __name__ == "__main__":
