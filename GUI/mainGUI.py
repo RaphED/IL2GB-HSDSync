@@ -9,6 +9,7 @@ from pythonServices.messageBus import MessageBus
 from GUI.SubscriptionsPanel import SubscriptionPanel
 from GUI.parametersPanel import ParametersPanel
 from GUI.consolePanel import ConsolePanel
+from GUI.actionsPanel import ActionPanel
 
 import ISSsynchronizer
 import ISSScanner
@@ -28,33 +29,34 @@ class mainGUI:
         style.theme_use("forest-light")
 
         self.root.title("InterSquadron Skin Synchronizer")
-        self.root.geometry("900x800")
+        self.root.geometry("800x600")
+        
+        # 1 - UPPER FRAME
+        top_main_frame = tk.Frame(self.root)
+        top_main_frame.pack(side="top", fill="both")
+        # 1.1 - left upper frame
+        left_upper_frame = tk.Frame(top_main_frame)
+        left_upper_frame.pack(side="left", fill="both")
 
-        #Initialization of the main components
-        self.subscriptionsPanel = SubscriptionPanel(self.root)
-        self.parametersPanel = ParametersPanel(self.root)
+        self.subscriptionsPanel = SubscriptionPanel(left_upper_frame)
 
-        # Create buttons in a frame
-        button_frame = tk.Frame(self.root)
-        button_frame.pack(fill="both", pady=2)
+        # 1.2 - right upper frame
+        right_upper_frame = tk.Frame(top_main_frame)
+        right_upper_frame.pack(side="right", fill="both")
+        
+        self.parametersPanel = ParametersPanel(right_upper_frame)
+        self.actionPanel = ActionPanel(right_upper_frame, scanCommand = self.start_scan, syncCommand=self.start_sync)
 
-        self.ScanButton = ttk.Button(button_frame, text="Scan", style="Accent.TButton", command=self.start_scan)
-        self.ScanButton.pack(side="left", padx=10, pady=5)
+        # 2 - BOTTOM FRAME
+        bottom_main_frame = tk.Frame(self.root)
+        bottom_main_frame.pack(side="bottom", fill="both")
 
-        self.SyncButton = ttk.Button(button_frame, text="Synchronize", style="Accent.TButton", command=self.start_sync)
-        self.SyncButton.pack(side="left", padx=10, pady=5)
-        self.lockSyncButton()
+        self.consolePanel = ConsolePanel(bottom_main_frame)
 
-        self.consolePanel = ConsolePanel(self.root)
-
+        #OTHER STORED INFORMATION
         self.currentScanResult: ISSsynchronizer.ScanResult = None
 
-    def lockSyncButton(self):
-        self.SyncButton["state"] = "disabled"
-    
-    def unlockSyncButton(self):
-        self.SyncButton["state"] = "enabled"
-
+        
     def run(self):
         return self.root.mainloop()
     
@@ -63,13 +65,13 @@ class mainGUI:
 
         if scanResult is None:
             self.consolePanel.clearPanel()
-            self.lockSyncButton()
+            self.actionPanel.lockSyncButton()
         else:
             MessageBus.emitMessage(scanResult.toString(), scanResult)
             if scanResult.IsSyncUpToDate():
-                self.lockSyncButton()
+                self.actionPanel.lockSyncButton()
             else:
-                self.unlockSyncButton()
+                self.actionPanel.unlockSyncButton()
 
     def start_scan(self):
         self.updateScanResult(None)
@@ -89,7 +91,7 @@ class mainGUI:
 
         self.consolePanel.updateFromMessageBus()
         #once sync done, lock it
-        self.lockSyncButton()
+        self.actionPanel.lockSyncButton()
 
     
                 
