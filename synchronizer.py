@@ -18,6 +18,7 @@ class ScanResult:
         self.toBeUpdatedSkins = dict[str, list]()
         self.toBeRemovedSkins= list()
         self.previouslyInstalledSkins = list()
+        self.toBeUpdatedCockpitNotes = list()
 
     def appendMissingSkin(self, source, remoteSkinInfo):
         self.missingSkins[source].append(remoteSkinInfo)
@@ -250,11 +251,6 @@ def deleteUnregisteredSkins(scanResult: ScanResult):
     for skin in scanResult.toBeRemovedSkins:
         deleteSkinFromLocal(skin)
 
-def updateAll(scanResult: ScanResult):
-    if getConf("autoRemoveUnregisteredSkins"):
-        deleteUnregisteredSkins(scanResult)
-    updateRegisteredSkins(scanResult)
-
 def updateSingleSkinFromRemote(source, remoteSkin):
 
     MessageBus.emitMessage(f"Downloading {remoteSkin[getSourceParam(source, "name")]}...")
@@ -272,6 +268,9 @@ def updateSingleSkinFromRemote(source, remoteSkin):
 def deleteSkinFromLocal(localSkinInfo):
     localService.removeSkin(localSkinInfo)
     MessageBus.emitMessage(f"Deleted skin : {localSkinInfo["name"]}")
+
+def customPhotoSyncIsActive():
+    return getConf("autoRemoveUnregisteredSkins") != "noSync"
 
 def scanCustomPhotos():
     
@@ -310,4 +309,20 @@ def updateCustomPhotos(toBeUpdatedPhotos):
         
         except HTTPError as httpError:
             MessageBus.emitMessage(f"Custom photo {customPhoto["aircraft"]} download ERROR {httpError.args} ")
-        
+
+def ScanAll():
+    scanResult = scanSkins()
+    if customPhotoSyncIsActive():
+        scanResult.toBeUpdatedCockpitNotes = scanCustomPhotos()
+    return scanResult
+
+
+
+def updateAll(scanResult: ScanResult):
+    if customPhotoSyncIsActive():
+        updateCustomPhotos(scanResult.toBeUpdatedCockpitNotes)
+    
+    if getConf("autoRemoveUnregisteredSkins"):
+        deleteUnregisteredSkins(scanResult)
+    
+    updateRegisteredSkins(scanResult)

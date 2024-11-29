@@ -12,61 +12,38 @@ import ISSupdater
 from GUI.mainGUI import mainGUI
 
 
-def syncronize_main():
+def runMainConsole():
     try:
         performPreScanChecks()
 
         print("**********************************************")
         print("**************** SYNC STARTED ****************")
         print("**********************************************\n")
-        #CUSTOM PHOTOS SECTION
-        print("\tSTEP 1/2 - CUSTOM PHOTOS SYNC\n")
-        cockpitNotesMode = configurationService.getConf("cockpitNotesMode")
-        if cockpitNotesMode == "noSync":
-            print("No synchronization parametered\nMove on the next step")
-        else:
-            print(f"Custom photos scan mode : {cockpitNotesMode}")
-            printWarning("Photos scan launched. Please wait...")
-            scanResult = synchronizer.scanCustomPhotos()
-            if len(scanResult) > 0:
-                printWarning(f"{len(scanResult)} custom photos has to be updated :")
-                print([customPhoto["aircraft"] for customPhoto in scanResult])
-                
-                answer = messagebox.askyesno(title='Synchronisation action',
-                message=f'Do you want to perform the update on these {len(scanResult)} custom photos?')                
-                if answer:
-                    printWarning("UPDATE STARTED...")
-                    synchronizer.updateCustomPhotos(scanResult)
-                    printSuccess("UPDATE DONE")
-                else:
-                    printWarning("NO UPDATE PERFORMED")
-            else:
-                printSuccess("All custom photos are already up to date")
 
-        #SKINS SECTION
-        print("\n\tSTEP 2/2 - SKINS SYNC\n")
-        
+        print("\tSTEP 1/2 - SCAN\n")
         if isSubcriptionFolderEmpty():
             printWarning("There are no subscriptions.\nPlease import or activate .iss file(s) to subscribe to any skins collection")
-
         printWarning("Skins scan launched. Please wait...")
-        #once the prec checks passed, perform the global scan
-        scanResult = synchronizer.scanSkins()
+        scanResult = synchronizer.ScanAll()
         print(scanResult.toString())
 
         #then as the user for the update if any
+        print("\tSTEP 2/2 - SYNC\n")
         if scanResult.IsSyncUpToDate():
             printSuccess("All skins are up to date.")
         else:
-            answer = messagebox.askyesno(title='Synchronisation action',
-            message='Do you want to perform the update ?')
-            if answer:
-                printWarning("UPDATE STARTED...")
-                synchronizer.updateAll(scanResult)
-                printSuccess("UPDATE DONE")
-            else:
-                printWarning("NO UPDATE PERFORMED")
-
+            while True:
+                deletionMode = input("Do you want to perform the update ? yes (y) or no (n) ? ").lower()
+                if deletionMode == "y":
+                    printWarning("UPDATE STARTED...")
+                    synchronizer.updateAll(scanResult)
+                    printSuccess("UPDATE DONE")
+                    break
+                elif deletionMode == "n":
+                    printWarning("NO UPDATE PERFORMED")
+                    break
+                else:
+                    printError("unexpected anwser")
 
     except Exception as e:
         printError(e)
@@ -74,6 +51,8 @@ def syncronize_main():
     print("**********************************************")
     print("***************** SYNC ENDED *****************")
     print("**********************************************")
+
+    input("Press any key...")
 
 def performAtProgramLauchChecks():
 
@@ -180,7 +159,8 @@ if __name__ == "__main__":
         sys.exit()
 
     if console_mode:
-        syncronize_main()
+        runMainConsole()
+        sys.exit()
 
     #NORMAL RUN
     performAtProgramLauchChecks()
