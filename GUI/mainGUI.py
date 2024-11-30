@@ -77,7 +77,17 @@ class mainGUI:
 
             else:
                 self.actionPanel.unlockSyncButton()
-                self.actionPanel.SumaryScanLabel.config(text="Skin to be sync :"+str(len(scanResult.missingSkins)))# TODO rajouter un vrai print en allant peux être faire un refactif du scanResult pour les avoir propre, possiblement en même temps que les prints dans le scan...
+                stats=scanResult.getDiskUsageStats()
+                byteSizeToBeDownload=sum(stats["missingSkinsSpace"].values())+sum(stats["toBeUpdatedSkinsSpace"].values())+stats["toBeUpdatedCustomPhotos"]
+                stringAddPart=""
+                if byteSizeToBeDownload!=0:
+                    stringAddPart="To download: "+ISSScanner.bytesToString(byteSizeToBeDownload)+"."
+                byteSizeToBeRemoved=stats["toBeRemovedSkinsSpace"]
+                stringRemovePart=""
+                if byteSizeToBeRemoved!=0:
+                    stringRemovePart="To remove: "+ISSScanner.bytesToString(byteSizeToBeRemoved)+"."
+
+                self.actionPanel.SumaryScanLabel.config(text=stringAddPart+" "+stringRemovePart)# TODO rajouter un vrai print en allant peux être faire un refactif du scanResult pour les avoir propre, possiblement en même temps que les prints dans le scan...
 
     def start_scan(self):
         tae.async_execute(self.start_async_scan(), wait=True, visible=False, pop_up=False, callback=None, master=self.root)

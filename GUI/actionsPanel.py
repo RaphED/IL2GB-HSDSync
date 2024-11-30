@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import ttk
+from tkinter import font,ttk
 
 class ActionPanel:
 
@@ -13,7 +13,8 @@ class ActionPanel:
         self.ScanButton = ttk.Button(frame, text="Scan", style="Accent.TButton", command=scanCommand)
         self.ScanButton.pack(side=tk.TOP, padx=10)
 
-        self.SumaryScanLabel = ttk.Label(frame, text="", justify="center")
+        custom_font = font.Font(family="Arial", size=13, weight="bold")
+        self.SumaryScanLabel = ttk.Label(frame, text="", justify="center", font=custom_font)
         self.SumaryScanLabel.pack(side=tk.TOP, padx=10,pady=20)
 
         self.SyncButton = ttk.Button(frame, text="Synchronize", style="Accent.TButton", command=syncCommand)
