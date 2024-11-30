@@ -1,6 +1,6 @@
 import tkinter as tk
 
-from pythonServices.messageBus import MessageBus
+# from pythonServices.messageBus import MessageBus
 
 class ConsolePanel:
 
@@ -11,7 +11,7 @@ class ConsolePanel:
         self.text_widget = tk.Text(self.root, wrap="word", height=15, width=50)
         self.text_widget.pack(expand=True, fill="both")
         
-
+    @staticmethod
     def addLine(self, text):
         self.text_widget.config(state=tk.NORMAL)  # Disable editing
         self.text_widget.insert(tk.END, text + "\n")  # Insert text
@@ -24,6 +24,6 @@ class ConsolePanel:
     def updateFromMessageBus(self):
         #TODO : manage a proper way to display only the wanted messages and not everything always
         self.clearPanel()
-        messages = MessageBus.readMessages()
-        for message in messages:
-            self.addLine(message.text)
+        # messages = MessageBus.readMessages()
+        # for message in messages:
+        #     self.addLine(message.text)

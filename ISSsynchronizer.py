@@ -65,7 +65,7 @@ def updateCustomPhotos(toBeUpdatedPhotos):
 
 
 
-def updateAll(scanResult: ScanResult):
+async def updateAll(scanResult: ScanResult):
     if customPhotoSyncIsActive():
         updateCustomPhotos(scanResult.toBeUpdatedCockpitNotes)
     

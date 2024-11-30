@@ -2,6 +2,8 @@ import time
 from tkinter import ttk
 import tkinter as tk
 import logging
+import tk_async_execute as tae
+import asyncio
 
 from pythonServices.filesService import getRessourcePath
 from pythonServices.messageBus import MessageBus
@@ -77,7 +79,7 @@ class mainGUI:
         self.updateScanResult(None)
         scanResult = ISSScanner.scanAll()
         self.updateScanResult(scanResult)
-        self.consolePanel.updateFromMessageBus()
+        # self.consolePanel.updateFromMessageBus()
         
         
     
@@ -85,11 +87,14 @@ class mainGUI:
         if self.currentScanResult is None:
             logging.error("Sync launched with no scan result")
             return
-        
-        ISSsynchronizer.updateAll(self.currentScanResult)
+        MessageBus.emitMessage("SYNCHRONIZATION BEGINS")
+
+
+        tae.async_execute(ISSsynchronizer.updateAll(self.currentScanResult), wait=True, visible=False, pop_up=False, callback=None, master=self.root)
+
         MessageBus.emitMessage("SYNCHRONIZATION FINISHED")
 
-        self.consolePanel.updateFromMessageBus()
+        # self.consolePanel.updateFromMessageBus()
         #once sync done, lock it
         self.actionPanel.lockSyncButton()
 

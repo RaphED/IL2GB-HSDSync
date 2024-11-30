@@ -11,6 +11,8 @@ import logging
 from versionManager import isCurrentVersionUpToDate
 import ISSupdater
 import ISSScanner
+import tk_async_execute as tae
+import asyncio
 
 from GUI.mainGUI import mainGUI
 
@@ -174,7 +176,15 @@ if __name__ == "__main__":
 
     #NORMAL RUN
     performAtProgramLauchChecks()
+    messageBus = MessageBus.getSingletonInstance()
 
-    mainGUI = mainGUI()
-    mainGUI.run()
+    mainUI = mainGUI()
+
+    messageBus.ui=mainUI.consolePanel
+
+    tae.start()
+    
+    mainUI.run()
+
+    tae.stop()
     

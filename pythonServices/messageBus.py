@@ -1,4 +1,10 @@
 import time
+import tk_async_execute as tae
+import asyncio
+
+from GUI.consolePanel import ConsolePanel
+
+
 
 class Message:
     def __init__(self, text: str, object: object = None):
@@ -13,6 +19,12 @@ class MessageBus:
 
     #SINGLETON MANAGEMENT
     _bus_instance = None
+    ui=None
+
+    def setUI(gui):
+        messageBus = MessageBus.getSingletonInstance()
+
+        messageBus.ui=gui
 
     @staticmethod
     def getSingletonInstance():
@@ -24,9 +36,13 @@ class MessageBus:
     #BUS EXTERNAL INTERRACTIONS
     @staticmethod
     def emitMessage(messageText: str, enclosedObject : object = None) -> None:
-        newMessage = Message(messageText, enclosedObject)
+        # newMessage = Message(messageText, enclosedObject)
         messageBus = MessageBus.getSingletonInstance()
-        messageBus.messages[newMessage.timeStamp] = newMessage
+        # messageBus.messages[newMessage.timeStamp] = newMessage
+
+        # Je le transforme litéralement pour le test en service => printService
+        global ui
+        ConsolePanel.addLine(messageBus.ui,messageText)
 
     @staticmethod
     def readMessages(beginTimeStamp: float = None, endTimeStamp: float = None) -> list[Message]:
