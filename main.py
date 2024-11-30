@@ -1,16 +1,16 @@
 import sys
-from tkinter import messagebox
 import ISSsynchronizer
 import pythonServices.configurationService as configurationService
 from pythonServices.subscriptionService import isSubcriptionFolderEmpty
 from pythonServices.filesService import cleanTemporaryFolder
-from pythonServices.messageBus import MessageBus
+from pythonServices.messageBrocker import MessageBrocker
 
 import pythonServices.loggingService
 import logging
 from versionManager import isCurrentVersionUpToDate
 import ISSupdater
 import ISSScanner
+import tk_async_execute as tae
 
 from GUI.mainGUI import mainGUI
 
@@ -40,7 +40,6 @@ def runMainConsole():
                 if deletionMode == "y":
                     printWarning("UPDATE STARTED...")
                     ISSsynchronizer.updateAll(scanResult)
-                    printMessageBus()
                     printSuccess("UPDATE DONE")
                     break
                 elif deletionMode == "n":
@@ -129,12 +128,6 @@ def printWarning(text):
 def printSuccess(text):
     print("\033[92m{}\033[00m".format(text))
 
-def printMessageBus():
-    #TODO : make it async
-    messages = MessageBus.readMessages()
-    for message in messages:
-        print(message.text)
-
 ######### MAIN ###############
 if __name__ == "__main__":
 
@@ -168,13 +161,20 @@ if __name__ == "__main__":
         ISSupdater.replaceAndLaunchMainExe(prerelease = update_withPrerelease)
         sys.exit()
 
+    performAtProgramLauchChecks()
+    
     if console_mode:
+        #CONSOLE RUN
+        
+        #register the console to the message brocker
+        MessageBrocker.registerHook(print)
         runMainConsole()
         sys.exit()
 
-    #NORMAL RUN
-    performAtProgramLauchChecks()
-
-    mainGUI = mainGUI()
-    mainGUI.run()
+    else:
+        #NORMAL GUI RUN
+        mainUI = mainGUI()
+        tae.start()
+        mainUI.run()
+        tae.stop()
     

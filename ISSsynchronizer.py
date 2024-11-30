@@ -2,7 +2,7 @@ from requests.exceptions import HTTPError
 
 import pythonServices.localService as localService
 import pythonServices.remoteService as remoteService
-from pythonServices.messageBus import MessageBus
+from pythonServices.messageBrocker import MessageBrocker
 from pythonServices.configurationService import getConf, customPhotoSyncIsActive
 
 from ISSScanner import ScanResult
@@ -29,7 +29,7 @@ def deleteUnregisteredSkins(scanResult: ScanResult):
 
 def updateSingleSkinFromRemote(source, remoteSkin: remoteService.RemoteSkin):
 
-    MessageBus.emitMessage(f"Downloading {remoteSkin.getValue("name")}...")
+    MessageBrocker.emitMessage(f"Downloading {remoteSkin.getValue("name")}...")
 
     #download to temp the skin
     downloadedFiles = remoteService.downloadSkinToTempDir(source, remoteSkin)
@@ -39,11 +39,11 @@ def updateSingleSkinFromRemote(source, remoteSkin: remoteService.RemoteSkin):
         #Move the file to the target directory and replace existing file if any
         final_path = localService.moveSkinFromPathToDestination(file, remoteSkin.getValue("aircraft"))
 
-        MessageBus.emitMessage(f"Downloaded to {final_path}")
+        MessageBrocker.emitMessage(f"Downloaded to {final_path}")
 
 def deleteSkinFromLocal(localSkinInfo):
     localService.removeSkin(localSkinInfo)
-    MessageBus.emitMessage(f"Deleted skin : {localSkinInfo["name"]}")
+    MessageBrocker.emitMessage(f"Deleted skin : {localSkinInfo["name"]}")
 
 
 def updateCustomPhotos(toBeUpdatedPhotos):
@@ -56,16 +56,16 @@ def updateCustomPhotos(toBeUpdatedPhotos):
             
             #Move the file to the target directory and replace existing file if any
             localService.moveCustomPhotoFromPathToDestination(downloadedFile, customPhoto["aircraft"])
-            MessageBus.emitMessage(f"Custom photo {customPhoto["aircraft"]} updated")
+            MessageBrocker.emitMessage(f"Custom photo {customPhoto["aircraft"]} updated")
         
         except HTTPError as httpError:
-            MessageBus.emitMessage(f"Custom photo {customPhoto["aircraft"]} download ERROR {httpError.args} ")
+            MessageBrocker.emitMessage(f"Custom photo {customPhoto["aircraft"]} download ERROR {httpError.args} ")
 
 
 
 
 
-def updateAll(scanResult: ScanResult):
+async def updateAll(scanResult: ScanResult):
     if customPhotoSyncIsActive():
         updateCustomPhotos(scanResult.toBeUpdatedCockpitNotes)
     

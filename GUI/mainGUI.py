@@ -2,9 +2,11 @@ import time
 from tkinter import ttk
 import tkinter as tk
 import logging
+import tk_async_execute as tae
+import asyncio
 
 from pythonServices.filesService import getRessourcePath
-from pythonServices.messageBus import MessageBus
+from pythonServices.messageBrocker import MessageBrocker
 
 from GUI.SubscriptionsPanel import SubscriptionPanel
 from GUI.parametersPanel import ParametersPanel
@@ -66,30 +68,43 @@ class mainGUI:
         if scanResult is None:
             self.consolePanel.clearPanel()
             self.actionPanel.lockSyncButton()
+            self.actionPanel.SumaryScanLabel.config(text="...")
         else:
-            MessageBus.emitMessage(scanResult.toString(), scanResult)
+            MessageBrocker.emitMessage(scanResult.toString(), scanResult)
             if scanResult.IsSyncUpToDate():
                 self.actionPanel.lockSyncButton()
+                self.actionPanel.SumaryScanLabel.config(text="Skins are up to date.")
+
             else:
                 self.actionPanel.unlockSyncButton()
+                stats=scanResult.getDiskUsageStats()
+                byteSizeToBeDownload=sum(stats["missingSkinsSpace"].values())+sum(stats["toBeUpdatedSkinsSpace"].values())+stats["toBeUpdatedCustomPhotos"]
+                stringAddPart=""
+                if byteSizeToBeDownload!=0:
+                    stringAddPart="To download: "+ISSScanner.bytesToString(byteSizeToBeDownload)+"."
+                byteSizeToBeRemoved=stats["toBeRemovedSkinsSpace"]
+                stringRemovePart=""
+                if byteSizeToBeRemoved!=0:
+                    stringRemovePart="To remove: "+ISSScanner.bytesToString(byteSizeToBeRemoved)+"."
+
+                self.actionPanel.SumaryScanLabel.config(text=stringAddPart+" "+stringRemovePart)# TODO rajouter un vrai print en allant peux être faire un refactif du scanResult pour les avoir propre, possiblement en même temps que les prints dans le scan...
 
     def start_scan(self):
+        tae.async_execute(self.start_async_scan(), wait=True, visible=False, pop_up=False, callback=None, master=self.root)
+
+    async def start_async_scan(self):
         self.updateScanResult(None)
         scanResult = ISSScanner.scanAll()
         self.updateScanResult(scanResult)
-        self.consolePanel.updateFromMessageBus()
-        
-        
     
     def start_sync(self):
         if self.currentScanResult is None:
             logging.error("Sync launched with no scan result")
             return
-        
-        ISSsynchronizer.updateAll(self.currentScanResult)
-        MessageBus.emitMessage("SYNCHRONIZATION FINISHED")
+        MessageBrocker.emitMessage("SYNCHRONIZATION BEGINS")
+        tae.async_execute(ISSsynchronizer.updateAll(self.currentScanResult), wait=True, visible=False, pop_up=False, callback=None, master=self.root)
+        MessageBrocker.emitMessage("SYNCHRONIZATION FINISHED")
 
-        self.consolePanel.updateFromMessageBus()
         #once sync done, lock it
         self.actionPanel.lockSyncButton()
 
