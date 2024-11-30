@@ -6,7 +6,7 @@ import tk_async_execute as tae
 import asyncio
 
 from pythonServices.filesService import getRessourcePath
-from pythonServices.messageBus import MessageBus
+from pythonServices.messageBrocker import MessageBrocker
 
 from GUI.SubscriptionsPanel import SubscriptionPanel
 from GUI.parametersPanel import ParametersPanel
@@ -69,7 +69,7 @@ class mainGUI:
             self.consolePanel.clearPanel()
             self.actionPanel.lockSyncButton()
         else:
-            MessageBus.emitMessage(scanResult.toString(), scanResult)
+            MessageBrocker.emitMessage(scanResult.toString(), scanResult)
             if scanResult.IsSyncUpToDate():
                 self.actionPanel.lockSyncButton()
             else:
@@ -79,7 +79,6 @@ class mainGUI:
         self.updateScanResult(None)
         scanResult = ISSScanner.scanAll()
         self.updateScanResult(scanResult)
-        # self.consolePanel.updateFromMessageBus()
         
         
     
@@ -87,14 +86,10 @@ class mainGUI:
         if self.currentScanResult is None:
             logging.error("Sync launched with no scan result")
             return
-        MessageBus.emitMessage("SYNCHRONIZATION BEGINS")
-
-
+        MessageBrocker.emitMessage("SYNCHRONIZATION BEGINS")
         tae.async_execute(ISSsynchronizer.updateAll(self.currentScanResult), wait=True, visible=False, pop_up=False, callback=None, master=self.root)
+        MessageBrocker.emitMessage("SYNCHRONIZATION FINISHED")
 
-        MessageBus.emitMessage("SYNCHRONIZATION FINISHED")
-
-        # self.consolePanel.updateFromMessageBus()
         #once sync done, lock it
         self.actionPanel.lockSyncButton()
 
