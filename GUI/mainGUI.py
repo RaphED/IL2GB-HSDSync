@@ -68,19 +68,24 @@ class mainGUI:
         if scanResult is None:
             self.consolePanel.clearPanel()
             self.actionPanel.lockSyncButton()
+            self.actionPanel.SumaryScanLabel.config(text="...")
         else:
             MessageBrocker.emitMessage(scanResult.toString(), scanResult)
             if scanResult.IsSyncUpToDate():
                 self.actionPanel.lockSyncButton()
+                self.actionPanel.SumaryScanLabel.config(text="Skins are up to date.")
+
             else:
                 self.actionPanel.unlockSyncButton()
+                self.actionPanel.SumaryScanLabel.config(text="Skin to be sync :"+str(len(scanResult.missingSkins)))# TODO rajouter un vrai print en allant peux être faire un refactif du scanResult pour les avoir propre, possiblement en même temps que les prints dans le scan...
 
     def start_scan(self):
+        tae.async_execute(self.start_async_scan(), wait=True, visible=False, pop_up=False, callback=None, master=self.root)
+
+    async def start_async_scan(self):
         self.updateScanResult(None)
         scanResult = ISSScanner.scanAll()
         self.updateScanResult(scanResult)
-        
-        
     
     def start_sync(self):
         if self.currentScanResult is None:
