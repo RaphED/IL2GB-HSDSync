@@ -32,21 +32,22 @@ class ScanResult:
             "missingSkinsSpace": {source:remoteService.getSpaceUsageOfRemoteSkinCatalog(source, self.missingSkins[source]) for source in self.getUsedSources()},
             "toBeUpdatedSkinsSpace": {source:remoteService.getSpaceUsageOfRemoteSkinCatalog(source, self.toBeUpdatedSkins[source]) for source in self.getUsedSources()},
             "toBeRemovedSkinsSpace": localService.getSpaceUsageOfLocalSkinCatalog(self.toBeRemovedSkins),
-            "previouslyInstalledSkinsSpace": localService.getSpaceUsageOfLocalSkinCatalog(self.previouslyInstalledSkins)
+            "previouslyInstalledSkinsSpace": localService.getSpaceUsageOfLocalSkinCatalog(self.previouslyInstalledSkins),
+            "toBeUpdatedCustomPhotos": remoteService.getSpaceUsageOfCustomPhotoCatalog(self.toBeUpdatedCockpitNotes)
         }
     
     def toString(self):
         returnString = ""
+
+        diskSpaceStats = self.getDiskUsageStats()
+
 
         if customPhotoSyncIsActive():
             returnString += f"Cockpit notes selected mode : {getConf("cockpitNotesMode")}\n"
             if len(self.toBeUpdatedCockpitNotes) == 0:
                 returnString += "All custom photos are up to date\n"
             else:
-                returnString += f"{len(self.toBeUpdatedCockpitNotes)} custom photos are to be updated\n"
-
-
-        diskSpaceStats = self.getDiskUsageStats()
+                returnString += f"{len(self.toBeUpdatedCockpitNotes)} custom photos are to be updated ({bytesToString(diskSpaceStats["toBeUpdatedCustomPhotos"])})\n"
 
         for source in self.getUsedSources():
             returnString += f"*********** Sync with {source} ***********\n"

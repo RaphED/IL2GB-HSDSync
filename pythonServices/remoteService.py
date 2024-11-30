@@ -193,6 +193,15 @@ def getCustomPhotosList():
         return file_content
     return []
 
+def getSpaceUsageOfCustomPhotoCatalog(customPhotosList):
+    totalDiskSpace = 0
+    for skin in customPhotosList:
+        #This is soooo bad. custom photos are about 1 400 000 bites
+        #TODO : addd the file size in the manifests
+        totalDiskSpace += 1400000
+    
+    return totalDiskSpace
+
 def downloadCustomPhoto(cockpitNotesMode, cockpitNote):
     filesURL = getCockpitNotesModeInfo(cockpitNotesMode)["filesURL"]
 
