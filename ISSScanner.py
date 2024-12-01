@@ -151,7 +151,6 @@ def scanSkins():
 
     #get the local skins list in memory
     scanResult.previouslyInstalledSkins = localService.getSkinsList()
-
     #load all subscriptions
     subscribedCollectionList = getAllSubscribedCollection()
     for collection in subscribedCollectionList:
@@ -268,7 +267,6 @@ def scanCustomPhotos():
 def scanAll():
     MessageBrocker.emitProgress(0) #TEMP PROGRESS
     scanResult = scanSkins()
-    MessageBrocker.emitProgress(0.9) #TEMP PROGRESS
     if customPhotoSyncIsActive():
         scanResult.toBeUpdatedCockpitNotes = scanCustomPhotos()
     MessageBrocker.emitProgress(1.0) #TEMP PROGRESS

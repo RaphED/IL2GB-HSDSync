@@ -70,7 +70,9 @@ class mainGUI:
             self.actionPanel.lockSyncButton()
             self.actionPanel.SumaryScanLabel.config(text="...")
         else:
-            MessageBrocker.emitConsoleMessage(scanResult.toString())
+            #Display the scan result in the console
+            self.consolePanel.addLine(scanResult.toString())
+            
             if scanResult.IsSyncUpToDate():
                 self.actionPanel.lockSyncButton()
                 self.actionPanel.SumaryScanLabel.config(text="Skins are up to date.")
