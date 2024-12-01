@@ -12,6 +12,7 @@ from GUI.SubscriptionsPanel import SubscriptionPanel
 from GUI.parametersPanel import ParametersPanel
 from GUI.consolePanel import ConsolePanel
 from GUI.actionsPanel import ActionPanel
+from GUI.progressBar import ProgressBar
 
 import ISSsynchronizer
 import ISSScanner
@@ -50,6 +51,8 @@ class mainGUI:
         self.actionPanel = ActionPanel(right_upper_frame, scanCommand = self.start_scan, syncCommand=self.start_sync)
 
         # 2 - BOTTOM FRAME
+        self.progressBar = ProgressBar(self.root)
+        
         bottom_main_frame = tk.Frame(self.root)
         bottom_main_frame.pack(side="bottom", fill="both")
 
@@ -72,7 +75,7 @@ class mainGUI:
         else:
             #Display the scan result in the console
             self.consolePanel.addLine(scanResult.toString())
-            
+
             if scanResult.IsSyncUpToDate():
                 self.actionPanel.lockSyncButton()
                 self.actionPanel.SumaryScanLabel.config(text="Skins are up to date.")

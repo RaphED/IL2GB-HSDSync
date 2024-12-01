@@ -11,11 +11,7 @@ class ConsolePanel:
         self.text_widget = tk.Text(self.root, wrap="word", height=15, width=50)
         self.text_widget.pack(expand=True, fill="both")
 
-        MessageBrocker.registerConsoleHook(self.addLine)
-
-        #temp : progress there
-        MessageBrocker.registerProgressHook(self.addProgress)
-        
+        MessageBrocker.registerConsoleHook(self.addLine)       
     
     def addLine(self, text):
         self.text_widget.config(state=tk.NORMAL)  # Disable editing
