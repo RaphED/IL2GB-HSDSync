@@ -2,6 +2,9 @@ import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 import os
 import shutil
+import tk_async_execute as tae
+import asyncio
+from pythonServices.messageBrocker import MessageBrocker
 
 from pythonServices.subscriptionService import getAllSubscribedCollectionByFileName
 from pythonServices.remoteService import getSpaceUsageOfRemoteSkinCatalog, RemoteSkin
@@ -13,7 +16,7 @@ class SubscriptionPanel:
         
         self.root = root
         
-        label = ttk.Label(text="Subscriptions", font=("Arial", 10,"bold"))
+        label = ttk.Label(text="Collections", font=("Arial", 10,"bold"))
         label.pack(side="left", fill="x",padx=5)  # Add some padding above the Treeview
         subscription_label_frame = ttk.LabelFrame(root, labelwidget=label, padding=(5, 5))
         subscription_label_frame.pack(fill="both",padx=2, pady=2)
@@ -22,7 +25,9 @@ class SubscriptionPanel:
         self.tree.pack(fill="both",  padx=5, pady=5)
         
         # Add hierarchical data to the Treeview
-        self.populate_tree()
+        # tae.async_execute(self.async_populate_tree(), wait=False, visible=False, pop_up=False, callback=None, master=self.root)
+        self.the_start_of_syncs()
+     
 
         # Bind a selection event to the Treeview
         self.tree.bind("<<TreeviewSelect>>", self.on_item_selected)
@@ -37,15 +42,25 @@ class SubscriptionPanel:
         self.switch_state_button = ttk.Button(subscription_label_frame, text="Activate/Disable", command=self.switch_state)
         self.switch_state_button.pack(side="left", padx=5, pady=5)
 
-    def populate_tree(self):
+    def the_start_of_syncs(self):
+        tae.async_execute(self.async_populate_tree(), wait=False, visible=False, pop_up=False, callback=None, master=self.root)
 
+    async def async_populate_tree(self):
+        # Simulate the 5-second loading process with asyncio.sleep (replace this with actual data loading logic)
+        self.populate_tree()
+
+    def populate_tree(self):
+        MessageBrocker.emitConsoleMessage("Getting collections from /Subscriptions folder")
+        MessageBrocker.emitProgress(0.2)
         collectionByNameSubscribeFile = getAllSubscribedCollectionByFileName()
         """Populates the Treeview with nested data."""
         for ISSFile in collectionByNameSubscribeFile.keys():
             skinCollection = list[RemoteSkin]()
             for collection in collectionByNameSubscribeFile[ISSFile]:
                 skinCollection += getSkinsMatchingWithSubscribedCollection(collection)
-            
+            #TODO eric => here you set the tree so the user can see it, but you wait after the list is synced to call size, and  data and allow user to click scan, the user can still modify other elements in between (except maibe the path of il2?
+            # Also need to verify that the user list is kept and not redownloaded)
+            # Also need to be absolutly sure that list are always read in the same order
             #TODO : make it work for multiple sources
             catalogSize=getSpaceUsageOfRemoteSkinCatalog("HSD",skinCollection)
             #parent_id = self.tree.insert("", "end", text=key + "\t\t(" + synchronizer.bytesToString(catalogSize) + ")")  # Add main item
