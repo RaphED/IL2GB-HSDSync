@@ -265,9 +265,11 @@ def scanCustomPhotos():
     return toBeUpdatedPhotos
 
 def scanAll():
+    MessageBrocker.emitConsoleMessage("SCAN BEGINS...")
     MessageBrocker.emitProgress(0) #TEMP PROGRESS
     scanResult = scanSkins()
     if customPhotoSyncIsActive():
         scanResult.toBeUpdatedCockpitNotes = scanCustomPhotos()
     MessageBrocker.emitProgress(1.0) #TEMP PROGRESS
+    MessageBrocker.emitConsoleMessage("SCAN FINISHED")
     return scanResult

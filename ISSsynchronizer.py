@@ -17,6 +17,8 @@ def updateRegisteredSkins(scanResult: ScanResult):
     _estimated_total_progress = 1
     MessageBrocker.emitProgress(_progress) #TEMP PROGRESS
     totalUpdates = sum([len(lst) for lst in scanResult.missingSkins.values()]) + sum([len(lst) for lst in scanResult.toBeUpdatedSkins.values()])
+    if totalUpdates == 0:
+        totalUpdates = 1
     _progress_step = (_estimated_total_progress - _progress) / totalUpdates
     
     for source in scanResult.getUsedSources():
@@ -62,6 +64,13 @@ def deleteSkinFromLocal(localSkinInfo):
 
 def updateCustomPhotos(toBeUpdatedPhotos):
     cockpitMode = getConf("cockpitNotesMode")
+    _progress = 0
+    _estimated_total_progress = 0.2
+    MessageBrocker.emitProgress(_progress) #TEMP PROGRESS
+    totalUpdates = len(toBeUpdatedPhotos)
+    if totalUpdates == 0:
+        totalUpdates = 1
+    _progress_step = (_estimated_total_progress - _progress) / totalUpdates
 
     for customPhoto in toBeUpdatedPhotos:
         
@@ -75,12 +84,15 @@ def updateCustomPhotos(toBeUpdatedPhotos):
         except HTTPError as httpError:
             MessageBrocker.emitConsoleMessage(f"Custom photo {customPhoto["aircraft"]} download ERROR {httpError.args} ")
 
+        _progress += _progress_step #TEMP PROGRESS
+        MessageBrocker.emitProgress(_progress) #TEMP PROGRESS
+
 
 
 
 
 async def updateAll(scanResult: ScanResult):
-    MessageBrocker.emitConsoleMessage("SYNCHRONIZATION BEGINS")
+    MessageBrocker.emitConsoleMessage("SYNCHRONIZATION BEGINS...")
     MessageBrocker.emitProgress(0) #TEMP PROGRESS
 
     if customPhotoSyncIsActive():
