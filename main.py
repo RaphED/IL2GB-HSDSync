@@ -167,7 +167,7 @@ if __name__ == "__main__":
         #CONSOLE RUN
         
         #register the console to the message brocker
-        MessageBrocker.registerHook(print)
+        MessageBrocker.registerConsoleHook(print)
         runMainConsole()
         sys.exit()
 

@@ -11,7 +11,10 @@ class ConsolePanel:
         self.text_widget = tk.Text(self.root, wrap="word", height=15, width=50)
         self.text_widget.pack(expand=True, fill="both")
 
-        MessageBrocker.registerHook(self.addLine)
+        MessageBrocker.registerConsoleHook(self.addLine)
+
+        #temp : progress there
+        MessageBrocker.registerProgressHook(self.addProgress)
         
     
     def addLine(self, text):
@@ -22,3 +25,6 @@ class ConsolePanel:
 
     def clearPanel(self):
         self.text_widget.delete(1.0,tk.END)
+
+    def addProgress(self, progress: float):
+        self.addLine(str(progress))

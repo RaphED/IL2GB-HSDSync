@@ -2,6 +2,7 @@ from pythonServices.configurationService import getConf, customPhotoSyncIsActive
 import pythonServices.localService as localService
 import pythonServices.remoteService as remoteService
 from pythonServices.subscriptionService import SubscribedCollection, getAllSubscribedCollection
+from pythonServices.messageBrocker import MessageBrocker
 
 import logging
 
@@ -265,7 +266,10 @@ def scanCustomPhotos():
     return toBeUpdatedPhotos
 
 def scanAll():
+    MessageBrocker.emitProgress(0) #TEMP PROGRESS
     scanResult = scanSkins()
+    MessageBrocker.emitProgress(0.9) #TEMP PROGRESS
     if customPhotoSyncIsActive():
         scanResult.toBeUpdatedCockpitNotes = scanCustomPhotos()
+    MessageBrocker.emitProgress(1.0) #TEMP PROGRESS
     return scanResult

@@ -1,15 +1,10 @@
-import time
-
-class Message:
-    def __init__(self, text: str, object: object = None):
-        self.timeStamp = time.time()
-        self.text = text
-        self.object = object
+from typing import Callable, Any
 
 class MessageBrocker:
 
     def __init__(self):
-        self.messageHooks = list()
+        self.consoleMessageHooks = list[Callable[[str], Any]]()
+        self.progressHooks = list[Callable[[float], Any]]()
 
     #SINGLETON MANAGEMENT
     _instance = None
@@ -20,18 +15,27 @@ class MessageBrocker:
             MessageBrocker._instance = MessageBrocker()
         return MessageBrocker._instance
 
-    #BUS EXTERNAL INTERRACTIONS
+    #EXTERNAL INTERRACTIONS
+    # --- CONSOLE MESSAGES
     @staticmethod
-    def emitMessage(messageText: str, enclosedObject : object = None) -> None:
-        #register the message in the bus
-        newMessage = Message(messageText, enclosedObject)
-        
-        #and send it to the registered message hooks
-        brocker_instance = MessageBrocker.getSingletonInstance()
-        for hook in brocker_instance.messageHooks:
-            hook(messageText)
+    def emitConsoleMessage(consoleText: str) -> None:
+       brocker_instance = MessageBrocker.getSingletonInstance()
+       for hook in brocker_instance.consoleMessageHooks:
+           hook(consoleText)
 
     @staticmethod
-    def registerHook(callback):
+    def registerConsoleHook(callback: Callable[[str], Any]):
         brocker_instance = MessageBrocker.getSingletonInstance()
-        brocker_instance.messageHooks.append(callback)
+        brocker_instance.consoleMessageHooks.append(callback)
+
+    # --- PROGRESS MESSAGES
+    @staticmethod
+    def emitProgress(percentage: float) -> None:
+       brocker_instance = MessageBrocker.getSingletonInstance()
+       for hook in brocker_instance.progressHooks:
+           hook(percentage)
+
+    @staticmethod
+    def registerProgressHook(callback: Callable[[float], Any]):
+        brocker_instance = MessageBrocker.getSingletonInstance()
+        brocker_instance.progressHooks.append(callback)

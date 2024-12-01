@@ -29,7 +29,7 @@ def deleteUnregisteredSkins(scanResult: ScanResult):
 
 def updateSingleSkinFromRemote(source, remoteSkin: remoteService.RemoteSkin):
 
-    MessageBrocker.emitMessage(f"Downloading {remoteSkin.getValue("name")}...")
+    MessageBrocker.emitConsoleMessage(f"Downloading {remoteSkin.getValue("name")}...")
 
     #download to temp the skin
     downloadedFiles = remoteService.downloadSkinToTempDir(source, remoteSkin)
@@ -39,11 +39,11 @@ def updateSingleSkinFromRemote(source, remoteSkin: remoteService.RemoteSkin):
         #Move the file to the target directory and replace existing file if any
         final_path = localService.moveSkinFromPathToDestination(file, remoteSkin.getValue("aircraft"))
 
-        MessageBrocker.emitMessage(f"Downloaded to {final_path}")
+        MessageBrocker.emitConsoleMessage(f"Downloaded to {final_path}")
 
 def deleteSkinFromLocal(localSkinInfo):
     localService.removeSkin(localSkinInfo)
-    MessageBrocker.emitMessage(f"Deleted skin : {localSkinInfo["name"]}")
+    MessageBrocker.emitConsoleMessage(f"Deleted skin : {localSkinInfo["name"]}")
 
 
 def updateCustomPhotos(toBeUpdatedPhotos):
@@ -56,16 +56,18 @@ def updateCustomPhotos(toBeUpdatedPhotos):
             
             #Move the file to the target directory and replace existing file if any
             localService.moveCustomPhotoFromPathToDestination(downloadedFile, customPhoto["aircraft"])
-            MessageBrocker.emitMessage(f"Custom photo {customPhoto["aircraft"]} updated")
+            MessageBrocker.emitConsoleMessage(f"Custom photo {customPhoto["aircraft"]} updated")
         
         except HTTPError as httpError:
-            MessageBrocker.emitMessage(f"Custom photo {customPhoto["aircraft"]} download ERROR {httpError.args} ")
+            MessageBrocker.emitConsoleMessage(f"Custom photo {customPhoto["aircraft"]} download ERROR {httpError.args} ")
 
 
 
 
 
 async def updateAll(scanResult: ScanResult):
+    MessageBrocker.emitConsoleMessage("SYNCHRONIZATION BEGINS")
+    
     if customPhotoSyncIsActive():
         updateCustomPhotos(scanResult.toBeUpdatedCockpitNotes)
     
@@ -73,3 +75,5 @@ async def updateAll(scanResult: ScanResult):
         deleteUnregisteredSkins(scanResult)
     
     updateRegisteredSkins(scanResult)
+
+    MessageBrocker.emitConsoleMessage("SYNCHRONIZATION FINISHED")
