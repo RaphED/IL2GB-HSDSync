@@ -9,13 +9,12 @@ class ParametersPanel:
 
         self.root = root
 
-        #Part of params :
-        params_label_frame = tk.Frame(self.root)
+        label = ttk.Label(text="Parameters", font=("Arial", 10,"bold"))
+        label.pack(side="left", fill="x",padx=5)  # Add some padding above the Treeview
+        params_label_frame = ttk.LabelFrame(root, labelwidget=label, padding=(5, 5))
         params_label_frame.pack(fill="both",padx=2, pady=2)
-        self.param_label = tk.Label(params_label_frame, text="Parameters :", font=("Arial", 10,"bold","underline"))
-        self.param_label.pack(side="left", fill="x",padx=5)  # Add some padding above the Treeview
-
-        path_frame = tk.Frame(self.root)
+        
+        path_frame = tk.Frame(params_label_frame)
         path_frame.pack(fill="x", pady=5)
         self.path_label = tk.Label(path_frame, text=self.short_path(getConf("IL2GBGameDirectory")), anchor="w")
         self.path_label.pack(side="left", fill="x", expand=True, padx=5)
@@ -23,7 +22,7 @@ class ParametersPanel:
         self.path_button.pack(side="right", padx=5)
 
         # Toggle Switch
-        toggle_frame = tk.Frame(self.root)
+        toggle_frame = tk.Frame(params_label_frame)
         toggle_frame.pack(fill="x", pady=5)
         tk.Label(toggle_frame, text="Auto remove unregistered skins", anchor="w").pack(side="left", padx=5)
         self.toggle_var = tk.BooleanVar(value=getConf("autoRemoveUnregisteredSkins"))
@@ -31,7 +30,7 @@ class ParametersPanel:
         self.toggle_button.pack(side="right", padx=5)
 
         # Dropdown Menu
-        dropdown_frame = tk.Frame(self.root)
+        dropdown_frame = tk.Frame(params_label_frame)
         dropdown_frame.pack(fill="x", pady=5)
         tk.Label(dropdown_frame, text="Cockpit Photo", anchor="w").pack(side="left", padx=5)
         self.dropdown_var = tk.StringVar(value=getConf("cockpitNotesMode"))
