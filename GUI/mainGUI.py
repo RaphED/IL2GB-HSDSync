@@ -70,7 +70,7 @@ class mainGUI:
             self.actionPanel.lockSyncButton()
             self.actionPanel.SumaryScanLabel.config(text="...")
         else:
-            MessageBrocker.emitMessage(scanResult.toString(), scanResult)
+            MessageBrocker.emitConsoleMessage(scanResult.toString())
             if scanResult.IsSyncUpToDate():
                 self.actionPanel.lockSyncButton()
                 self.actionPanel.SumaryScanLabel.config(text="Skins are up to date.")
@@ -101,9 +101,7 @@ class mainGUI:
         if self.currentScanResult is None:
             logging.error("Sync launched with no scan result")
             return
-        MessageBrocker.emitMessage("SYNCHRONIZATION BEGINS")
         tae.async_execute(ISSsynchronizer.updateAll(self.currentScanResult), wait=True, visible=False, pop_up=False, callback=None, master=self.root)
-        MessageBrocker.emitMessage("SYNCHRONIZATION FINISHED")
 
         #once sync done, lock it
         self.actionPanel.lockSyncButton()
