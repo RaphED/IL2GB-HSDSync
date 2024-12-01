@@ -13,14 +13,12 @@ class SubscriptionPanel:
         
         self.root = root
         
-        # Create a Label widget to display text above the Treeview
-        subscription_label_frame = tk.Frame(self.root)
+        label = ttk.Label(text="Subscriptions", font=("Arial", 10,"bold"))
+        label.pack(side="left", fill="x",padx=5)  # Add some padding above the Treeview
+        subscription_label_frame = ttk.LabelFrame(root, labelwidget=label, padding=(5, 5))
         subscription_label_frame.pack(fill="both",padx=2, pady=2)
-        self.label = tk.Label(subscription_label_frame, text="Subscriptions :", font=("Arial", 10,"bold","underline"))
-        self.label.pack(side="left", fill="x",padx=5)  # Add some padding above the Treeview
 
-        # Create and pack the Treeview widget with the custom style
-        self.tree = ttk.Treeview(self.root, show="tree" )#, style="Custom.Treeview")
+        self.tree = ttk.Treeview(subscription_label_frame, show="tree", style="Treeview" )
         self.tree.pack(fill="both",  padx=5, pady=5)
         
         # Add hierarchical data to the Treeview
@@ -29,18 +27,14 @@ class SubscriptionPanel:
         # Bind a selection event to the Treeview
         self.tree.bind("<<TreeviewSelect>>", self.on_item_selected)
 
-        # Create buttons in a frame
-        button_frame = tk.Frame(self.root)
-        button_frame.pack(fill="both", pady=2)
-
         # Add background color to the button frame for visibility
-        self.add_button = ttk.Button(button_frame, text="Import", command=self.add_item)
+        self.add_button = ttk.Button(subscription_label_frame, text="Import", command=self.add_item)
         self.add_button.pack(side="left", padx=10, pady=5)
 
-        self.delete_button = ttk.Button(button_frame, text="Delete", command=self.delete_item)
+        self.delete_button = ttk.Button(subscription_label_frame, text="Delete", command=self.delete_item)
         self.delete_button.pack(side="left", padx=5, pady=5)
 
-        self.switch_state_button = ttk.Button(button_frame, text="Activate/Disable", command=self.switch_state)
+        self.switch_state_button = ttk.Button(subscription_label_frame, text="Activate/Disable", command=self.switch_state)
         self.switch_state_button.pack(side="left", padx=5, pady=5)
 
     def populate_tree(self):
