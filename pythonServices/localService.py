@@ -6,6 +6,7 @@ import logging
 
 from pythonServices.configurationService import getConf
 from pythonServices.filesService import moveFile, deleteFile
+from pythonServices.messageBrocker import MessageBrocker
 
 def getSkinDirectory():
     return os.path.join(getConf("IL2GBGameDirectory"), "data\\graphics\\skins")
@@ -18,8 +19,16 @@ def getSkinsList():
     skinList = []
     skinsDirectory = getSkinDirectory()
     
+    _progress = 0.1
+    _estimated_total_progress = 0.8
+    MessageBrocker.emitProgress(_progress) #TEMP PROGRESS
+    
+    _progress_step = (_estimated_total_progress - _progress) / len(list(os.walk(skinsDirectory)))
+
     for root, dirs, files in os.walk(skinsDirectory):
-        
+        _progress += _progress_step #TEMP PROGRESS
+        MessageBrocker.emitProgress(_progress) #TEMP PROGRESS
+
         #continue if no files
         if len(files) == 0:
             continue
@@ -66,6 +75,7 @@ def getSkinsList():
                     break
                     #TODO: manage the case of an orphan secondary file
     
+
     return skinList
 
 def moveSkinFromPathToDestination(src_path, aircraft):

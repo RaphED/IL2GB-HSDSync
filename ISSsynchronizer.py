@@ -12,15 +12,29 @@ import logging
 
 
 def updateRegisteredSkins(scanResult: ScanResult):
+
+    _progress = 0.2
+    _estimated_total_progress = 1
+    MessageBrocker.emitProgress(_progress) #TEMP PROGRESS
+    totalUpdates = sum([len(lst) for lst in scanResult.missingSkins.values()]) + sum([len(lst) for lst in scanResult.toBeUpdatedSkins.values()])
+    _progress_step = (_estimated_total_progress - _progress) / totalUpdates
     
     for source in scanResult.getUsedSources():
+        
         #import all missings skins
         for skin in scanResult.missingSkins[source]:
             updateSingleSkinFromRemote(source, skin)
 
+            _progress += _progress_step #TEMP PROGRESS
+            MessageBrocker.emitProgress(_progress) #TEMP PROGRESS
+            
+
         #import all to be updated skins
         for skin in scanResult.toBeUpdatedSkins[source]:
             updateSingleSkinFromRemote(source, skin)
+
+            _progress += _progress_step #TEMP PROGRESS
+            MessageBrocker.emitProgress(_progress) #TEMP PROGRESS
 
 
 def deleteUnregisteredSkins(scanResult: ScanResult):
@@ -67,13 +81,15 @@ def updateCustomPhotos(toBeUpdatedPhotos):
 
 async def updateAll(scanResult: ScanResult):
     MessageBrocker.emitConsoleMessage("SYNCHRONIZATION BEGINS")
-    
+    MessageBrocker.emitProgress(0) #TEMP PROGRESS
+
     if customPhotoSyncIsActive():
         updateCustomPhotos(scanResult.toBeUpdatedCockpitNotes)
-    
+    MessageBrocker.emitProgress(0.2) #TEMP PROGRESS
     if getConf("autoRemoveUnregisteredSkins"):
         deleteUnregisteredSkins(scanResult)
     
     updateRegisteredSkins(scanResult)
 
+    MessageBrocker.emitProgress(1) #TEMP PROGRESS
     MessageBrocker.emitConsoleMessage("SYNCHRONIZATION FINISHED")
