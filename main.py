@@ -27,7 +27,7 @@ def runMainConsole():
         if isSubcriptionFolderEmpty():
             printWarning("There are no subscriptions.\nPlease import or activate .iss file(s) to subscribe to any skins collection")
         printWarning("Skins scan launched. Please wait...")
-        scanResult = ISSScanner.ScanAll()
+        scanResult = ISSScanner.scanAll()
         print(scanResult.toString())
 
         #then as the user for the update if any
