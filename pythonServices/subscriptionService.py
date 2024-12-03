@@ -4,6 +4,7 @@ import re
 import logging
 
 from pythonServices.remoteService import getSourceInfo, RemoteSkin
+from pythonServices.filesService import downloadFile
 
 subscriptionPath = os.path.join(os.getcwd(),"Subscriptions")
 
@@ -36,23 +37,30 @@ def getSubscribedCollectionFromFile(subscriptionFilePath):
     subscribedCollectionlist = []
     try:
         file = open(subscriptionFilePath, "r")
-        rawJsonData: list = json.load(file)
+        rawJsonData = json.load(file)
 
         #raw data should be a list
         for rawSubscription in rawJsonData:
-            subscribedCollectionlist.append(
-                SubscribedCollection(
-                    subcriptionName=os.path.basename(subscriptionFilePath).replace(".iss", ""),
-                    source=rawSubscription.get("source"),
-                    criteria=rawSubscription["criteria"]
+            proxyFile = rawSubscription.get("ProxyISS")
+            if proxyFile is None:   #OPTION 1 : this is a normal collection
+                subscribedCollectionlist.append(
+                    SubscribedCollection(
+                        subcriptionName=os.path.basename(subscriptionFilePath).replace(".iss", ""),
+                        source=rawSubscription.get("source"),
+                        criteria=rawSubscription["criteria"]
+                    )
                 )
-            )
+            else:   #OPTION 2 : this is a link to remote iss file
+                downloadedFile = downloadFile(proxyFile)
+                subscribedCollectionlist += getSubscribedCollectionFromFile(downloadedFile)
 
+        
+        return subscribedCollectionlist
+                
     except Exception as e:
         logging.error(f"Error at loading subscription file {subscriptionFilePath}. Error detail : {e}")
     
-    return subscribedCollectionlist
-
+    
 def getAllSubscribedCollection() -> list[SubscribedCollection]:
 
     returnedCollections = []
