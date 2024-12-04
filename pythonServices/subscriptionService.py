@@ -59,6 +59,7 @@ def getSubscribedCollectionFromFile(subscriptionFilePath):
                 
     except Exception as e:
         logging.error(f"Error at loading subscription file {subscriptionFilePath}. Error detail : {e}")
+        return []
     
     
 def getAllSubscribedCollection() -> list[SubscribedCollection]:
