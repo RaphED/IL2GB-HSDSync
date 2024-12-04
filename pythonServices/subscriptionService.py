@@ -21,7 +21,12 @@ class SubscribedCollection:
         self.criteria: dict[str,str]= criteria
         
 
-    def match(self, remoteSkinInfo: RemoteSkin):
+    def match(self, remoteSkinInfo: RemoteSkin, applyCensorship = False) -> bool:
+        
+        #cannot take a skin if we want to apply censorship and there is not uncensored version
+        if applyCensorship and not remoteSkinInfo.hasAnCensoredVersion():
+            return False
+        
         for criterion in self.criteria.keys():
             #transform * in .*
             matchingRegExp =self.criteria[criterion].replace("*", ".*") 
