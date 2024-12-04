@@ -1,3 +1,4 @@
+from enum import Enum
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 import os
@@ -10,10 +11,44 @@ from pythonServices.subscriptionService import getAllSubscribedCollectionByFileN
 from pythonServices.remoteService import getSpaceUsageOfRemoteSkinCatalog, RemoteSkin
 from ISSScanner import getSkinsMatchingWithSubscribedCollection, bytesToString
 
+class PlanesLinked:
+    name=None
+    onLocal=False
+    treeID=None
+
+    def __init__(self,name,onLocal,treeID):
+        self.name=name
+        self.onLocal=onLocal
+        self.treeID=treeID
+
+class SubscriptionState(Enum):
+    NOTLOADED = 1
+    LOADED = 2
+    DISABLED = 3
+
+class Subscription:
+    name=None
+    treeID=None
+    state=SubscriptionState.NOTLOADED
+    size=None
+    planesLinked=list[PlanesLinked]
+    fileName=None
+
+    def __init__(self,name,fileName,treeID,state):#,,size):
+        self.name=name
+        self.treeID=treeID
+        self.state=state
+        self.fileName=fileName
+        # self.size=size
+
+
 class SubscriptionPanel:
 
+    subscriptions = []
+
     def __init__(self, root: tk):
-        
+        global subscriptions
+        subscriptions = []
         self.root = root
         
         label = ttk.Label(text="Collections", font=("Arial", 10,"bold"))
@@ -24,11 +59,8 @@ class SubscriptionPanel:
         self.tree = ttk.Treeview(subscription_label_frame, show="tree", style="Treeview" )
         self.tree.pack(fill="both",  padx=5, pady=5)
         
-        # Add hierarchical data to the Treeview
-        # tae.async_execute(self.async_populate_tree(), wait=False, visible=False, pop_up=False, callback=None, master=self.root)
         self.the_start_of_syncs()
      
-
         # Bind a selection event to the Treeview
         self.tree.bind("<<TreeviewSelect>>", self.on_item_selected)
 
@@ -53,32 +85,46 @@ class SubscriptionPanel:
         MessageBrocker.emitConsoleMessage("Getting collections from /Subscriptions folder")
         MessageBrocker.emitProgress(0.2)
         collectionByNameSubscribeFile = getAllSubscribedCollectionByFileName()
-        """Populates the Treeview with nested data."""
-        for ISSFile in collectionByNameSubscribeFile.keys():
-            skinCollection = list[RemoteSkin]()
-            for collection in collectionByNameSubscribeFile[ISSFile]:
-                skinCollection += getSkinsMatchingWithSubscribedCollection(collection)
-            #TODO eric => here you set the tree so the user can see it, but you wait after the list is synced to call size, and  data and allow user to click scan, the user can still modify other elements in between (except maibe the path of il2?
-            # Also need to verify that the user list is kept and not redownloaded)
-            # Also need to be absolutly sure that list are always read in the same order
-            #TODO : make it work for multiple sources
-            catalogSize=getSpaceUsageOfRemoteSkinCatalog("HSD",skinCollection)
-            #parent_id = self.tree.insert("", "end", text=key + "\t\t(" + synchronizer.bytesToString(catalogSize) + ")")  # Add main item
-            parent_id = self.tree.insert("", "end", text=buildCollectionTreeLabel(ISSFile, catalogSize=catalogSize))  # Add main item
-            for skin in skinCollection:
-                self.tree.insert(parent_id, "end", text=skin.getValue('name'))  # Add sub-items
+        global subscriptions
 
+        #Part adding the disactivated
         subscriptionPath = os.path.join(os.getcwd(),"Subscriptions")
-
-        disabledElements = list()
         #create subsciption path of not exists
         for root, dirs, files in os.walk(subscriptionPath):
             for file in files:
                 if file.endswith(".iss.disabled"): #We only consider files with iss extension
-                    disabledElements.append( file[:file.find(".iss.disabled")])
+                    name=buildCollectionTreeLabel(file[:file.find(".iss.disabled")], isDisabled=True)
+                    sub_id = self.tree.insert("", "end",text=name )
+                    newSub=Subscription(name=name,fileName=file[:file.find(".iss.disabled")],treeID=sub_id,state=SubscriptionState.DISABLED)
+                    subscriptions.append(newSub)        
 
-        for disabledElement in disabledElements:
-            self.tree.insert("", "end", text=buildCollectionTreeLabel(disabledElement, isDisabled=True))
+        #We have the files, we add it to the tree and display the GUI as soon as possible and say it's loading
+        for ISSFile in collectionByNameSubscribeFile.keys():
+            text=buildCollectionTreeLabel(ISSFile, catalogSize=0,loading=True)
+            tree_id = self.tree.insert("", "end", text=text)  # Add main item
+            newSub=Subscription(name=text,fileName=ISSFile,treeID=tree_id,state=SubscriptionState.NOTLOADED)
+            subscriptions.append(newSub)
+
+
+        #This part needs to be even more async and fire and forget until it has the results
+        tae.async_execute(self.async_populate_tree_after_calculate(collectionByNameSubscribeFile), wait=False, visible=False, pop_up=False, callback=None, master=self.root)
+
+    async def async_populate_tree_after_calculate(self,collectionByNameSubscribeFile):        
+        for ISSFile in collectionByNameSubscribeFile.keys():
+            skinCollection = list[RemoteSkin]()
+            catalogSize=0
+
+            for collection in collectionByNameSubscribeFile[ISSFile]:
+                skinCollection += getSkinsMatchingWithSubscribedCollection(collection)
+                catalogSize+=getSpaceUsageOfRemoteSkinCatalog("HSD",skinCollection)#TODO change this ! This is bad and an aprox, you mays have a lot of repeats !
+
+                #Get the current loading elements of the treeview:
+            for obj in subscriptions:
+                if obj.fileName == ISSFile:
+                    self.tree.item(obj.treeID, text=buildCollectionTreeLabel(ISSFile, catalogSize=catalogSize)) 
+                    for skin in skinCollection:
+                        self.tree.insert(obj.treeID, "end", text=skin.getValue('name'))
+                    break
 
     def on_item_selected(self, event):
         """Handle the selection event."""
@@ -157,7 +203,9 @@ class SubscriptionPanel:
 
 #TODO : Quite temporary solution before handling properly objects instead of strings and titles
 treeLabelSeparator = "\t\t"
-def buildCollectionTreeLabel(catalogName,catalogSize = 0, isDisabled = False ):
+def buildCollectionTreeLabel(catalogName,catalogSize = 0, isDisabled = False,loading=False ):
+    if loading:
+        return f"{catalogName}{treeLabelSeparator} (LOADING ...)"
     if isDisabled:
         return f"{catalogName}{treeLabelSeparator}DISABLED"
     else:
