@@ -4,6 +4,7 @@ import re
 import logging
 
 from pythonServices.remoteService import getSourceInfo, RemoteSkin
+from pythonServices.filesService import downloadFile
 
 subscriptionPath = os.path.join(os.getcwd(),"Subscriptions")
 
@@ -20,7 +21,12 @@ class SubscribedCollection:
         self.criteria: dict[str,str]= criteria
         
 
-    def match(self, remoteSkinInfo: RemoteSkin):
+    def match(self, remoteSkinInfo: RemoteSkin, applyCensorship = False) -> bool:
+        
+        #cannot take a skin if we want to apply censorship and there is not uncensored version
+        if applyCensorship and not remoteSkinInfo.hasAnCensoredVersion():
+            return False
+        
         for criterion in self.criteria.keys():
             #transform * in .*
             matchingRegExp =self.criteria[criterion].replace("*", ".*") 
@@ -36,23 +42,31 @@ def getSubscribedCollectionFromFile(subscriptionFilePath):
     subscribedCollectionlist = []
     try:
         file = open(subscriptionFilePath, "r")
-        rawJsonData: list = json.load(file)
+        rawJsonData = json.load(file)
 
         #raw data should be a list
         for rawSubscription in rawJsonData:
-            subscribedCollectionlist.append(
-                SubscribedCollection(
-                    subcriptionName=os.path.basename(subscriptionFilePath).replace(".iss", ""),
-                    source=rawSubscription.get("source"),
-                    criteria=rawSubscription["criteria"]
+            proxyFile = rawSubscription.get("ProxyISS")
+            if proxyFile is None:   #OPTION 1 : this is a normal collection
+                subscribedCollectionlist.append(
+                    SubscribedCollection(
+                        subcriptionName=os.path.basename(subscriptionFilePath).replace(".iss", ""),
+                        source=rawSubscription.get("source"),
+                        criteria=rawSubscription["criteria"]
+                    )
                 )
-            )
+            else:   #OPTION 2 : this is a link to remote iss file
+                downloadedFile = downloadFile(proxyFile)
+                subscribedCollectionlist += getSubscribedCollectionFromFile(downloadedFile)
 
+        
+        return subscribedCollectionlist
+                
     except Exception as e:
         logging.error(f"Error at loading subscription file {subscriptionFilePath}. Error detail : {e}")
+        return []
     
-    return subscribedCollectionlist
-
+    
 def getAllSubscribedCollection() -> list[SubscribedCollection]:
 
     returnedCollections = []

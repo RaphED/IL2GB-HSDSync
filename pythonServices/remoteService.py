@@ -58,19 +58,22 @@ class RemoteSkin:
         self.infos[key] = value
 
     def getValue(self, param: str):
-        #TODO : make Censorship a param
         applyCensorship = getConf("applyCensorship")
 
         if applyCensorship:
             return self.infos.get(getSourceParam(self.source, param, censored=True))
         else:
             #take the uncensored value, and if value is None or "", then take censored
-            uncensored_value = self.infos.get(getSourceParam(self.source, param, censored=True))
+            uncensored_value = self.infos.get(getSourceParam(self.source, param, censored=False))
             if uncensored_value is not None and uncensored_value != "":
                 return uncensored_value
             else:
                 return self.infos.get(getSourceParam(self.source, param, censored=True))
 
+    def hasAnCensoredVersion(self) -> bool:
+        #we consider the first dds file
+        firstUncensoredValue =  self.infos.get(getSourceParam(source=self.source, param="mainSkinFileName", censored=True))
+        return firstUncensoredValue is not None and firstUncensoredValue != ""
 
 
 def getSkinsCatalogFromSource(source) -> list[RemoteSkin]:
