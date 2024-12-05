@@ -86,6 +86,7 @@ class SubscriptionPanel:
         MessageBrocker.emitProgress(0.2)
         collectionByNameSubscribeFile = getAllSubscribedCollectionByFileName()
         global subscriptions
+        subscriptions = []
 
         #Part adding the disactivated
         subscriptionPath = os.path.join(os.getcwd(),"Subscriptions")
