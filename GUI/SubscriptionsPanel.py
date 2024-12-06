@@ -117,7 +117,8 @@ class SubscriptionPanel:
 
             for collection in collectionByNameSubscribeFile[ISSFile]:
                 skinCollection += getSkinsMatchingWithSubscribedCollection(collection)
-                catalogSize+=getSpaceUsageOfRemoteSkinCatalog("HSD",skinCollection)#TODO change this ! This is bad and an aprox, you mays have a lot of repeats !
+            
+            catalogSize+=getSpaceUsageOfRemoteSkinCatalog("HSD",skinCollection)#TODO change this ! This is bad and an aprox, you mays have a lot of repeats !
 
                 #Get the current loading elements of the treeview:
             for obj in subscriptions:
