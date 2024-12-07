@@ -28,6 +28,9 @@ class SubscribedCollection:
             return False
         
         for criterion in self.criteria.keys():
+            if remoteSkinInfo.infos.get(criterion) is None:
+                logging.warning(f"Unexpected criteron '{criterion}' for skin source '{remoteSkinInfo.source}' and collection '{self.subcriptionName}'")
+                return False
             #transform * in .*
             matchingRegExp =self.criteria[criterion].replace("*", ".*") 
             if not re.match(matchingRegExp,remoteSkinInfo.infos[criterion]):
