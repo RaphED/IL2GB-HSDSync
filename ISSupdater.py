@@ -6,7 +6,6 @@ import logging
 
 from pythonServices.filesService import downloadFile, getTempFolderFullPath, copyFile
 from versionManager import getLastRelease
-import pythonServices.loggingService
 
 
 def downloadLastReleaseFile(fileName, prerelease = False):

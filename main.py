@@ -5,7 +5,6 @@ from pythonServices.subscriptionService import isSubcriptionFolderEmpty
 from pythonServices.filesService import cleanTemporaryFolder
 from pythonServices.messageBrocker import MessageBrocker
 
-import pythonServices.loggingService
 import logging
 from versionManager import isCurrentVersionUpToDate
 import ISSupdater
@@ -135,7 +134,7 @@ if __name__ == "__main__":
     updater_mode = False
     update_withPrerelease = False
     console_mode = False #TODO : Not implemented yet
-    debug_mode = False #TODO : Not implemented yet
+    debug_mode = False
 
     for arg in sys.argv[1:]:
         if arg == '-updater':
@@ -148,6 +147,19 @@ if __name__ == "__main__":
             console_mode = True
         elif arg == '-debug':
             debug_mode = True
+    
+    #INITIALISE LOGS
+    logLevel = logging.DEBUG
+    if not debug_mode:
+        logLevel = logging.INFO
+ 
+    logging.basicConfig(
+        filename='iss.log',       # Le fichier de log où les messages seront enregistrés
+        level= logLevel,          # Le niveau de log (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+        format='%(asctime)s - %(levelname)s - %(message)s',  # Format du message
+        datefmt='%Y-%m-%d %H:%M:%S'    # Format de la date
+    )
+    
     
     #Check if an update has to be launched
     if not isCurrentVersionUpToDate(prerelease = update_withPrerelease) or force_update:
