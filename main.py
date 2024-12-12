@@ -103,19 +103,6 @@ def generateConfFileWithConsole():
     
     configurationService.update_config_param("IL2GBGameDirectory", foundIL2Path)
 
-    print("ISS provides two modes :\n - (a) keep all downloaded skins\n - (b) remove all skins and keep only the ones you are subscripted to.")
-    
-    while True:
-        deletionMode = input("What mode do you want ? (a) or (b) ? ").lower()
-        if deletionMode == "a":
-            configurationService.update_config_param("autoRemoveUnregisteredSkins", False)
-            break
-        elif deletionMode == "b":
-            configurationService.update_config_param("autoRemoveUnregisteredSkins", True)
-            break
-        else:
-            printError("Unknown anwser. Please anwser a or b")
-
     printSuccess("Configuration initialized with success")
     
 def printError(text):
