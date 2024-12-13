@@ -9,9 +9,9 @@ import logging
 from versionManager import isCurrentVersionUpToDate
 import ISSupdater
 import ISSScanner
-import tk_async_execute as tae
 
-from GUI.mainGUI import mainGUI
+from GUI.mainGUI import runMainGUI
+from GUI.uploaderGUI import runUploaderGUI
 
 
 def runMainConsole():
@@ -157,23 +157,17 @@ if __name__ == "__main__":
     
     
     if updater_mode:
-        ISSupdater.replaceAndLaunchMainExe(prerelease = update_withPrerelease)
+        runUploaderGUI()
         sys.exit()
 
     performAtProgramLauchChecks()
     
     if console_mode:
-        #CONSOLE RUN
-        
+        #CONSOLE RUN        
         #register the console to the message brocker
         MessageBrocker.registerConsoleHook(print)
         runMainConsole()
         sys.exit()
-
     else:
         #NORMAL GUI RUN
-        mainUI = mainGUI()
-        tae.start()
-        mainUI.run()
-        tae.stop()
-    
+        runMainGUI()

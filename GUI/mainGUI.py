@@ -16,12 +16,11 @@ from GUI.progressBar import ProgressBar
 import ISSsynchronizer
 import ISSScanner
 
-class mainGUI:
+class MainGUI:
     
-    def __init__(self):
+    def __init__(self, root):
 
-        #initialise tinker compotent (why root ??)
-        self.root = tk.Tk()
+        self.root = root
 
         self.root.iconbitmap(getRessourcePath("iss.ico"))
 
@@ -59,10 +58,6 @@ class mainGUI:
 
         #OTHER STORED INFORMATION
         self.currentScanResult: ISSsynchronizer.ScanResult = None
-
-        
-    def run(self):
-        return self.root.mainloop()
     
     def updateScanResult(self, scanResult: ISSsynchronizer.ScanResult):
         self.currentScanResult = scanResult
@@ -111,4 +106,11 @@ class mainGUI:
         self.actionPanel.lockSyncButton()
 
     
-                
+def runMainGUI():
+    
+    root = tk.Tk()
+    mainGUI = MainGUI(root)
+    
+    tae.start()
+    root.mainloop()
+    tae.stop()
