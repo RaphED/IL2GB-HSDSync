@@ -11,7 +11,7 @@ import ISSupdater
 import ISSScanner
 
 from GUI.mainGUI import runMainGUI
-from GUI.uploaderGUI import runUploaderGUI
+from GUI.updaterGUI import runUpdaterGUI
 
 
 def runMainConsole():
@@ -155,9 +155,8 @@ if __name__ == "__main__":
         ISSupdater.downloadAndRunUpdater(prerelease = update_withPrerelease)
         sys.exit()
     
-    
     if updater_mode:
-        runUploaderGUI()
+        runUpdaterGUI(update_withPrerelease)
         sys.exit()
 
     performAtProgramLauchChecks()

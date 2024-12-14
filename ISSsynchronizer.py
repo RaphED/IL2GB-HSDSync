@@ -87,10 +87,6 @@ def updateCustomPhotos(toBeUpdatedPhotos):
         _progress += _progress_step #TEMP PROGRESS
         MessageBrocker.emitProgress(_progress) #TEMP PROGRESS
 
-
-
-
-
 async def updateAll(scanResult: ScanResult):
     MessageBrocker.emitConsoleMessage("SYNCHRONIZATION BEGINS...")
     MessageBrocker.emitProgress(0) #TEMP PROGRESS
