@@ -1,6 +1,4 @@
 import sys
-import pythonServices.configurationService as configurationService
-from pythonServices.filesService import cleanTemporaryFolder
 
 import logging
 from versionManager import isCurrentVersionUpToDate
@@ -8,23 +6,6 @@ import ISSupdater
 
 from GUI.mainGUI import runMainGUI
 from GUI.updaterGUI import runUpdaterGUI
-
-def performAtProgramLauchChecks():
-
-    #make sure the temporary folder is clean -> do not do that due to update !
-    cleanTemporaryFolder()
-
-     #check conf file is generated
-    if not configurationService.configurationFileExists():
-        #at first create a conf file with default params
-        logging.info("New configuration file generated")
-        configurationService.generateConfFile()
-        #Then get the IL2 path
-        foundIL2Path = configurationService.tryToFindIL2Path()
-        logging.info(f"IL2 found path {foundIL2Path}")
-        if foundIL2Path is not None:
-            configurationService.update_config_param("IL2GBGameDirectory", foundIL2Path)
-        
 
 ######### MAIN ###############
 if __name__ == "__main__":
@@ -65,5 +46,4 @@ if __name__ == "__main__":
         runUpdaterGUI(update_withPrerelease)
     #NORMAL MODE
     else:
-        performAtProgramLauchChecks()
         runMainGUI()
