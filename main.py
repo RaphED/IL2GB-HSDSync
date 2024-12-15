@@ -1,60 +1,13 @@
 import sys
-import ISSsynchronizer
 import pythonServices.configurationService as configurationService
-from pythonServices.subscriptionService import isSubcriptionFolderEmpty
 from pythonServices.filesService import cleanTemporaryFolder
-from pythonServices.messageBrocker import MessageBrocker
 
 import logging
 from versionManager import isCurrentVersionUpToDate
 import ISSupdater
-import ISSScanner
 
 from GUI.mainGUI import runMainGUI
 from GUI.updaterGUI import runUpdaterGUI
-
-
-def runMainConsole():
-    try:
-        performPreScanChecks()
-
-        print("**********************************************")
-        print("**************** SYNC STARTED ****************")
-        print("**********************************************\n")
-
-        print("\tSTEP 1/2 - SCAN\n")
-        if isSubcriptionFolderEmpty():
-            printWarning("There are no subscriptions.\nPlease import or activate .iss file(s) to subscribe to any skins collection")
-        printWarning("Skins scan launched. Please wait...")
-        scanResult = ISSScanner.scanAll()
-        print(scanResult.toString())
-
-        #then as the user for the update if any
-        print("\tSTEP 2/2 - SYNC\n")
-        if scanResult.IsSyncUpToDate():
-            printSuccess("All skins are up to date.")
-        else:
-            while True:
-                deletionMode = input("Do you want to perform the update ? yes (y) or no (n) ? ").lower()
-                if deletionMode == "y":
-                    printWarning("UPDATE STARTED...")
-                    ISSsynchronizer.updateAll(scanResult)
-                    printSuccess("UPDATE DONE")
-                    break
-                elif deletionMode == "n":
-                    printWarning("NO UPDATE PERFORMED")
-                    break
-                else:
-                    printError("unexpected anwser")
-
-    except Exception as e:
-        printError(e)
-
-    print("**********************************************")
-    print("***************** SYNC ENDED *****************")
-    print("**********************************************")
-
-    input("Press any key...")
 
 def performAtProgramLauchChecks():
 
@@ -120,7 +73,6 @@ if __name__ == "__main__":
     force_update = False
     updater_mode = False
     update_withPrerelease = False
-    console_mode = False #TODO : Not implemented yet
     debug_mode = False
 
     for arg in sys.argv[1:]:
@@ -130,8 +82,6 @@ if __name__ == "__main__":
             force_update = True
         elif arg == '-prerelease':
             update_withPrerelease = True
-        elif arg == '-console':
-            console_mode = True
         elif arg == '-debug':
             debug_mode = True
     
@@ -157,16 +107,6 @@ if __name__ == "__main__":
     
     if updater_mode:
         runUpdaterGUI(update_withPrerelease)
-        sys.exit()
-
-    performAtProgramLauchChecks()
-    
-    if console_mode:
-        #CONSOLE RUN        
-        #register the console to the message brocker
-        MessageBrocker.registerConsoleHook(print)
-        runMainConsole()
-        sys.exit()
     else:
-        #NORMAL GUI RUN
+        performAtProgramLauchChecks()
         runMainGUI()
