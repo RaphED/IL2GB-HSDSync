@@ -16,13 +16,6 @@
 			"args": ["-debug", "-prerelease"],
             "console": "integratedTerminal"
 		},{
-			"name": "ConsoleMode",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "main.py",
-			"args": ["-console", "-prerelease"],
-            "console": "integratedTerminal"
-		},{
 			"name": "Updater",
             "type": "debugpy",
             "request": "launch",
