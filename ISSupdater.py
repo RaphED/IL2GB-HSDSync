@@ -22,9 +22,10 @@ def runNewIndependantProcess(args):
     logging.info(f"Running new independant command : {args}")
     subprocess.Popen(
         args,  # Arguments to the updater
-        shell=False,            # Don't use a shell to avoid unnecessary dependencies
-        close_fds=True,         # Close file descriptors to detach from the parent process
-        creationflags=subprocess.DETACHED_PROCESS if sys.platform == "win32" else 0  # Detach process on Windows
+        start_new_session=True
+        #shell=False,            # Don't use a shell to avoid unnecessary dependencies
+        #close_fds=True,         # Close file descriptors to detach from the parent process
+        #creationflags=subprocess.DETACHED_PROCESS if sys.platform == "win32" else 0  # Detach process on Windows
     )
 
 
