@@ -1,6 +1,5 @@
 import tkinter as tk
 import threading
-import sys
 import logging
 
 from GUI.splashScreen import SplashScreen

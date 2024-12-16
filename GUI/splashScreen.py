@@ -7,8 +7,8 @@ from pythonServices.filesService import getRessourcePath
 class SplashScreen:
     def __init__(self, root, imageFileName):
         self.root = root
-        self.size_x = 600
-        self.size_y = 300
+        self.size_x = 900
+        self.size_y = 600
 
         self.splash = tk.Toplevel()
         self.splash.overrideredirect(True)
