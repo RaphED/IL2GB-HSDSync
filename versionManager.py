@@ -4,7 +4,7 @@ from packaging.version import Version
 
 #This is THE reference for the current ISS version
 #Change version here when preparing a new release
-currentVersion = 2
+currentVersion = 3
 
 GITHUB_REPO_URL = "https://api.github.com/repos/RaphED/IL2GB-inter-squadrons-skins-synchronizer"
 

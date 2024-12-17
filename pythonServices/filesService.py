@@ -17,9 +17,18 @@ def cleanTemporaryFolder():
     if temporaryFolderExists():
         for root, dirs, files in os.walk(getTempFolderFullPath()):
             for f in files:
-                os.unlink(os.path.join(root, f))
+                filePath = os.path.join(root, f)
+                try:
+                    os.unlink(filePath)
+                except:
+                    logging.warning(f"Cannot clean temporary file {filePath}")
             for d in dirs:
-                shutil.rmtree(os.path.join(root, d))
+                dirPath = os.path.join(root, d)
+                try:
+                    shutil.rmtree(dirPath)
+                except:
+                    logging.warning(f"Cannot clean temporary directory {dirPath}")
+                
 
 # Function to download a file from a URL and save it to a temporary directory
 def downloadFile(url, expectedMD5 = None):

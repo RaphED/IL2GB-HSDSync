@@ -13,14 +13,7 @@
             "type": "debugpy",
             "request": "launch",
             "program": "main.py",
-			"args": ["-prerelease"],
-            "console": "integratedTerminal"
-		},{
-			"name": "ConsoleMode",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "main.py",
-			"args": ["-console", "-prerelease"],
+			"args": ["-debug", "-prerelease"],
             "console": "integratedTerminal"
 		},{
 			"name": "Updater",

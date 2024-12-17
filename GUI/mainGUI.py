@@ -1,27 +1,26 @@
-import time
 from tkinter import ttk
 import tkinter as tk
 import logging
 import tk_async_execute as tae
 
-from pythonServices.configurationService import getConf
-from pythonServices.filesService import getRessourcePath
+from pythonServices.configurationService import configurationFileExists, getConf
+from pythonServices.filesService import getRessourcePath, cleanTemporaryFolder
 
 from GUI.SubscriptionsPanel import SubscriptionPanel
 from GUI.parametersPanel import ParametersPanel
 from GUI.consolePanel import ConsolePanel
 from GUI.actionsPanel import ActionPanel
 from GUI.progressBar import ProgressBar
+from GUI.firstLaunchGUI import runFirstLaunchGUI
 
 import ISSsynchronizer
 import ISSScanner
 
-class mainGUI:
+class MainGUI:
     
-    def __init__(self):
+    def __init__(self, root):
 
-        #initialise tinker compotent (why root ??)
-        self.root = tk.Tk()
+        self.root = root
 
         self.root.iconbitmap(getRessourcePath("iss.ico"))
 
@@ -59,10 +58,6 @@ class mainGUI:
 
         #OTHER STORED INFORMATION
         self.currentScanResult: ISSsynchronizer.ScanResult = None
-
-        
-    def run(self):
-        return self.root.mainloop()
     
     def updateScanResult(self, scanResult: ISSsynchronizer.ScanResult):
         self.currentScanResult = scanResult
@@ -110,5 +105,19 @@ class mainGUI:
         #once sync done, lock it
         self.actionPanel.lockSyncButton()
 
+
+def runMainGUI():
     
-                
+    #make sure the temporary folder is clean -> do not do that due to update !
+    cleanTemporaryFolder()
+
+    #check conf file is generated
+    if not configurationFileExists():
+        runFirstLaunchGUI()
+    
+    root = tk.Tk()
+    mainGUI = MainGUI(root)
+
+    tae.start()
+    root.mainloop()
+    tae.stop()
