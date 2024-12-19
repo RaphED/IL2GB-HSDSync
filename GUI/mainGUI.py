@@ -52,7 +52,7 @@ class MainGUI:
         self.progressBar = ProgressBar(self.root)
         
         bottom_main_frame = tk.Frame(self.root)
-        bottom_main_frame.pack(side="bottom", fill="both")
+        bottom_main_frame.pack(side="bottom", fill="both", expand=True)
 
         self.consolePanel = ConsolePanel(bottom_main_frame)
 
