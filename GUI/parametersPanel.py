@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, filedialog
 
-from pythonServices.configurationService import getConf, update_config_param, allowedCockpitNotesModes
+from pythonServices.configurationService import getConf, update_config_param, allowedCockpitNotesModes, checkIL2InstallPath
 
 class ParametersPanel:
 
@@ -16,7 +16,8 @@ class ParametersPanel:
         
         path_frame = tk.Frame(params_label_frame)
         path_frame.pack(fill="x", pady=5)
-        self.path_label = tk.Label(path_frame, text=self.short_path(getConf("IL2GBGameDirectory")), anchor="w")
+        self.path_label = tk.Label(path_frame, text="", highlightbackground="red")
+        self.update_pathLabel()
         self.path_label.pack(side="left", fill="x", expand=True, padx=5)
         self.path_button = ttk.Button(path_frame, text="Modify", command=self.modify_path)
         self.path_button.pack(side="right", padx=5)
@@ -48,6 +49,15 @@ class ParametersPanel:
             return f"{fullPath[:maxLength]}..."
         return fullPath
     
+    def update_pathLabel(self):
+        currentIL2Path = getConf("IL2GBGameDirectory")
+        self.path_label.config(text=self.short_path(currentIL2Path))
+        #display error if conf is unproper
+        if checkIL2InstallPath():
+            self.path_label.config(highlightthickness=0)
+        else:
+            self.path_label.config(highlightthickness=2)
+    
     def modify_path(self):
         file_path = filedialog.askdirectory(
             initialdir=getConf("IL2GBGameDirectory"),
@@ -55,7 +65,7 @@ class ParametersPanel:
         )
         if len(file_path)>0:
             update_config_param("IL2GBGameDirectory",file_path)
-            self.path_label.config(text=self.short_path(file_path))
+            self.update_pathLabel()
     
     def modify_auto_remove(self):
         lebooleanquejeveux=self.toggle_var.get()

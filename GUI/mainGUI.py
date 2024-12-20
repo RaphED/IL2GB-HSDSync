@@ -30,7 +30,7 @@ class MainGUI:
         style.theme_use("forest-light")
 
         self.root.title("InterSquadron Skin Synchronizer")
-        self.root.geometry("800x600")
+        self.root.geometry("850x600")
         
         # 1 - UPPER FRAME
         top_main_frame = tk.Frame(self.root)
@@ -65,14 +65,14 @@ class MainGUI:
         if scanResult is None:
             self.consolePanel.clearPanel()
             self.actionPanel.lockSyncButton()
-            self.actionPanel.SumaryScanLabel.config(text="...")
+            self.actionPanel.setScanLabelText("...")
         else:
             #Display the scan result in the console
             self.consolePanel.addLine(scanResult.toString())
 
             if scanResult.IsSyncUpToDate():
                 self.actionPanel.lockSyncButton()
-                self.actionPanel.SumaryScanLabel.config(text="Skins are up to date.")
+                self.actionPanel.setScanLabelText("Skins are up to date.")
 
             else:
                 self.actionPanel.unlockSyncButton()
@@ -86,7 +86,7 @@ class MainGUI:
                 if byteSizeToBeRemoved!=0 and getConf("autoRemoveUnregisteredSkins"):
                     stringRemovePart="To remove: "+ISSScanner.bytesToString(byteSizeToBeRemoved)+"."
 
-                self.actionPanel.SumaryScanLabel.config(text=stringAddPart+" "+stringRemovePart)# TODO rajouter un vrai print en allant peux être faire un refactif du scanResult pour les avoir propre, possiblement en même temps que les prints dans le scan...
+                self.actionPanel.setScanLabelText(stringAddPart+" "+stringRemovePart)# TODO rajouter un vrai print en allant peux être faire un refactif du scanResult pour les avoir propre, possiblement en même temps que les prints dans le scan...
 
     def start_scan(self):
         tae.async_execute(self.start_async_scan(), wait=True, visible=False, pop_up=False, callback=None, master=self.root)
@@ -94,7 +94,8 @@ class MainGUI:
     async def start_async_scan(self):
         self.updateScanResult(None)
         scanResult = ISSScanner.scanAll()
-        self.updateScanResult(scanResult)
+        if scanResult is not None:
+            self.updateScanResult(scanResult)
     
     def start_sync(self):
         if self.currentScanResult is None:
