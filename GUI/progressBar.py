@@ -3,17 +3,15 @@ from tkinter import ttk
 
 from pythonServices.messageBrocker import MessageBrocker
 
-class ProgressBar:
+class ProgressBar(ttk.Progressbar):
 
     def __init__(self, root: tk):
 
-        self.root = root
-        self.bar = ttk.Progressbar(self.root, orient="horizontal", mode="determinate", length=500)
-        self.bar.pack(side=tk.TOP, padx=10, pady=10)
+        super().__init__(root, orient="horizontal", mode="determinate", length=500)
         MessageBrocker.registerProgressHook(self.updateProgress)
-        self.bar["value"] = 0
-        self.bar["maximum"] = 100
+        self["value"] = 0
+        self["maximum"] = 100
     
     def updateProgress(self, progress: float):
-        self.bar["value"] = int(progress*100)
+        self["value"] = int(progress*100)
     
