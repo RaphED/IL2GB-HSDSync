@@ -84,3 +84,6 @@ def deleteFile(filePath):
 def getRessourcePath(relativePath):
     base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.curdir))
     return os.path.join(base_path, "Ressources", relativePath)
+
+def getIconPath(iconfileName):
+    return getRessourcePath(f"icons\\{iconfileName}")
