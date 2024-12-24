@@ -2,15 +2,17 @@ from tkinter import ttk
 import tkinter as tk
 import logging
 import tk_async_execute as tae
+import webbrowser
 
 from pythonServices.configurationService import configurationFileExists, getConf
-from pythonServices.filesService import getRessourcePath, cleanTemporaryFolder
+from pythonServices.filesService import getRessourcePath, getIconPath, cleanTemporaryFolder
 
 from GUI.SubscriptionsPanel import SubscriptionPanel
 from GUI.parametersPanel import ParametersPanel
 from GUI.consolePanel import ConsolePanel
 from GUI.actionsPanel import ActionPanel
 from GUI.progressBar import ProgressBar
+from GUI.Components.clickableIcon import CliquableIcon
 from GUI.firstLaunchGUI import runFirstLaunchGUI
 
 import ISSsynchronizer
@@ -49,7 +51,34 @@ class MainGUI:
         self.actionPanel = ActionPanel(right_upper_frame, scanCommand = self.start_scan, syncCommand=self.start_sync)
 
         # 2 - BOTTOM FRAME
-        self.progressBar = ProgressBar(self.root)
+        #2.1 info bar
+        info_bar = tk.Frame(self.root)
+        info_bar.pack(fill="both")
+
+        info_bar.grid_columnconfigure(0, weight=0)  # Left column
+        info_bar.grid_columnconfigure(1, weight=1)  # Middle colum, takes all possible width
+        info_bar.grid_columnconfigure(2, weight=0)  # Right
+        info_bar.grid_rowconfigure(0)
+        
+        self.irreIcon = CliquableIcon(
+            info_bar, 
+            icon_path=getIconPath("irre-logo-32.png"),
+            onClick=open_link_IRREWelcome,
+            opacityFactor=15,
+            onMouseOverOpacityFactor=255
+        )
+        self.progressBar = ProgressBar(info_bar)
+
+        self.helpIcon = CliquableIcon(
+            info_bar, 
+            icon_path=getIconPath("help-32.png"), 
+            tooltip_text="Online ISS documentation", 
+            onClick=open_link_ISSDocumentation
+        )
+        
+        self.irreIcon.grid(column=0, row=0, padx=5, pady=2)
+        self.progressBar.grid(column=1, row=0, padx=5, pady=5)
+        self.helpIcon.grid(column=2, row=0, padx=5, pady=2)
         
         bottom_main_frame = tk.Frame(self.root)
         bottom_main_frame.pack(side="bottom", fill="both", expand=True)
@@ -58,7 +87,8 @@ class MainGUI:
 
         #OTHER STORED INFORMATION
         self.currentScanResult: ISSsynchronizer.ScanResult = None
-    
+
+
     def updateScanResult(self, scanResult: ISSsynchronizer.ScanResult):
         self.currentScanResult = scanResult
 
@@ -106,7 +136,18 @@ class MainGUI:
         #once sync done, lock it
         self.actionPanel.lockSyncButton()
 
+#TOOLS
 
+def open_link(link: str):
+    webbrowser.open(link)
+
+def open_link_ISSDocumentation():
+    open_link("https://melodious-andesaurus-f9a.notion.site/IL2GB-Inter-squadron-Skin-Synchronizer-ISS-1477b1e5c2b8803db322d0daba993f94")
+
+def open_link_IRREWelcome():
+    open_link("https://www.lesirreductibles.com")
+
+#MAIN RUN
 def runMainGUI():
     
     #make sure the temporary folder is clean -> do not do that due to update !
