@@ -20,16 +20,19 @@ class CliquableIcon(tk.Label):
         # Precalculate original alpha to avoid recalculation
         self.original_alpha = self.referenceImage.split()[3]
 
-        self.displayIcon(opacityFactor=opacityFactor)
+        self.base_opacityFactor = opacityFactor
+        self.displayIcon()
 
         self.tooltip = None
         self.tooltip_text = tooltip_text
         self.onClickCommand = onClick
-        self.fade_after_id = None
 
         #Fade parameters
-        self.fade_steps = 10
-        self.fade_ms = 50
+        self.fade_after_id = None
+        self.fade_ms = 2000
+        self.fade_step_ms = 100
+        self.onMouseOverOpacityFactor = onMouseOverOpacityFactor
+        self.fade_step_opacityFactor = abs(self.onMouseOverOpacityFactor - self.base_opacityFactor) / (self.fade_ms / self.fade_step_ms)
 
         #BIND EVENTS
         
@@ -47,7 +50,9 @@ class CliquableIcon(tk.Label):
     def runOnClickCommand(self, event= None):
         self.onClickCommand()
 
-    def displayIcon(self, opacityFactor = 255):
+    def displayIcon(self, opacityFactor = None):
+        if opacityFactor is None:
+            opacityFactor = self.base_opacityFactor
         self.current_opacityFactor = opacityFactor
         if self.current_opacityFactor == 255:
             #do not perform any calculation if opacity is full
@@ -67,27 +72,28 @@ class CliquableIcon(tk.Label):
     def start_fade_in(self, event):
         if self.fade_after_id:
             self.after_cancel(self.fade_after_id)
-        self.fade_to(255)
+        self.fade_to(self.onMouseOverOpacityFactor)
     
     def start_fade_out(self, event):
         if self.fade_after_id:
             self.after_cancel(self.fade_after_id)
-        self.fade_to(0)
+        self.fade_to(self.base_opacityFactor)
     
     def fade_to(self, target_opacityFactor):
-        if target_opacityFactor != self.current_opacityFactor:
-            step = (target_opacityFactor - self.current_opacityFactor) // self.fade_steps
-            next_alpha = self.current_opacityFactor + step
-            
-            if (step > 0 and next_alpha <= target_opacityFactor) or \
-               (step < 0 and next_alpha >= target_opacityFactor):
-                self.displayIcon(next_alpha)
-                self.fade_after_id = self.after(
-                    self.fade_ms, 
-                    lambda: self.fade_to(target_opacityFactor)
-                )
+        if target_opacityFactor == self.current_opacityFactor:
+            self.displayIcon(target_opacityFactor)
+        else:
+            next_opacity = self.current_opacityFactor
+            if self.current_opacityFactor < target_opacityFactor:
+                next_opacity = min(next_opacity + self.fade_step_opacityFactor, target_opacityFactor)
             else:
-                self.displayIcon(target_opacityFactor)
+                next_opacity = max(next_opacity - self.fade_step_opacityFactor, target_opacityFactor)
+
+            self.displayIcon(opacityFactor=next_opacity)
+            self.fade_after_id = self.after(
+                ms=self.fade_step_ms,
+                func=lambda: self.fade_to(target_opacityFactor)
+            )
     
     def show_tooltip(self, event=None):
         """Displays the tooltip"""
