@@ -23,12 +23,20 @@ class ParametersPanel:
         self.path_button.pack(side="right", padx=5)
 
         # Toggle Switch
-        toggle_frame = tk.Frame(params_label_frame)
-        toggle_frame.pack(fill="x", pady=5)
-        tk.Label(toggle_frame, text="Auto remove unregistered skins", anchor="w").pack(side="left", padx=5)
-        self.toggle_var = tk.BooleanVar(value=getConf("autoRemoveUnregisteredSkins"))
-        self.toggle_button = ttk.Checkbutton(toggle_frame, variable=self.toggle_var, onvalue=True, offvalue=False, command=self.modify_auto_remove)
-        self.toggle_button.pack(side="right", padx=5)
+        toggle_removeSkins_frame = tk.Frame(params_label_frame)
+        toggle_removeSkins_frame.pack(fill="x", pady=5)
+        tk.Label(toggle_removeSkins_frame, text="Auto remove unregistered skins", anchor="w").pack(side="left", padx=5)
+        self.toggle_removeSkins_var = tk.BooleanVar(value=getConf("autoRemoveUnregisteredSkins"))
+        self.toggle_removeSkins_button = ttk.Checkbutton(toggle_removeSkins_frame, variable=self.toggle_removeSkins_var, onvalue=True, offvalue=False, command=self.modify_auto_remove)
+        self.toggle_removeSkins_button.pack(side="right", padx=5)
+
+        
+        toggle_applyCensorship_frame = tk.Frame(params_label_frame)
+        toggle_applyCensorship_frame.pack(fill="x", pady=5)
+        tk.Label(toggle_applyCensorship_frame, text="Apply censorship", anchor="w").pack(side="left", padx=5)
+        self.toggle_applyCensorship_var = tk.BooleanVar(value=getConf("applyCensorship"))
+        self.toggle_applyCensorship_button = ttk.Checkbutton(toggle_applyCensorship_frame, variable=self.toggle_applyCensorship_var, onvalue=True, offvalue=False, command=self.modify_apply_censorship)
+        self.toggle_applyCensorship_button.pack(side="right", padx=5)
 
         # Dropdown Menu
         dropdown_frame = tk.Frame(params_label_frame)
@@ -68,8 +76,12 @@ class ParametersPanel:
             self.update_pathLabel()
     
     def modify_auto_remove(self):
-        lebooleanquejeveux=self.toggle_var.get()
+        lebooleanquejeveux=self.toggle_removeSkins_var.get()
         update_config_param("autoRemoveUnregisteredSkins", lebooleanquejeveux)
+
+    def modify_apply_censorship(self):
+        lebooleanquejeveux=self.toggle_applyCensorship_var.get()
+        update_config_param("applyCensorship", lebooleanquejeveux)
     
     def on_dropdown_change(self, event):
         """Handle dropdown value change."""
