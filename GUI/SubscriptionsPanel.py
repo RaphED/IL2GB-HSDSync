@@ -5,11 +5,12 @@ import os
 import shutil
 import tk_async_execute as tae
 import asyncio
+from pythonServices import localService
 from pythonServices.messageBrocker import MessageBrocker
 
 from pythonServices.subscriptionService import getAllSubscribedCollectionByFileName
 from pythonServices.remoteService import getSpaceUsageOfRemoteSkinCatalog, RemoteSkin
-from ISSScanner import getSkinsMatchingWithSubscribedCollection, bytesToString
+from ISSScanner import getSkinsFromSourceMatchingWithSubscribedCollections, bytesToString
 
 class PlanesLinked:
     name=None
@@ -59,6 +60,11 @@ class SubscriptionPanel:
         self.tree = ttk.Treeview(subscription_label_frame, show="tree", style="Treeview" )
         self.tree.pack(fill="both",  padx=5, pady=5)
         
+        self.tree.tag_configure('yellow', background='#ffd29c')
+        # Define a tag for green background
+        self.tree.tag_configure('green', background='#70ff8a')
+        self.tree.tag_configure('red', background='#ffb8b8')
+            
         self.the_start_of_syncs()
      
         # Bind a selection event to the Treeview
@@ -111,13 +117,14 @@ class SubscriptionPanel:
         tae.async_execute(self.async_populate_tree_after_calculate(collectionByNameSubscribeFile), wait=False, visible=False, pop_up=False, callback=None, master=self.root)
 
     async def async_populate_tree_after_calculate(self,collectionByNameSubscribeFile):        
+        localSkins = localService.getSkinsList()
+
         for ISSFile in collectionByNameSubscribeFile.keys():
             skinCollection = list[RemoteSkin]()
             catalogSize=0
 
-            for collection in collectionByNameSubscribeFile[ISSFile]:
-                skinCollection += getSkinsMatchingWithSubscribedCollection(collection)
-            
+            skinCollection += getSkinsFromSourceMatchingWithSubscribedCollections("HSD",collectionByNameSubscribeFile[ISSFile])
+           
             catalogSize+=getSpaceUsageOfRemoteSkinCatalog("HSD",skinCollection)#TODO change this ! This is bad and an aprox, you mays have a lot of repeats !
 
                 #Get the current loading elements of the treeview:
@@ -125,7 +132,8 @@ class SubscriptionPanel:
                 if obj.fileName == ISSFile:
                     self.tree.item(obj.treeID, text=buildCollectionTreeLabel(ISSFile, catalogSize=catalogSize)) 
                     for skin in skinCollection:
-                        self.tree.insert(obj.treeID, "end", text=skin.getValue('name'))
+                        # if skin.getValue('name')
+                        self.tree.insert(obj.treeID, "end", text=skin.getValue('name'),tags="red")
                     break
 
     def on_item_selected(self, event):
