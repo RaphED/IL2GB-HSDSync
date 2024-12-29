@@ -1,4 +1,4 @@
-from pythonServices.configurationService import getConf, customPhotoSyncIsActive
+from pythonServices.configurationService import getConf, customPhotoSyncIsActive, checkIL2InstallPath
 import pythonServices.localService as localService
 import pythonServices.remoteService as remoteService
 from pythonServices.subscriptionService import SubscribedCollection, getAllSubscribedCollection
@@ -259,6 +259,13 @@ def scanCustomPhotos():
     return toBeUpdatedPhotos
 
 def scanAll():
+    #check conf is proper
+    if not checkIL2InstallPath():
+        MessageBrocker.emitConsoleMessage("!!! INVALID IL2 path !!!\nPlease modify the pass from the parameters panel")
+        MessageBrocker.emitConsoleMessage("SCAN Cancelled")
+        return None
+
+
     MessageBrocker.emitConsoleMessage("SCAN BEGINS...")
     MessageBrocker.emitProgress(0) #TEMP PROGRESS
     scanResult = scanSkins()

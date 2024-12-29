@@ -20,7 +20,9 @@ class ConsolePanel:
         self.text_widget.config(state=tk.DISABLED)  # Disable editing again
 
     def clearPanel(self):
+        self.text_widget.config(state=tk.NORMAL)  # Disable editing
         self.text_widget.delete(1.0,tk.END)
+        self.text_widget.config(state=tk.DISABLED)  # Disable editing again
 
     def addProgress(self, progress: float):
         self.addLine(str(progress))

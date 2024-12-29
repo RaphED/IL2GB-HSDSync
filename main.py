@@ -7,6 +7,7 @@ import tk_async_execute as tae
 
 from GUI.mainGUI import runMainGUI
 from GUI.updaterGUI import runUpdaterGUI
+from GUI.crashGUI import runCrashGUI
 
 ######### MAIN ###############
 if __name__ == "__main__":
@@ -38,15 +39,18 @@ if __name__ == "__main__":
         datefmt='%Y-%m-%d %H:%M:%S'    # Format de la date
     )
     
-    
-    #Check if an update has to be launched
-    if not isCurrentVersionUpToDate(prerelease = update_withPrerelease) or force_update:
-        ISSupdater.downloadAndRunUpdater(prerelease = update_withPrerelease)
-    #UPDATER MODE
-    elif updater_mode:
-        runUpdaterGUI(update_withPrerelease)
-    #NORMAL MODE
-    else:
-        tae.start()
-        runMainGUI()
-        tae.stop()
+    try:
+        #Check if an update has to be launched
+        if not isCurrentVersionUpToDate(prerelease = update_withPrerelease) or force_update:
+            ISSupdater.downloadAndRunUpdater(prerelease = update_withPrerelease)
+        #UPDATER MODE
+        elif updater_mode:
+            runUpdaterGUI(update_withPrerelease)
+        #NORMAL MODE
+        else:
+            tae.start()
+            runMainGUI()
+            tae.stop()
+    except Exception as e:
+        logging.error(e)
+        runCrashGUI(exception=e)

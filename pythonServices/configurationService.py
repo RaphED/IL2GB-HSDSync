@@ -70,26 +70,13 @@ def update_config_param(param, newValue):
     with open(config_file, 'w') as f:
         json.dump(current_config, f, indent=4)
 
-
-def checkConfParamIsValid(param):
-    match param:
-        case "IL2GBGameDirectory":
-            #skin directory is a good one if we can find the IL2.exe
-            return checkIL2InstallPath(getConf(param))
-        
-        case "cockpitNotesMode":
-            return getConf(param) in allowedCockpitNotesModes
-        
-        case _:
-            raise Exception(f"Unexpected param : {param}")
-        
 def generateConfFile():
     with open(config_file, 'w') as f:
         json.dump(default_config, f, indent=4)
     return default_config
 
-def checkIL2InstallPath(IL2Path):
-    return os.path.exists(os.path.join(IL2Path, "bin\\game\\Il-2.exe"))
+def checkIL2InstallPath():
+    return os.path.exists(os.path.join(getConf("IL2GBGameDirectory"), "bin\\game\\Il-2.exe"))
 
 def tryToFindIL2Path(exe_name='Il-2.exe'):
     # Get the list of available drives (e.g., C:, D:, etc.)

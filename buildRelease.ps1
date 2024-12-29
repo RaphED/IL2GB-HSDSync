@@ -5,6 +5,11 @@ $BuildDir = "build"
 $DistDir = "release"
 $zipFile = "ISS.zip"
 
+#clear all pycaches
+Get-ChildItem -Path "." -Directory -Recurse -Filter "__pycache__" | ForEach-Object {
+    Remove-Item $_.FullName -Recurse -Force
+}
+
 #clear build folder
 Remove-Item -Path $BuildDir -Recurse -Force
 New-Item -Path $BuildDir -ItemType Directory
@@ -33,6 +38,7 @@ function New-VersionFile {
     Set-Content -Path "$BuildDir\$targetVersionFileName" -Value $fileContent
 }
 
+#NOT USED
 function New-exeFile {
     param(
         [string]$appName,
@@ -70,7 +76,4 @@ Copy-Item -Path "SubscriptionExamples\IRRE Full.iss" -Destination "$DistDir\Subs
 
 #create the zip with all files in the dist
 Compress-Archive -Path "$DistDir\*" -DestinationPath $DistDir"\"$zipFile
-
-#Create the updater exe
-New-exeFile -appName "ISSUpdater" -pythonMain "ISSupdater.py"
 

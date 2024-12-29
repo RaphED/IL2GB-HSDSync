@@ -14,12 +14,15 @@ class ActionPanel:
         self.ScanButton.pack(side=tk.TOP, padx=10)
 
         custom_font = font.Font(family="Arial", size=13, weight="bold")
-        self.SumaryScanLabel = ttk.Label(frame, text="", justify="center", font=custom_font)
-        self.SumaryScanLabel.pack(side=tk.TOP, padx=10,pady=20)
+        self.SummaryScanLabel = ttk.Label(frame, text="", justify="center", font=custom_font)
+        self.SummaryScanLabel.pack(side=tk.TOP, padx=10,pady=20)
 
         self.SyncButton = ttk.Button(frame, text="Synchronize", style="Accent.TButton", command=syncCommand)
         self.SyncButton.pack(side=tk.TOP, padx=10)
         self.lockSyncButton()
+
+    def setScanLabelText(self, text: str):
+        self.SummaryScanLabel.config(text=text)
 
     def lockSyncButton(self):
         
@@ -30,4 +33,10 @@ class ActionPanel:
         self.SyncButton.configure(style="Accent.TButton")
 
         self.SyncButton["state"] = "enabled"
+        
+        
+
+
+
+
 
