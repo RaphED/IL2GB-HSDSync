@@ -69,7 +69,18 @@ def getSubscribedCollectionFromFile(subscriptionFilePath):
         logging.error(f"Error at loading subscription file {subscriptionFilePath}. Error detail : {e}")
         return []
     
-    
+def getSubscribeCollectionFromRawJson(rawJson,name):
+    subscribedCollectionlist = []
+    for rawSubscription in rawJson:
+            subscribedCollectionlist.append(
+                SubscribedCollection(
+                    subcriptionName=os.path.basename(name),
+                    source=rawSubscription.get("source"),
+                    criteria=rawSubscription["criteria"]
+                )
+            )
+    return subscribedCollectionlist
+        
 def getAllSubscribedCollection() -> list[SubscribedCollection]:
 
     returnedCollections = []

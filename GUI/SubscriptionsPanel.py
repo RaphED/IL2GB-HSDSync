@@ -5,9 +5,9 @@ import os
 import shutil
 import tk_async_execute as tae
 import asyncio
+from GUI.CreateNewISSPanel import CreateNewISSPanel
 from pythonServices import localService
 from pythonServices.messageBrocker import MessageBrocker
-
 from pythonServices.subscriptionService import getAllSubscribedCollectionByFileName
 from pythonServices.remoteService import getSpaceUsageOfRemoteSkinCatalog, RemoteSkin
 from ISSScanner import getSkinsFromSourceMatchingWithSubscribedCollections, bytesToString
@@ -77,14 +77,22 @@ class SubscriptionPanel:
         self.delete_button = ttk.Button(subscription_label_frame, text="Delete", command=self.delete_item)
         self.delete_button.pack(side="left", padx=5, pady=5)
 
+
         self.switch_state_button = ttk.Button(subscription_label_frame, text="Activate/Disable", command=self.switch_state)
         self.switch_state_button.pack(side="left", padx=5, pady=5)
+
+        self.open_window_button = ttk.Button(subscription_label_frame, text="Create", command=self.open_subscription_window)
+        self.open_window_button.pack(pady=20)
+
+    def changeAllSubscriptionButtonsState(self,state):
+        self.add_button.state=state
+        self.delete_button.state=state
+        self.switch_state_button.state=state
 
     def the_start_of_syncs(self):
         tae.async_execute(self.async_populate_tree(), wait=False, visible=False, pop_up=False, callback=None, master=self.root)
 
     async def async_populate_tree(self):
-        # Simulate the 5-second loading process with asyncio.sleep (replace this with actual data loading logic)
         self.populate_tree()
 
     def populate_tree(self):
@@ -112,12 +120,12 @@ class SubscriptionPanel:
             newSub=Subscription(name=text,fileName=ISSFile,treeID=tree_id,state=SubscriptionState.NOTLOADED)
             subscriptions.append(newSub)
 
-
-        #This part needs to be even more async and fire and forget until it has the results
         tae.async_execute(self.async_populate_tree_after_calculate(collectionByNameSubscribeFile), wait=False, visible=False, pop_up=False, callback=None, master=self.root)
 
-    async def async_populate_tree_after_calculate(self,collectionByNameSubscribeFile):        
-        localSkins = localService.getSkinsList()
+    async def async_populate_tree_after_calculate(self,collectionByNameSubscribeFile):   
+        self.changeAllSubscriptionButtonsState(False) #TODO BUG DES BOMBARDIER PASSER SUR LE RESULT DE SCAN !!!
+        toto= localService.getSkinsList()
+        namesLocalSkins = {entry['mainFileName']: entry['mainFileMd5'] for entry in toto}
 
         for ISSFile in collectionByNameSubscribeFile.keys():
             skinCollection = list[RemoteSkin]()
@@ -127,14 +135,22 @@ class SubscriptionPanel:
            
             catalogSize+=getSpaceUsageOfRemoteSkinCatalog("HSD",skinCollection)#TODO change this ! This is bad and an aprox, you mays have a lot of repeats !
 
-                #Get the current loading elements of the treeview:
             for obj in subscriptions:
                 if obj.fileName == ISSFile:
                     self.tree.item(obj.treeID, text=buildCollectionTreeLabel(ISSFile, catalogSize=catalogSize)) 
                     for skin in skinCollection:
-                        # if skin.getValue('name')
-                        self.tree.insert(obj.treeID, "end", text=skin.getValue('name'),tags="red")
+                        localPlane=namesLocalSkins.get(skin.infos.get("mainSkinFileName"))
+                        if localPlane is not None:
+                            if skin.infos.get("HashDDS0") ==localPlane:
+                                self.tree.insert(obj.treeID, "end", text=skin.getValue('name'),tags="green")
+                            else:
+                                self.tree.insert(obj.treeID, "end", text=skin.getValue('name'),tags="yellow")
+                        else:
+                            self.tree.insert(obj.treeID, "end", text=skin.getValue('name'),tags="red")
                     break
+        MessageBrocker.emitProgress(1.0)
+        self.changeAllSubscriptionButtonsState(True)
+
 
     def on_item_selected(self, event):
         """Handle the selection event."""
@@ -209,6 +225,31 @@ class SubscriptionPanel:
                         self.tree.delete(item)
 
                     self.populate_tree()
+
+ #TODO MOVE THIS TO A NEW 
+    def open_subscription_window(self):
+        def on_second_window_close():
+            messagebox.showinfo("Main Window", "Subscription window has been closed!")
+        
+        
+        CreateNewISSPanel(self.root, on_close=on_second_window_close)
+
+        # # Create a Toplevel window using the root reference
+        # second_window = tk.Toplevel(self.root)
+        # second_window.title("Subscription Window")
+        # second_window.geometry("300x200")
+
+        # # Add specific elements to the subscription window
+        # tk.Label(second_window, text="Manage Subscriptions").pack(pady=10)
+        # tk.Entry(second_window).pack(pady=5)
+        # tk.Button(second_window, text="Close", command=second_window.destroy).pack(pady=10)
+
+        # Handle the closing event of the second window
+
+        #    // second_window.destroy()
+
+        # //second_window.protocol("WM_DELETE_WINDOW", on_second_window_close)
+
 
 
 #TODO : Quite temporary solution before handling properly objects instead of strings and titles
