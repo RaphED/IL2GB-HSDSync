@@ -70,8 +70,9 @@ def getSubscribedCollectionFromFile(subscriptionFilePath):
         return []
     
 def getSubscribeCollectionFromRawJson(rawJson,name):
+    cooked=json.loads(rawJson)
     subscribedCollectionlist = []
-    for rawSubscription in rawJson:
+    for rawSubscription in cooked:
             subscribedCollectionlist.append(
                 SubscribedCollection(
                     subcriptionName=os.path.basename(name),

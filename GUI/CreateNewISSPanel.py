@@ -1,4 +1,5 @@
 from enum import Enum
+import json
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 import os
@@ -8,8 +9,8 @@ import asyncio
 from pythonServices import localService
 from pythonServices.messageBrocker import MessageBrocker
 
-from pythonServices.subscriptionService import getAllSubscribedCollectionByFileName
-from pythonServices.remoteService import getSpaceUsageOfRemoteSkinCatalog, RemoteSkin
+from pythonServices.subscriptionService import getAllSubscribedCollectionByFileName, getSubscribeCollectionFromRawJson
+from pythonServices.remoteService import getSkinsCatalogFromSource, getSpaceUsageOfRemoteSkinCatalog, RemoteSkin
 from ISSScanner import getSkinsFromSourceMatchingWithSubscribedCollections, bytesToString
 
 import tkinter as tk
@@ -23,95 +24,192 @@ class CreateNewISSPanel:
         # Create a Toplevel window
         self.window = tk.Toplevel(parent)
         self.window.title("Create New ISS Subscription")
-        self.window.geometry("1200x800")
+        self.window.geometry("1400x1200")
 
         # Call on_close when the window is closed
         self.window.protocol("WM_DELETE_WINDOW", self.on_close)
 
         # Top Inputs in a LabelFrame
-        frame_inputs = ttk.LabelFrame(self.window, text="Subscription Details", padding=10)
+        frame_inputs = ttk.LabelFrame(self.window, text="Filters/ Criterias :", padding=10)
         frame_inputs.pack(fill="x", padx=10, pady=5)
+        
+        frame_queries = ttk.Frame(frame_inputs, padding=5)
+        frame_queries.grid(row=0, column=0, padx=5, pady=5)
 
-        ttk.Label(frame_inputs, text="Name of subscription:").grid(row=0, column=0, sticky="w", padx=5, pady=5)
-        self.entry_name = ttk.Entry(frame_inputs, width=20)
-        self.entry_name.grid(row=0, column=1, padx=5, pady=5)
+     
+        
+        ttk.Label(frame_queries, text="il2Group:").grid(row=0, column=0, sticky="w", padx=5, pady=5)
+        self.entry_il2group = ttk.Entry(frame_queries,width=20,)
+        self.entry_il2group.grid(row=0, column=1, padx=5, pady=5)
 
-        ttk.Label(frame_inputs, text="Keyword:").grid(row=1, column=0, sticky="w", padx=5, pady=5)
-        self.entry_keyword = ttk.Entry(frame_inputs, width=20)
-        self.entry_keyword.grid(row=1, column=1, padx=5, pady=5)
+        ttk.Label(frame_queries, text="SkinPack").grid(row=0, column=2, sticky="w", padx=5, pady=5)
+        self.entry_skinPack = ttk.Entry(frame_queries, width=20)
+        self.entry_skinPack.grid(row=0, column=3, padx=5, pady=5)        
+        
+        ttk.Label(frame_queries, text="Title").grid(row=0, column=4, sticky="w", padx=5, pady=5)
+        self.entry_title = ttk.Entry(frame_queries, width=20)
+        self.entry_title.grid(row=0, column=5, padx=5, pady=5)
 
-        ttk.Label(frame_inputs, text="Category:").grid(row=0, column=2, sticky="w", padx=5, pady=5)
-        self.combo_category = ttk.Combobox(frame_inputs, values=["Category 1", "Category 2", "Category 3"], state="readonly")
-        self.combo_category.grid(row=0, column=3, padx=5, pady=5)
+        #Adding listening to input change
+        def update_dynamic_list(event):
+            toot=1
+            tae.async_execute(self.actualise_dynamic_planes(), wait=False, visible=False, pop_up=False, callback=None, master=self.window)
+        self.entry_il2group.bind("<KeyRelease>",update_dynamic_list)
+        self.entry_skinPack.bind("<KeyRelease>",update_dynamic_list)
+        self.entry_title.bind("<KeyRelease>",update_dynamic_list)
 
-        button_add_param = ttk.Button(frame_inputs, text="Add Parameter to query", command=self.add_parameter)
-        button_add_param.grid(row=1, column=2, columnspan=2, pady=5)
+
+
+
+        #Planes of the current filters
+        self.tree_creating_criterias = ttk.Treeview(frame_inputs, columns=("plane"), show="headings", height=10)
+        self.tree_creating_criterias.grid(row=1, column=0, padx=5, pady=5)
+
+        self.tree_creating_criterias.heading("plane", text="Planes matching live query")
+        for plane in getSkinsCatalogFromSource("HSD"):
+            self.tree_creating_criterias.insert("", "end", values=(plane.infos["Title"],))
+
+
+
+
+        # Buttons and comment to add it
+        frame_comment_and_button = ttk.Frame(frame_inputs, padding=5)
+        frame_comment_and_button.grid(row=2,padx=5, pady=5)
+        ttk.Label(frame_comment_and_button, text="Comments :").grid(row=0, column=0, sticky="w", padx=5, pady=5)
+        self.entry_comment = ttk.Entry(frame_comment_and_button, width=40)
+        self.entry_comment.grid(row=0, column=1, padx=5, pady=5)
+
+
+        button_add_param = ttk.Button(frame_comment_and_button, text="Add criterias to query", style="Accent.TButton", command=self.add_parameter)
+        button_add_param.grid(row=0, column=3, columnspan=2, pady=5)
+
+
+
+
+
+
+
 
         # Treeview for Parameters in a LabelFrame
         frame_params = ttk.LabelFrame(self.window, text="Existing Parameters", padding=10)
         frame_params.pack(fill="x", padx=10, pady=5)
 
-        self.tree_params = ttk.Treeview(frame_params, columns=("name", "keyword", "category"), show="headings", height=5)
+        columns = ("comment", "il2Group", "skinPack", "title")
+        self.tree_params = ttk.Treeview(frame_params, columns=columns, show="headings")
         self.tree_params.pack(side="left", fill="x", expand=True)
 
-        self.tree_params.heading("name", text="Name")
-        self.tree_params.heading("keyword", text="Keyword")
-        self.tree_params.heading("category", text="Category")
+        # Configure columns
+        for col in columns:
+            self.tree_params.column(col, width=150, anchor="center")  # Center text in column
+            self.tree_params.heading(col, text=col.capitalize(), anchor="center")  # Left-align text in header
 
         button_delete_param = ttk.Button(frame_params, text="Delete", command=self.delete_parameter)
         button_delete_param.pack(side="right", padx=5)
 
+        button_edit_param = ttk.Button(frame_params, text="Edit", command=self.edit_parameter)
+        button_edit_param.pack(side="right", padx=5)
         # Plane Selection in a LabelFrame
         frame_planes = ttk.LabelFrame(self.window, text="Plane Selection", padding=10)
         frame_planes.pack(fill="both", expand=True, padx=10, pady=5)
 
-        self.tree_all_planes = ttk.Treeview(frame_planes, columns=("plane"), show="headings", height=10)
-        self.tree_all_planes.grid(row=0, column=0, padx=5, pady=5)
-
-        self.tree_all_planes.heading("plane", text="All Planes")
-
-        button_add_plane = ttk.Button(frame_planes, text="Add Plane >>", command=self.add_plane)
-        button_add_plane.grid(row=0, column=1, padx=5)
+        
 
         self.tree_selected_planes = ttk.Treeview(frame_planes, columns=("plane"), show="headings", height=10)
         self.tree_selected_planes.grid(row=0, column=2, padx=5, pady=5)
 
         self.tree_selected_planes.heading("plane", text="Selected Planes")
 
-        button_remove_plane = ttk.Button(frame_planes, text="<< Remove Plane", command=self.remove_plane)
-        button_remove_plane.grid(row=1, column=1, padx=5, pady=5)
-
         # Save button
         button_save = ttk.Button(self.window, text="Save to .ISS", command=self.save_to_iss)
         button_save.pack(pady=10)
 
         # Populate sample planes
-        for plane in ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"]:
-            self.tree_all_planes.insert("", "end", values=(plane,))
+
+
+    async def actualise_dynamic_planes(self):
+        name = self.entry_comment.get()
+        il2Group = self.entry_il2group.get()
+        skinPack = self.entry_skinPack.get()
+        title=self.entry_title.get()
+        comment=self.entry_comment.get()
+
+        rawjson=element_to_json(comment, il2Group, skinPack, title)
+        collections= getSubscribeCollectionFromRawJson(rawjson,"test")
+        skins=getSkinsFromSourceMatchingWithSubscribedCollections("HSD", collections)
+        
+        # Add these slins to the view below so the user can see the implied skins
+        self.tree_creating_criterias.delete(*self.tree_creating_criterias.get_children())
+
+        for skin in skins:
+            self.tree_creating_criterias.insert("", "end", values=(skin.getValue("name"),))
+
 
     def add_parameter(self):
-        name = self.entry_name.get()
-        keyword = self.entry_keyword.get()
-        category = self.combo_category.get()
+        name = self.entry_comment.get()
+        il2Group = self.entry_il2group.get()
+        skinPack = self.entry_skinPack.get()
+        title=self.entry_title.get()
 
-        if name and keyword and category:
-            self.tree_params.insert("", "end", values=(name, keyword, category))
+        if name or il2Group or skinPack:
+            self.tree_params.insert("", "end", values=(name, il2Group, skinPack, title))
+        tae.async_execute(self.actualiseSelectedPlanes(), wait=False, visible=False, pop_up=False, callback=None, master=self.window)
+
 
     def delete_parameter(self):
         selected_item = self.tree_params.selection()
         for item in selected_item:
             self.tree_params.delete(item)
+    def edit_parameter(self):
+        selected_item = self.tree_params.selection()
+        toto=1
 
-    def add_plane(self):
-        selected_items = self.tree_all_planes.selection()
-        for item in selected_items:
-            values = self.tree_all_planes.item(item, "values")
-            self.tree_selected_planes.insert("", "end", values=values)
+    async def actualiseSelectedPlanes(self):
+        # TODO  self.tree_selected_planes purge
+        # regarder quels sont les skins qui seront sélectionné et les faire apparaitre dans la liste de droite
+        rawjson=treeview_to_json(self.tree_params)
+        collections= getSubscribeCollectionFromRawJson(rawjson,"test")
+        skins=getSkinsFromSourceMatchingWithSubscribedCollections("HSD", collections)
+        
+        # Add these slins to the view below so the user can see the implied skins
+        self.tree_selected_planes.delete(*self.tree_selected_planes.get_children())
+        for skin in skins:
+            self.tree_selected_planes.insert("", "end", values=(skin.getValue("name"),))
 
-    def remove_plane(self):
-        selected_items = self.tree_selected_planes.selection()
-        for item in selected_items:
-            self.tree_selected_planes.delete(item)
 
     def save_to_iss(self):
         print("Saved!")
+
+    import json
+
+def treeview_to_json(treeview):
+    rows = []
+    for row_id in treeview.get_children():
+        row_values = treeview.item(row_id)["values"]
+        rows.append(row_values)
+
+    result = []
+    for row in rows:
+        comment, il2Group, skinPack, title = row
+        entry = {"source": "HSD","comment": comment, "criteria": {}}
+        if il2Group:
+            entry["criteria"]["IL2Group"] = il2Group
+        if skinPack:
+            entry["criteria"]["SkinPack"] = skinPack
+        if title:
+            entry["criteria"]["Title"] = title
+
+        result.append(entry)
+
+    return json.dumps(result)
+
+def element_to_json(comment, il2Group, skinPack, title):   
+    result = []
+    entry = {"source": "HSD","comment": comment, "criteria": {}}
+    if il2Group:
+        entry["criteria"]["IL2Group"] = il2Group
+    if skinPack:
+        entry["criteria"]["SkinPack"] = skinPack
+    if title:
+        entry["criteria"]["Title"] = title
+    result.append(entry)
+    return json.dumps(result)
