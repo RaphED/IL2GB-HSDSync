@@ -12,116 +12,106 @@ from pythonServices.subscriptionService import getAllSubscribedCollectionByFileN
 from pythonServices.remoteService import getSpaceUsageOfRemoteSkinCatalog, RemoteSkin
 from ISSScanner import getSkinsFromSourceMatchingWithSubscribedCollections, bytesToString
 
+import tkinter as tk
+from tkinter import ttk
+
 
 class CreateNewISSPanel:
-    def __init__(self, parent: tk.Tk,on_close):
-        # Create a Toplevel window
-        self.window = tk.Toplevel(parent)
-        self.window.title("Subscription Window")
-        self.window.geometry("900x900")
-
-        # Store the on_close callback
+    def __init__(self, parent: tk.Tk, on_close):
         self.on_close = on_close
 
-        # Handle the closing event of the second window
-        self.window.protocol("WM_DELETE_WINDOW", self._handle_close)
+        # Create a Toplevel window
+        self.window = tk.Toplevel(parent)
+        self.window.title("Create New ISS Subscription")
+        self.window.geometry("1200x800")
 
-        def add_parameter():
-            # Get input values
-            name = entry_name.get()
-            keyword = entry_keyword.get()
-            category = combo_category.get()
+        # Call on_close when the window is closed
+        self.window.protocol("WM_DELETE_WINDOW", self.on_close)
 
-            # Add to the treeview
-            if name and keyword and category:
-                tree_params.insert('', 'end', values=(name, keyword, category))
+        # Top Inputs in a LabelFrame
+        frame_inputs = ttk.LabelFrame(self.window, text="Subscription Details", padding=10)
+        frame_inputs.pack(fill="x", padx=10, pady=5)
 
-        def delete_parameter():
-            selected_item = tree_params.selection()
-            for item in selected_item:
-                tree_params.delete(item)
+        ttk.Label(frame_inputs, text="Name of subscription:").grid(row=0, column=0, sticky="w", padx=5, pady=5)
+        self.entry_name = ttk.Entry(frame_inputs, width=20)
+        self.entry_name.grid(row=0, column=1, padx=5, pady=5)
 
-        def add_plane():
-            selected_items = tree_all_planes.selection()
-            for item in selected_items:
-                values = tree_all_planes.item(item, 'values')
-                tree_selected_planes.insert('', 'end', values=values)
+        ttk.Label(frame_inputs, text="Keyword:").grid(row=1, column=0, sticky="w", padx=5, pady=5)
+        self.entry_keyword = ttk.Entry(frame_inputs, width=20)
+        self.entry_keyword.grid(row=1, column=1, padx=5, pady=5)
 
-        def remove_plane():
-            selected_items = tree_selected_planes.selection()
-            for item in selected_items:
-                tree_selected_planes.delete(item)
+        ttk.Label(frame_inputs, text="Category:").grid(row=0, column=2, sticky="w", padx=5, pady=5)
+        self.combo_category = ttk.Combobox(frame_inputs, values=["Category 1", "Category 2", "Category 3"], state="readonly")
+        self.combo_category.grid(row=0, column=3, padx=5, pady=5)
 
-        # Top inputs
-        frame_top = ttk.Frame(self.window)
-        frame_top.pack(pady=10)
+        button_add_param = ttk.Button(frame_inputs, text="Add Parameter to query", command=self.add_parameter)
+        button_add_param.grid(row=1, column=2, columnspan=2, pady=5)
 
-        ttk.Label(frame_top, text="Name of subscription:").grid(row=0, column=0)
-        entry_name = tk.Entry(frame_top, width=20)
-        entry_name.grid(row=0, column=1, padx=5)
+        # Treeview for Parameters in a LabelFrame
+        frame_params = ttk.LabelFrame(self.window, text="Existing Parameters", padding=10)
+        frame_params.pack(fill="x", padx=10, pady=5)
 
-        ttk.Label(frame_top, text="Keyword:").grid(row=1, column=0)
-        entry_keyword = tk.Entry(frame_top, width=20)
-        entry_keyword.grid(row=1, column=1, padx=5)
+        self.tree_params = ttk.Treeview(frame_params, columns=("name", "keyword", "category"), show="headings", height=5)
+        self.tree_params.pack(side="left", fill="x", expand=True)
 
-        ttk.Label(frame_top, text="Category:").grid(row=0, column=2)
-        combo_category = ttk.Combobox(frame_top, values=["Category 1", "Category 2", "Category 3"], state="readonly")
-        combo_category.grid(row=0, column=3, padx=5)
+        self.tree_params.heading("name", text="Name")
+        self.tree_params.heading("keyword", text="Keyword")
+        self.tree_params.heading("category", text="Category")
 
-        button_add_param = ttk.Button(frame_top, text="Add Parameter to query", command=add_parameter)
-        button_add_param.grid(row=1, column=2, columnspan=2)
-
-        # Parameters treeview
-        frame_params = ttk.Frame(self.window)
-        frame_params.pack(pady=10)
-
-        ttk.Label(frame_params, text="Existing Parameters:").pack(anchor="w")
-        tree_params = ttk.Treeview(frame_params, columns=("name", "keyword", "category"), show="headings", height=5)
-        tree_params.pack(side="left", fill="x")
-
-        tree_params.heading("name", text="Name")
-        tree_params.heading("keyword", text="Keyword")
-        tree_params.heading("category", text="Category")
-
-        button_delete_param = ttk.Button(frame_params, text="Delete", command=delete_parameter)
+        button_delete_param = ttk.Button(frame_params, text="Delete", command=self.delete_parameter)
         button_delete_param.pack(side="right", padx=5)
 
-        # Plane selection
-        frame_planes = ttk.Frame(self.window)
-        frame_planes.pack(pady=10)
+        # Plane Selection in a LabelFrame
+        frame_planes = ttk.LabelFrame(self.window, text="Plane Selection", padding=10)
+        frame_planes.pack(fill="both", expand=True, padx=10, pady=5)
 
-        tree_all_planes = ttk.Treeview(frame_planes, columns=("plane"), show="headings", height=10)
-        tree_all_planes.grid(row=0, column=0, padx=5)
+        self.tree_all_planes = ttk.Treeview(frame_planes, columns=("plane"), show="headings", height=10)
+        self.tree_all_planes.grid(row=0, column=0, padx=5, pady=5)
 
-        tree_all_planes.heading("plane", text="All Planes")
+        self.tree_all_planes.heading("plane", text="All Planes")
 
-        button_add_plane = ttk.Button(frame_planes, text="Add Plane >>", command=add_plane)
-        button_add_plane.grid(row=0, column=1)
+        button_add_plane = ttk.Button(frame_planes, text="Add Plane >>", command=self.add_plane)
+        button_add_plane.grid(row=0, column=1, padx=5)
 
-        tree_selected_planes = ttk.Treeview(frame_planes, columns=("plane"), show="headings", height=10)
-        tree_selected_planes.grid(row=0, column=2, padx=5)
+        self.tree_selected_planes = ttk.Treeview(frame_planes, columns=("plane"), show="headings", height=10)
+        self.tree_selected_planes.grid(row=0, column=2, padx=5, pady=5)
 
-        tree_selected_planes.heading("plane", text="Selected Planes")
+        self.tree_selected_planes.heading("plane", text="Selected Planes")
 
-        button_remove_plane = ttk.Button(frame_planes, text="<< Remove Plane", command=remove_plane)
-        button_remove_plane.grid(row=1, column=1)
+        button_remove_plane = ttk.Button(frame_planes, text="<< Remove Plane", command=self.remove_plane)
+        button_remove_plane.grid(row=1, column=1, padx=5, pady=5)
 
         # Save button
-        button_save = ttk.Button(self.window, text="Save to .ISS", command=lambda: print("Saved!"))
+        button_save = ttk.Button(self.window, text="Save to .ISS", command=self.save_to_iss)
         button_save.pack(pady=10)
 
         # Populate sample planes
         for plane in ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"]:
-            tree_all_planes.insert('', 'end', values=(plane,))
+            self.tree_all_planes.insert("", "end", values=(plane,))
 
-        # Run the application
+    def add_parameter(self):
+        name = self.entry_name.get()
+        keyword = self.entry_keyword.get()
+        category = self.combo_category.get()
 
-        
+        if name and keyword and category:
+            self.tree_params.insert("", "end", values=(name, keyword, category))
 
+    def delete_parameter(self):
+        selected_item = self.tree_params.selection()
+        for item in selected_item:
+            self.tree_params.delete(item)
 
+    def add_plane(self):
+        selected_items = self.tree_all_planes.selection()
+        for item in selected_items:
+            values = self.tree_all_planes.item(item, "values")
+            self.tree_selected_planes.insert("", "end", values=values)
 
-    def _handle_close(self):
-        # Call the on_close callback
-        if self.on_close:
-            self.on_close()
-        self.window.destroy()
+    def remove_plane(self):
+        selected_items = self.tree_selected_planes.selection()
+        for item in selected_items:
+            self.tree_selected_planes.delete(item)
+
+    def save_to_iss(self):
+        print("Saved!")

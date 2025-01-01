@@ -229,26 +229,9 @@ class SubscriptionPanel:
  #TODO MOVE THIS TO A NEW 
     def open_subscription_window(self):
         def on_second_window_close():
-            messagebox.showinfo("Main Window", "Subscription window has been closed!")
-        
-        
+            messagebox.showinfo("Main Window", "Subscription window has been closed!")        
         CreateNewISSPanel(self.root, on_close=on_second_window_close)
 
-        # # Create a Toplevel window using the root reference
-        # second_window = tk.Toplevel(self.root)
-        # second_window.title("Subscription Window")
-        # second_window.geometry("300x200")
-
-        # # Add specific elements to the subscription window
-        # tk.Label(second_window, text="Manage Subscriptions").pack(pady=10)
-        # tk.Entry(second_window).pack(pady=5)
-        # tk.Button(second_window, text="Close", command=second_window.destroy).pack(pady=10)
-
-        # Handle the closing event of the second window
-
-        #    // second_window.destroy()
-
-        # //second_window.protocol("WM_DELETE_WINDOW", on_second_window_close)
 
 
 
