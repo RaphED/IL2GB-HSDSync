@@ -17,6 +17,27 @@ import tkinter as tk
 from tkinter import ttk
 
 class CreateNewISSPanel:
+
+    async def actualise_dynamic_planes(self):
+        il2Group = self.entry_il2group.get()
+        skinPack = self.entry_skinPack.get()
+        title=self.entry_title.get()
+        comment=self.entry_comment.get()
+
+        rawjson=element_to_json(comment, il2Group, skinPack, title)
+        collections= getSubscribeCollectionFromRawJson(rawjson,"test")
+        skins=getSkinsFromSourceMatchingWithSubscribedCollections("HSD", collections)
+        
+        # Add these slins to the view below so the user can see the implied skins
+        self.tree_creating_criterias.delete(*self.tree_creating_criterias.get_children())
+
+        for skin in skins:
+            self.tree_creating_criterias.insert("", "end", values=(skin.getValue("name"),))
+
+    def update_dynamic_list(self, *args):
+            toot=1
+            tae.async_execute(self.actualise_dynamic_planes(), wait=False, visible=False, pop_up=False, callback=None, master=self.window)
+
     def __init__(self, parent: tk.Tk, on_close):
         self.editting_item_id=None
 
@@ -54,12 +75,17 @@ class CreateNewISSPanel:
         self.entry_title.grid(row=0, column=5, padx=5, pady=5)
 
         #Adding listening to input change
-        def update_dynamic_list(event):
-            toot=1
-            tae.async_execute(self.actualise_dynamic_planes(), wait=False, visible=False, pop_up=False, callback=None, master=self.window)
-        self.entry_il2group.bind("<KeyRelease>",update_dynamic_list)
-        self.entry_skinPack.bind("<KeyRelease>",update_dynamic_list)
-        self.entry_title.bind("<KeyRelease>",update_dynamic_list)
+        
+       
+        
+        
+        self.title_var.trace_add("write", self.update_dynamic_list)
+        self.skinPack_var.trace_add("write", self.update_dynamic_list)
+        self.il2group_var.trace_add("write", self.update_dynamic_list)
+
+        # self.entry_il2group.bind("<KeyRelease>",update_dynamic_list)
+        # self.entry_skinPack.bind("<KeyRelease>",update_dynamic_list)
+        # self.entry_title.bind("<KeyRelease>",update_dynamic_list)
 
 
 
@@ -132,22 +158,7 @@ class CreateNewISSPanel:
         # Populate sample planes
 
 
-    async def actualise_dynamic_planes(self):
-        il2Group = self.entry_il2group.get()
-        skinPack = self.entry_skinPack.get()
-        title=self.entry_title.get()
-        comment=self.entry_comment.get()
-
-        rawjson=element_to_json(comment, il2Group, skinPack, title)
-        collections= getSubscribeCollectionFromRawJson(rawjson,"test")
-        skins=getSkinsFromSourceMatchingWithSubscribedCollections("HSD", collections)
-        
-        # Add these slins to the view below so the user can see the implied skins
-        self.tree_creating_criterias.delete(*self.tree_creating_criterias.get_children())
-
-        for skin in skins:
-            self.tree_creating_criterias.insert("", "end", values=(skin.getValue("name"),))
-
+    
 
     def add_parameter(self):
         name = self.entry_comment.get()
