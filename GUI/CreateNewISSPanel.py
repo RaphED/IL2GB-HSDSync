@@ -16,9 +16,10 @@ from ISSScanner import getSkinsFromSourceMatchingWithSubscribedCollections, byte
 import tkinter as tk
 from tkinter import ttk
 
-
 class CreateNewISSPanel:
     def __init__(self, parent: tk.Tk, on_close):
+        self.editting_item_id=None
+
         self.on_close = on_close
 
         # Create a Toplevel window
@@ -37,17 +38,19 @@ class CreateNewISSPanel:
         frame_queries.grid(row=0, column=0, padx=5, pady=5)
 
      
-        
+        self.il2group_var = tk.StringVar()
         ttk.Label(frame_queries, text="il2Group:").grid(row=0, column=0, sticky="w", padx=5, pady=5)
-        self.entry_il2group = ttk.Entry(frame_queries,width=20,)
+        self.entry_il2group = ttk.Entry(frame_queries, textvariable=self.il2group_var,width=20,)
         self.entry_il2group.grid(row=0, column=1, padx=5, pady=5)
-
+        
+        self.skinPack_var = tk.StringVar()
         ttk.Label(frame_queries, text="SkinPack").grid(row=0, column=2, sticky="w", padx=5, pady=5)
-        self.entry_skinPack = ttk.Entry(frame_queries, width=20)
+        self.entry_skinPack = ttk.Entry(frame_queries,textvariable=self.skinPack_var, width=20)
         self.entry_skinPack.grid(row=0, column=3, padx=5, pady=5)        
         
+        self.title_var = tk.StringVar()
         ttk.Label(frame_queries, text="Title").grid(row=0, column=4, sticky="w", padx=5, pady=5)
-        self.entry_title = ttk.Entry(frame_queries, width=20)
+        self.entry_title = ttk.Entry(frame_queries,textvariable=self.title_var, width=20)
         self.entry_title.grid(row=0, column=5, padx=5, pady=5)
 
         #Adding listening to input change
@@ -75,12 +78,15 @@ class CreateNewISSPanel:
         # Buttons and comment to add it
         frame_comment_and_button = ttk.Frame(frame_inputs, padding=5)
         frame_comment_and_button.grid(row=2,padx=5, pady=5)
+        
+
+        self.comment_var=tk.StringVar()
         ttk.Label(frame_comment_and_button, text="Comments :").grid(row=0, column=0, sticky="w", padx=5, pady=5)
-        self.entry_comment = ttk.Entry(frame_comment_and_button, width=40)
+        self.entry_comment = ttk.Entry(frame_comment_and_button,textvariable=self.comment_var, width=40)
         self.entry_comment.grid(row=0, column=1, padx=5, pady=5)
 
 
-        button_add_param = ttk.Button(frame_comment_and_button, text="Add criterias to query", style="Accent.TButton", command=self.add_parameter)
+        button_add_param = ttk.Button(frame_comment_and_button, text="Save criterias", style="Accent.TButton", command=self.add_parameter)
         button_add_param.grid(row=0, column=3, columnspan=2, pady=5)
 
 
@@ -120,14 +126,13 @@ class CreateNewISSPanel:
         self.tree_selected_planes.heading("plane", text="Selected Planes")
 
         # Save button
-        button_save = ttk.Button(self.window, text="Save to .ISS", command=self.save_to_iss)
+        button_save = ttk.Button(self.window, text="Save to .ISS",style="Accent.TButton", command=self.save_to_iss)
         button_save.pack(pady=10)
 
         # Populate sample planes
 
 
     async def actualise_dynamic_planes(self):
-        name = self.entry_comment.get()
         il2Group = self.entry_il2group.get()
         skinPack = self.entry_skinPack.get()
         title=self.entry_title.get()
@@ -150,36 +155,52 @@ class CreateNewISSPanel:
         skinPack = self.entry_skinPack.get()
         title=self.entry_title.get()
 
-        if name or il2Group or skinPack:
-            self.tree_params.insert("", "end", values=(name, il2Group, skinPack, title))
+        if title or il2Group or skinPack:
+            if self.editting_item_id==None:
+                self.tree_params.insert("", "end", values=(name, il2Group, skinPack, title))
+            else: 
+                self.tree_params.item(self.editting_item_id, values=(name, il2Group, skinPack, title))
+                self.editting_item_id=None
         tae.async_execute(self.actualiseSelectedPlanes(), wait=False, visible=False, pop_up=False, callback=None, master=self.window)
-
+        self.il2group_var.set("")
+        self.skinPack_var.set("")
+        self.title_var.set("")
+        self.comment_var.set("")
 
     def delete_parameter(self):
         selected_item = self.tree_params.selection()
         for item in selected_item:
             self.tree_params.delete(item)
+    
     def edit_parameter(self):
-        selected_item = self.tree_params.selection()
-        toto=1
+        selected_items = self.tree_params.selection()
+        if len(selected_items)==1:
+            for item_id in selected_items:
+                item_data = self.tree_params.item(item_id)
+                values = item_data["values"]
+                self.editting_item_id=item_id
+        self.il2group_var.set(values[1])
+        self.skinPack_var.set(values[2])
+        self.title_var.set(values[3])
+        self.comment_var.set(values[0])
+
 
     async def actualiseSelectedPlanes(self):
-        # TODO  self.tree_selected_planes purge
-        # regarder quels sont les skins qui seront sélectionné et les faire apparaitre dans la liste de droite
         rawjson=treeview_to_json(self.tree_params)
         collections= getSubscribeCollectionFromRawJson(rawjson,"test")
         skins=getSkinsFromSourceMatchingWithSubscribedCollections("HSD", collections)
         
         # Add these slins to the view below so the user can see the implied skins
         self.tree_selected_planes.delete(*self.tree_selected_planes.get_children())
+
         for skin in skins:
             self.tree_selected_planes.insert("", "end", values=(skin.getValue("name"),))
 
 
     def save_to_iss(self):
+        treeview_to_json
         print("Saved!")
 
-    import json
 
 def treeview_to_json(treeview):
     rows = []
