@@ -142,7 +142,7 @@ class CreateNewISSPanel:
         button_edit_param = ttk.Button(frame_params, text="Edit", command=self.edit_parameter)
         button_edit_param.pack(side="right", padx=5)
         # Plane Selection in a LabelFrame
-        frame_planes = ttk.LabelFrame(self.window, text="Plane Selection", padding=10)
+        frame_planes = ttk.LabelFrame(self.window, text="Resulting plane list", padding=10)
         frame_planes.pack(fill="both", expand=True, padx=10, pady=5)
 
         
