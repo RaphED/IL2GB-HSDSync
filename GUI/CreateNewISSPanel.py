@@ -1,5 +1,6 @@
 from enum import Enum
 import json
+import time
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 import os
@@ -17,8 +18,9 @@ import tkinter as tk
 from tkinter import ttk
 
 class CreateNewISSPanel:
+    async def actualise_dynamic_planes(self):      
+        time.sleep(2)
 
-    async def actualise_dynamic_planes(self):
         il2Group = self.entry_il2group.get()
         skinPack = self.entry_skinPack.get()
         title=self.entry_title.get()
@@ -34,11 +36,21 @@ class CreateNewISSPanel:
         for skin in skins:
             self.tree_creating_criterias.insert("", "end", values=(skin.getValue("name"),))
 
+        self.alreadyRunning=False
+                
     def update_dynamic_list(self, *args):
-            toot=1
+        if self.alreadyRunning:
+            print("We passed here !")
+            return
+        else:
+            print("we passed into the rest")
+            self.alreadyRunning=True
             tae.async_execute(self.actualise_dynamic_planes(), wait=False, visible=False, pop_up=False, callback=None, master=self.window)
 
     def __init__(self, parent: tk.Tk, on_close):
+        self.alreadyRunning=False
+
+
         self.editting_item_id=None
 
         self.on_close = on_close
@@ -49,7 +61,6 @@ class CreateNewISSPanel:
         self.window.geometry("1400x1200")
 
         # Call on_close when the window is closed
-        self.window.protocol("WM_DELETE_WINDOW", self.on_close)
 
         # Top Inputs in a LabelFrame
         frame_inputs = ttk.LabelFrame(self.window, text="Filters/ Criterias :", padding=10)
@@ -74,20 +85,10 @@ class CreateNewISSPanel:
         self.entry_title = ttk.Entry(frame_queries,textvariable=self.title_var, width=20)
         self.entry_title.grid(row=0, column=5, padx=5, pady=5)
 
-        #Adding listening to input change
-        
-       
-        
-        
+        #Adding listening to input change       
         self.title_var.trace_add("write", self.update_dynamic_list)
         self.skinPack_var.trace_add("write", self.update_dynamic_list)
         self.il2group_var.trace_add("write", self.update_dynamic_list)
-
-        # self.entry_il2group.bind("<KeyRelease>",update_dynamic_list)
-        # self.entry_skinPack.bind("<KeyRelease>",update_dynamic_list)
-        # self.entry_title.bind("<KeyRelease>",update_dynamic_list)
-
-
 
 
         #Planes of the current filters
@@ -152,9 +153,21 @@ class CreateNewISSPanel:
         self.tree_selected_planes.heading("plane", text="Selected Planes")
 
         # Save button
-        button_save = ttk.Button(self.window, text="Save to .ISS",style="Accent.TButton", command=self.save_to_iss)
-        button_save.pack(pady=10)
+        self.title_var=tk.StringVar()
+        frame_controls = ttk.Frame(self.window)
+        frame_controls.pack(pady=10, fill="both",side="bottom")
 
+        # Label
+        label_title = ttk.Label(frame_controls, text="File name:")
+        label_title.grid(row=0, column=0, padx=5, pady=5)
+
+        # Entry field
+        entry_filename = ttk.Entry(frame_controls, textvariable=self.title_var)
+        entry_filename.grid(row=0, column=1, padx=5, pady=5)
+
+        # Button
+        button_save = ttk.Button(frame_controls, text="Save to .ISS", style="Accent.TButton", command=self.save_to_iss)
+        button_save.grid(row=0, column=2, padx=5, pady=5)
         # Populate sample planes
 
 
@@ -196,6 +209,7 @@ class CreateNewISSPanel:
         self.comment_var.set(values[0])
 
 
+    
     async def actualiseSelectedPlanes(self):
         rawjson=treeview_to_json(self.tree_params)
         collections= getSubscribeCollectionFromRawJson(rawjson,"test")
@@ -209,9 +223,49 @@ class CreateNewISSPanel:
 
 
     def save_to_iss(self):
-        treeview_to_json
-        print("Saved!")
+        # Ensure the Subscriptions folder exists
+        subscriptionPath = os.path.join(os.getcwd(), "Subscriptions")
+        if not os.path.exists(subscriptionPath):
+            messagebox.showwarning("Error : folder subscription not found !")
+        
+        # Get the filename
+        filename = self.title_var.get()
+        if not filename.endswith(".iss"):
+            filename += ".iss"
+        file_path = os.path.join(subscriptionPath, filename)
 
+        # Check if file already exists
+        if os.path.exists(file_path):
+            messagebox.showwarning("File Exists", f"The file '{filename}' already exists in the Subscriptions folder.")
+            return
+
+        # Convert treeview data to JSON and save to file
+        data = treeview_to_json(self.tree_params)  # Ensure this method returns the desired data as a dictionary or list
+        try:
+            with open(file_path, "w") as json_file:
+                json_file.write(data)
+        except Exception as e:
+            messagebox.showerror("Error", f"An error occurred while saving the file: {str(e)}")
+        
+        tae.async_execute(self.close_after_4sec(), wait=False, visible=False, pop_up=False, callback=None, master=self.window)
+
+    async def close_after_4sec(self):
+        time.sleep(4)
+        self.window.destroy()
+        self.on_close()
+
+
+def element_to_json(comment, il2Group, skinPack, title):   
+    result = []
+    entry = {"source": "HSD","comment": comment, "criteria": {}}
+    if il2Group:
+        entry["criteria"]["IL2Group"] = il2Group
+    if skinPack:
+        entry["criteria"]["SkinPack"] = skinPack
+    if title:
+        entry["criteria"]["Title"] = title
+    result.append(entry)
+    return json.dumps(result)
 
 def treeview_to_json(treeview):
     rows = []
@@ -232,16 +286,4 @@ def treeview_to_json(treeview):
 
         result.append(entry)
 
-    return json.dumps(result)
-
-def element_to_json(comment, il2Group, skinPack, title):   
-    result = []
-    entry = {"source": "HSD","comment": comment, "criteria": {}}
-    if il2Group:
-        entry["criteria"]["IL2Group"] = il2Group
-    if skinPack:
-        entry["criteria"]["SkinPack"] = skinPack
-    if title:
-        entry["criteria"]["Title"] = title
-    result.append(entry)
     return json.dumps(result)

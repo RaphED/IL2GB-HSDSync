@@ -229,7 +229,9 @@ class SubscriptionPanel:
  #TODO MOVE THIS TO A NEW 
     def open_subscription_window(self):
         def on_second_window_close():
-            messagebox.showinfo("Main Window", "Subscription window has been closed!")        
+            for item in self.tree.get_children():
+                self.tree.delete(item)
+            self.the_start_of_syncs()
         CreateNewISSPanel(self.root, on_close=on_second_window_close)
 
 
