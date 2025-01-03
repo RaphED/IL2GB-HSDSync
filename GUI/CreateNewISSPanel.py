@@ -47,9 +47,9 @@ class CreateNewISSPanel:
             self.alreadyRunning=True
             tae.async_execute(self.actualise_dynamic_planes(), wait=False, visible=False, pop_up=False, callback=None, master=self.window)
 
-    def __init__(self, parent: tk.Tk, on_close):
+    def __init__(self, parent: tk.Tk,variable, on_close):
         self.alreadyRunning=False
-
+       
 
         self.editting_item_id=None
 
@@ -153,7 +153,6 @@ class CreateNewISSPanel:
         self.tree_selected_planes.heading("plane", text="Selected Planes")
 
         # Save button
-        self.title_var=tk.StringVar()
         frame_controls = ttk.Frame(self.window)
         frame_controls.pack(pady=10, fill="both",side="bottom")
 
@@ -162,6 +161,7 @@ class CreateNewISSPanel:
         label_title.grid(row=0, column=0, padx=5, pady=5)
 
         # Entry field
+        self.title_var=tk.StringVar()
         entry_filename = ttk.Entry(frame_controls, textvariable=self.title_var)
         entry_filename.grid(row=0, column=1, padx=5, pady=5)
 
@@ -170,20 +170,38 @@ class CreateNewISSPanel:
         button_save.grid(row=0, column=2, padx=5, pady=5)
         # Populate sample planes
 
+        self.variable=variable
+        if variable!=None:
+            self.title_var.set(variable)
+            subscriptionPath = os.path.join(os.getcwd(),"Subscriptions",variable)
+
+            file = open(subscriptionPath, "r")
+            rawJsonData = json.load(file)
+
+            for rawSubscription in rawJsonData:
+                criteria = rawSubscription.get("criteria", {})
+                comment =  rawSubscription.get("comment", "")
+                il2Group = criteria.get("IL2Group", "")
+                skinPack = criteria.get("SkinPack", "")
+                title = criteria.get("Title", "")
+
+                self.tree_params.insert("", "end", values=(comment, il2Group, skinPack, title))
+
+            tae.async_execute(self.actualiseSelectedPlanes(), wait=False, visible=False, pop_up=False, callback=None, master=self.window)
 
     
 
     def add_parameter(self):
-        name = self.entry_comment.get()
+        comment = self.entry_comment.get()
         il2Group = self.entry_il2group.get()
         skinPack = self.entry_skinPack.get()
         title=self.entry_title.get()
 
         if title or il2Group or skinPack:
             if self.editting_item_id==None:
-                self.tree_params.insert("", "end", values=(name, il2Group, skinPack, title))
+                self.tree_params.insert("", "end", values=(comment, il2Group, skinPack, title))
             else: 
-                self.tree_params.item(self.editting_item_id, values=(name, il2Group, skinPack, title))
+                self.tree_params.item(self.editting_item_id, values=(comment, il2Group, skinPack, title))
                 self.editting_item_id=None
         tae.async_execute(self.actualiseSelectedPlanes(), wait=False, visible=False, pop_up=False, callback=None, master=self.window)
         self.il2group_var.set("")
@@ -235,7 +253,7 @@ class CreateNewISSPanel:
         file_path = os.path.join(subscriptionPath, filename)
 
         # Check if file already exists
-        if os.path.exists(file_path):
+        if os.path.exists(file_path) and self.variable!=filename:
             messagebox.showwarning("File Exists", f"The file '{filename}' already exists in the Subscriptions folder.")
             return
 

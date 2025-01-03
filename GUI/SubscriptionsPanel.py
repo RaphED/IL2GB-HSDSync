@@ -82,7 +82,10 @@ class SubscriptionPanel:
         self.switch_state_button.pack(side="left", padx=5, pady=5)
 
         self.open_window_button = ttk.Button(subscription_label_frame, text="Create", command=self.open_subscription_window)
-        self.open_window_button.pack(pady=20)
+        self.open_window_button.pack(side="left", padx=5, pady=5)
+
+        self.open_window_button = ttk.Button(subscription_label_frame, text="Edit", command=self.open_subscription_window_with_param)
+        self.open_window_button.pack(side="left", padx=5, pady=5)
 
     def changeAllSubscriptionButtonsState(self,state):
         self.add_button.state=state
@@ -138,15 +141,8 @@ class SubscriptionPanel:
             for obj in subscriptions:
                 if obj.fileName == ISSFile:
                     self.tree.item(obj.treeID, text=buildCollectionTreeLabel(ISSFile, catalogSize=catalogSize)) 
-                    for skin in skinCollection:
-                        localPlane=namesLocalSkins.get(skin.infos.get("mainSkinFileName"))
-                        if localPlane is not None:
-                            if skin.infos.get("HashDDS0") ==localPlane:
-                                self.tree.insert(obj.treeID, "end", text=skin.getValue('name'),tags="green")
-                            else:
-                                self.tree.insert(obj.treeID, "end", text=skin.getValue('name'),tags="yellow")
-                        else:
-                            self.tree.insert(obj.treeID, "end", text=skin.getValue('name'),tags="red")
+                    for skin in skinCollection:    
+                        self.tree.insert(obj.treeID, "end", text=skin.getValue('name'))
                     break
         MessageBrocker.emitProgress(1.0)
         self.changeAllSubscriptionButtonsState(True)
@@ -226,7 +222,6 @@ class SubscriptionPanel:
 
                     self.populate_tree()
 
- #TODO MOVE THIS TO A NEW 
     def open_subscription_window(self):
         def on_second_window_close():
             for item in self.tree.get_children():
@@ -234,8 +229,25 @@ class SubscriptionPanel:
             self.the_start_of_syncs()
         CreateNewISSPanel(self.root, on_close=on_second_window_close)
 
-
-
+    def open_subscription_window_with_param(self):
+        selected_item = self.tree.selection()
+        if selected_item:  # Ensure something is selected
+            for item in selected_item:
+                parent = self.tree.parent(item)  # Get the parent of the selected item
+                if parent == "":  # Top-level items have an empty string as their parent
+                    colelctionLabel = self.tree.item(item, 'text') 
+                    collectionName = getCollectionNameFromTreeLabel(colelctionLabel)
+                    isDisabled = colelctionLabel.endswith("DISABLED")
+                    if isDisabled:
+                        return
+                    
+            def on_second_window_close():
+                for item in self.tree.get_children():
+                    self.tree.delete(item)
+                self.the_start_of_syncs()
+            CreateNewISSPanel(self.root,variable=collectionName+".iss", on_close=on_second_window_close)
+        else:
+            messagebox.showerror("Error, you need to select a subscription first")
 
 #TODO : Quite temporary solution before handling properly objects instead of strings and titles
 treeLabelSeparator = "\t\t"
