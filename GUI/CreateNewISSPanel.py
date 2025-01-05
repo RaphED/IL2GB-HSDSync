@@ -161,8 +161,8 @@ class CreateNewISSPanel:
         label_title.grid(row=0, column=0, padx=5, pady=5)
 
         # Entry field
-        self.title_var=tk.StringVar()
-        entry_filename = ttk.Entry(frame_controls, textvariable=self.title_var)
+        self.filename_var=tk.StringVar()
+        entry_filename = ttk.Entry(frame_controls, textvariable=self.filename_var)
         entry_filename.grid(row=0, column=1, padx=5, pady=5)
 
         # Button
@@ -172,7 +172,7 @@ class CreateNewISSPanel:
 
         self.variable=variable
         if variable!=None:
-            self.title_var.set(variable)
+            self.filename_var.set(variable)
             subscriptionPath = os.path.join(os.getcwd(),"Subscriptions",variable)
 
             file = open(subscriptionPath, "r")
@@ -204,10 +204,10 @@ class CreateNewISSPanel:
                 self.tree_params.item(self.editting_item_id, values=(comment, il2Group, skinPack, title))
                 self.editting_item_id=None
         tae.async_execute(self.actualiseSelectedPlanes(), wait=False, visible=False, pop_up=False, callback=None, master=self.window)
-        self.il2group_var.set("")
-        self.skinPack_var.set("")
-        self.title_var.set("")
-        self.comment_var.set("")
+        # self.il2group_var.set("") permet de reset mais ca fait pas mal de process en back qui sont aps cool
+        # self.skinPack_var.set("")
+        # self.title_var.set("")
+        # self.comment_var.set("")
 
     def delete_parameter(self):
         selected_item = self.tree_params.selection()
@@ -247,7 +247,7 @@ class CreateNewISSPanel:
             messagebox.showwarning("Error : folder subscription not found !")
         
         # Get the filename
-        filename = self.title_var.get()
+        filename = self.filename_var.get()
         if not filename.endswith(".iss"):
             filename += ".iss"
         file_path = os.path.join(subscriptionPath, filename)
