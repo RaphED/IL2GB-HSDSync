@@ -245,7 +245,7 @@ class SubscriptionPanel:
                 for item in self.tree.get_children():
                     self.tree.delete(item)
                 self.the_start_of_syncs()
-            CreateNewISSPanel(self.root,variable=collectionName+".iss", on_close=on_second_window_close)
+            CreateNewISSPanel(self.root, on_close=on_second_window_close, variable=collectionName+".iss")
         else:
             messagebox.showerror("Error, you need to select a subscription first")
 

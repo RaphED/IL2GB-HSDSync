@@ -47,7 +47,7 @@ class CreateNewISSPanel:
             self.alreadyRunning=True
             tae.async_execute(self.actualise_dynamic_planes(), wait=False, visible=False, pop_up=False, callback=None, master=self.window)
 
-    def __init__(self, parent: tk.Tk,variable, on_close):
+    def __init__(self, parent: tk.Tk,on_close,variable=None):
         self.alreadyRunning=False
        
 
