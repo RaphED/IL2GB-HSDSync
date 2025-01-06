@@ -11,11 +11,11 @@ from pythonServices.messageBrocker import MessageBrocker
 def getSkinDirectory():
     return os.path.join(getConf("IL2GBGameDirectory"), "data\\graphics\\skins")
 
+
 def getCustomPhotosDirectory():
     return os.path.join(getConf("IL2GBGameDirectory"), "data\\graphics\\planes")
 
 def getSkinsList():
-
     skinList = []
     skinsDirectory = getSkinDirectory()
     
