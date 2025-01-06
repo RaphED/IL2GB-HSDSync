@@ -44,21 +44,22 @@ class ScanResult:
 
 
         if customPhotoSyncIsActive():
-            returnString += f"Cockpit notes selected mode : {getConf("cockpitNotesMode")}\n"
+            returnString += f"\n************ Cockpit notes ************\n"
+            returnString += f"** Selected mode : {getConf("cockpitNotesMode")}\n\n"
             if len(self.toBeUpdatedCockpitNotes) == 0:
                 returnString += "All custom photos are up to date\n"
             else:
                 returnString += f"{len(self.toBeUpdatedCockpitNotes)} custom photos are to be updated ({bytesToString(diskSpaceStats["toBeUpdatedCustomPhotos"])})\n"
 
         for source in self.getUsedSources():
-            returnString += f"*********** Sync with {source} ***********\n"
-            returnString += f"** Missing skins: ({bytesToString(sum(diskSpaceStats["missingSkinsSpace"].values()))})\n"
+            returnString += f"\n*********** Sync with {source} ***********\n"
+            returnString += f"\nMissing skins: ({bytesToString(sum(diskSpaceStats["missingSkinsSpace"].values()))})\n"
             for skin in self.missingSkins[source]:
                 returnString += f"\t- {skin.getValue("name")}\n"
             if len(self.missingSkins[source]) == 0:
                 returnString +="- None -\n"
 
-            returnString += f"** To be updated skins: ({bytesToString(sum(diskSpaceStats["toBeUpdatedSkinsSpace"].values()))})\n"
+            returnString += f"\nTo be updated skins: ({bytesToString(sum(diskSpaceStats["toBeUpdatedSkinsSpace"].values()))})\n"
             for skin in self.toBeUpdatedSkins[source]:
                 returnString += f"\t- {skin.getValue("name")}\n"
             if len(self.toBeUpdatedSkins[source]) == 0:
@@ -66,27 +67,45 @@ class ScanResult:
 
         afterUpdateDiskSpace = sum(diskSpaceStats["subscribedSkinsSpace"].values())
 
-        returnString += f"********** Non-Sync skins ********** ({bytesToString(diskSpaceStats["toBeRemovedSkinsSpace"])}) -> "
-        #if unregistered skins are not deleted, count them it the final space
-        if getConf("autoRemoveUnregisteredSkins"):
-            returnString += "(will be removed from your disk)"
-        else:
-            returnString += "(will stay on your disk)"
-            afterUpdateDiskSpace += diskSpaceStats["toBeRemovedSkinsSpace"]
+        returnString += f"\n********** Unregistered skins ********** ({bytesToString(diskSpaceStats["toBeRemovedSkinsSpace"])})"
 
         returnString += "\n"
         
         for skin in self.toBeRemovedSkins:
-            returnString += f"- {skin['name']}\n"
+            returnString += f"\t- {skin['name']}\n"
         if len(self.toBeRemovedSkins) == 0:
             returnString +="- None -\n"
 
-        returnString += "*************************************\n"
+        returnString += "\n*************** Scan result ***************\n\n"
+        if self.IsSyncUpToDate():
+            returnString += "Skins are up to date.\n"
+        else:
+            returnString += "Synchronisation required !\n"
+        
+        returnString += "\n*********** Disk space analysis ***********\n\n"
+        
         beforeUpdateDiskSpace = diskSpaceStats["previouslyInstalledSkinsSpace"]
-        returnString += f"Current total disk space : {bytesToString(beforeUpdateDiskSpace)}\n"
-        if not self.IsSyncUpToDate():
-            spaceDelta = afterUpdateDiskSpace - beforeUpdateDiskSpace
-            returnString += f"After update total disk space : {bytesToString(afterUpdateDiskSpace)} ({bytesToString(spaceDelta, forceSign=True)})\n"
+
+        toBeDownloaded = sum(diskSpaceStats["toBeUpdatedSkinsSpace"].values()) + sum(diskSpaceStats["missingSkinsSpace"].values()) + diskSpaceStats["toBeUpdatedCustomPhotos"]
+
+        #if unregistered skins are not deleted, count them it the final space
+        unregistered_remove_message = "will be removed"
+        if not getConf("autoRemoveUnregisteredSkins"):
+            unregistered_remove_message = "won't be removed"
+            afterUpdateDiskSpace += diskSpaceStats["toBeRemovedSkinsSpace"]
+
+        spaceDelta = afterUpdateDiskSpace - beforeUpdateDiskSpace
+        
+
+        if self.IsSyncUpToDate():
+            returnString += f"Disk space used by your skins : {bytesToString(beforeUpdateDiskSpace)}\n"
+            returnString += f"Disk space used by your unregistered skins : {bytesToString(diskSpaceStats["toBeRemovedSkinsSpace"])}\n"
+        else:
+            returnString += f"Disk space used by your skins (before update) : {bytesToString(beforeUpdateDiskSpace)}\n"
+            returnString += f"Disk space used by your unregistered skins ({unregistered_remove_message}): {bytesToString(diskSpaceStats["toBeRemovedSkinsSpace"])}\n"
+            
+            returnString += f"To be downloaded : {bytesToString(toBeDownloaded)}\n"
+            returnString += f"Disk space used by your skins (after update) : {bytesToString(afterUpdateDiskSpace)} ({bytesToString(spaceDelta, forceSign=True)})\n"
 
         return returnString
     
