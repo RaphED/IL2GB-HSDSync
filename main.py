@@ -48,9 +48,7 @@ if __name__ == "__main__":
             runUpdaterGUI(update_withPrerelease)
         #NORMAL MODE
         else:
-            tae.start()
             runMainGUI()
-            tae.stop()
     except Exception as e:
         logging.error(e)
         runCrashGUI(exception=e)

@@ -157,9 +157,11 @@ def runMainGUI():
     if not configurationFileExists():
         runFirstLaunchGUI()
     
+    tae.start()
+
+
     root = tk.Tk()
     mainGUI = MainGUI(root)
 
-    # tae.start()
     root.mainloop()
-    # tae.stop()
+    tae.stop()

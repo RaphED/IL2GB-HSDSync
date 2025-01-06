@@ -7,7 +7,7 @@ import os
 import shutil
 import tk_async_execute as tae
 import asyncio
-from pythonServices import localService
+from pythonServices import localService 
 from pythonServices.messageBrocker import MessageBrocker
 
 from pythonServices.subscriptionService import getAllSubscribedCollectionByFileName, getSubscribeCollectionFromRawJson
@@ -19,12 +19,10 @@ from tkinter import ttk
 
 class CreateNewISSPanel:
     async def actualise_dynamic_planes(self):      
-        time.sleep(2)
-
         il2Group = self.entry_il2group.get()
         skinPack = self.entry_skinPack.get()
-        title=self.entry_title.get()
-        comment=self.entry_comment.get()
+        title = self.entry_title.get()
+        comment = self.entry_comment.get()
 
         rawjson=element_to_json(comment, il2Group, skinPack, title)
         collections= getSubscribeCollectionFromRawJson(rawjson,"test")
@@ -35,20 +33,19 @@ class CreateNewISSPanel:
 
         for skin in skins:
             self.tree_creating_criterias.insert("", "end", values=(skin.getValue("name"),))
+        print("We passed in the entire function so it didn't really destroy")
+        self.runningTask=None
 
-        self.alreadyRunning=False
-                
     def update_dynamic_list(self, *args):
-        if self.alreadyRunning:
-            print("We passed here !")
-            return
-        else:
-            print("we passed into the rest")
-            self.alreadyRunning=True
-            tae.async_execute(self.actualise_dynamic_planes(), wait=False, visible=False, pop_up=False, callback=None, master=self.window)
+        if self.runningTask:
+            tae.utils.stop()
+            print("destroyed but I don't think so lol...")
+            tae.utils.start()
+
+        self.runningTask=tae.async_execute(self.actualise_dynamic_planes(), wait=False, visible=False, pop_up=False, callback=None, master=self.window)
 
     def __init__(self, parent: tk.Tk,on_close,variable=None):
-        self.alreadyRunning=False
+        self.runningTask=None
        
 
         self.editting_item_id=None
@@ -82,8 +79,13 @@ class CreateNewISSPanel:
         
         self.title_var = tk.StringVar()
         ttk.Label(frame_queries, text="Title").grid(row=0, column=4, sticky="w", padx=5, pady=5)
-        self.entry_title = ttk.Entry(frame_queries,textvariable=self.title_var, width=20)
+        self.entry_title = ttk.Entry(frame_queries, textvariable=self.title_var, width=20)
         self.entry_title.grid(row=0, column=5, padx=5, pady=5)
+
+
+
+
+        # //parent.after(100, self.poll_asyncio)
 
         #Adding listening to input change       
         self.title_var.trace_add("write", self.update_dynamic_list)
@@ -195,7 +197,7 @@ class CreateNewISSPanel:
         comment = self.entry_comment.get()
         il2Group = self.entry_il2group.get()
         skinPack = self.entry_skinPack.get()
-        title=self.entry_title.get()
+        title = self.entry_title.get()
 
         if title or il2Group or skinPack:
             if self.editting_item_id==None:
@@ -268,7 +270,7 @@ class CreateNewISSPanel:
         tae.async_execute(self.close_after_4sec(), wait=False, visible=False, pop_up=False, callback=None, master=self.window)
 
     async def close_after_4sec(self):
-        time.sleep(4)
+        time.sleep(2)
         self.window.destroy()
         self.on_close()
 
