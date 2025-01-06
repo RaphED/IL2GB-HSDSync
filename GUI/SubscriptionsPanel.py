@@ -59,12 +59,7 @@ class SubscriptionPanel:
 
         self.tree = ttk.Treeview(subscription_label_frame, show="tree", style="Treeview" )
         self.tree.pack(fill="both",  padx=5, pady=5)
-        
-        self.tree.tag_configure('yellow', background='#ffd29c')
-        # Define a tag for green background
-        self.tree.tag_configure('green', background='#70ff8a')
-        self.tree.tag_configure('red', background='#ffb8b8')
-            
+                    
         self.the_start_of_syncs()
      
         # Bind a selection event to the Treeview
@@ -80,12 +75,12 @@ class SubscriptionPanel:
 
         self.switch_state_button = ttk.Button(subscription_label_frame, text="Activate/Disable", command=self.switch_state)
         self.switch_state_button.pack(side="left", padx=5, pady=5)
+        # TODO WIP sur autre branche
+        # self.open_window_button = ttk.Button(subscription_label_frame, text="Create", command=self.open_subscription_window)
+        # self.open_window_button.pack(side="left", padx=5, pady=5)
 
-        self.open_window_button = ttk.Button(subscription_label_frame, text="Create", command=self.open_subscription_window)
-        self.open_window_button.pack(side="left", padx=5, pady=5)
-
-        self.open_window_button = ttk.Button(subscription_label_frame, text="Edit", command=self.open_subscription_window_with_param)
-        self.open_window_button.pack(side="left", padx=5, pady=5)
+        # self.open_window_button = ttk.Button(subscription_label_frame, text="Edit", command=self.open_subscription_window_with_param)
+        # self.open_window_button.pack(side="left", padx=5, pady=5)
 
     def changeAllSubscriptionButtonsState(self,state):
         self.add_button.state=state

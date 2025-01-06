@@ -32,7 +32,7 @@ class MainGUI:
         style.theme_use("forest-light")
 
         self.root.title("InterSquadron Skin Synchronizer")
-        self.root.geometry("1100x650")
+        self.root.geometry("850x600")
         
         # 1 - UPPER FRAME
         top_main_frame = tk.Frame(self.root)

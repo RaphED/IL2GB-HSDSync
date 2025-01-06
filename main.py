@@ -3,7 +3,6 @@ import sys
 import logging
 from versionManager import isCurrentVersionUpToDate
 import ISSupdater
-import tk_async_execute as tae
 
 from GUI.mainGUI import runMainGUI
 from GUI.updaterGUI import runUpdaterGUI
