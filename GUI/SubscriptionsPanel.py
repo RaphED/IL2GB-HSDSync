@@ -4,10 +4,7 @@ from tkinter import ttk, filedialog, messagebox
 import os
 import shutil
 import tk_async_execute as tae
-import asyncio
 from GUI.CreateNewISSPanel import CreateNewISSPanel
-from pythonServices import localService
-from pythonServices.messageBrocker import MessageBrocker
 from pythonServices.subscriptionService import getAllSubscribedCollectionByFileName
 from pythonServices.remoteService import getSpaceUsageOfRemoteSkinCatalog, RemoteSkin
 from ISSScanner import getSkinsFromSourceMatchingWithSubscribedCollections, bytesToString
@@ -94,8 +91,6 @@ class SubscriptionPanel:
         self.populate_tree()
 
     def populate_tree(self):
-        MessageBrocker.emitConsoleMessage("Getting collections from /Subscriptions folder")
-        MessageBrocker.emitProgress(0.2)
         collectionByNameSubscribeFile = getAllSubscribedCollectionByFileName()
         global subscriptions
         subscriptions = []
@@ -122,8 +117,6 @@ class SubscriptionPanel:
 
     async def async_populate_tree_after_calculate(self,collectionByNameSubscribeFile):   
         self.changeAllSubscriptionButtonsState(False) #TODO BUG DES BOMBARDIER PASSER SUR LE RESULT DE SCAN !!!
-        toto= localService.getSkinsList()
-        namesLocalSkins = {entry['mainFileName']: entry['mainFileMd5'] for entry in toto}
 
         for ISSFile in collectionByNameSubscribeFile.keys():
             skinCollection = list[RemoteSkin]()
@@ -139,7 +132,6 @@ class SubscriptionPanel:
                     for skin in skinCollection:    
                         self.tree.insert(obj.treeID, "end", text=skin.getValue('name'))
                     break
-        MessageBrocker.emitProgress(1.0)
         self.changeAllSubscriptionButtonsState(True)
 
 
