@@ -2,7 +2,7 @@ import tkinter as tk
 import threading
 import sys
 
-from GUI.splashScreen import SplashScreen
+from GUI.Components.splashScreen import SplashScreen
 import ISSupdater
 
 
