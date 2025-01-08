@@ -32,7 +32,6 @@ class CreateNewISSPanel:
 
         for skin in skins:
             self.tree_creating_criterias.insert("", "end", values=(skin.getValue("name"),))
-        print("We passed in the entire function so it didn't really destroy")
         self.runningTask=None
 
     def update_dynamic_list(self, *args):
@@ -51,7 +50,9 @@ class CreateNewISSPanel:
 
         # Create a Toplevel window
         self.window = tk.Toplevel(parent)
-        self.window.title("Create New ISS Subscription")
+        self.window.title("ISS file detail")
+        self.window.iconbitmap(getRessourcePath("iss.ico"))
+
         self.window.geometry("1400x1200")
 
         # Call on_close when the window is closed
@@ -139,7 +140,7 @@ class CreateNewISSPanel:
         self.tree_selected_planes = ttk.Treeview(frame_planes, columns=("plane"), show="headings", height=10)
         self.tree_selected_planes.grid(row=0, column=2, padx=5, pady=5)
 
-        self.tree_selected_planes.heading("plane", text="Selected Planes")
+        self.tree_selected_planes.heading("plane", text="Plane name")
 
         # Save button
         frame_controls = ttk.Frame(self.window)
