@@ -7,7 +7,8 @@ class CliquableIcon(tk.Label):
                 tooltip_text: str=None, #warning : cannot be used if onMouseOverOpacityFactor is set
                 onClick=None,
                 opacityFactor: int = 255, #opacity factor comes from 0 to 255
-                onMouseOverOpacityFactor: int = 255 #warning, cannot have tooltip if activated
+                onMouseOverOpacityFactor: int = 255, #warning, cannot have tooltip if activated
+                disabled = False
             ):
         
         super().__init__(root, cursor="hand2")
@@ -21,7 +22,7 @@ class CliquableIcon(tk.Label):
         self.original_alpha = self.referenceImage.split()[3]
 
         self.base_opacityFactor = opacityFactor
-        self.displayIcon()
+        self.disabled = disabled
 
         self.tooltip = None
         self.tooltip_text = tooltip_text
@@ -47,13 +48,22 @@ class CliquableIcon(tk.Label):
             self.bind('<Enter>', self.start_fade_in)
             self.bind('<Leave>', self.start_fade_out)
 
+        self.displayIcon()
+
     def runOnClickCommand(self, event= None):
-        self.onClickCommand()
+        if not self.disabled:
+            self.onClickCommand()
 
     def displayIcon(self, opacityFactor = None):
         if opacityFactor is None:
             opacityFactor = self.base_opacityFactor
+        
+        #force an opacity factor if disabled
+        if self.disabled:
+            opacityFactor = 50
+
         self.current_opacityFactor = opacityFactor
+        
         if self.current_opacityFactor == 255:
             #do not perform any calculation if opacity is full
             self.displayedImage = ImageTk.PhotoImage(self.referenceImage)

@@ -2,6 +2,7 @@ import os
 import json
 import re
 import logging
+import shutil
 
 from pythonServices.remoteService import getSourceInfo, RemoteSkin
 from pythonServices.filesService import downloadFile
@@ -91,7 +92,7 @@ def getAllSubscribedCollection() -> list[SubscribedCollection]:
         
     return returnedCollections
 
-def getAllSubscribedCollectionByFileName() -> dict[str, list[SubscribedCollection]]:
+def getAllSubscribedCollectionByFileName(getDisabledFiles = False) -> dict[str, list[SubscribedCollection]]:
     returnedCollections = dict[str, list[SubscribedCollection]]()
     #create subsciption path of not exists
     if not os.path.exists(subscriptionPath):
@@ -100,7 +101,9 @@ def getAllSubscribedCollectionByFileName() -> dict[str, list[SubscribedCollectio
     for root, dirs, files in os.walk(subscriptionPath):
         for file in files:
             if file.endswith(".iss"): #We only consider files with iss extension
-                returnedCollections[file[:-4]] = getSubscribedCollectionFromFile(os.path.join(root,file))
+                returnedCollections[file] = getSubscribedCollectionFromFile(os.path.join(root,file))
+            if getDisabledFiles and file.endswith(".iss.disabled"):
+                returnedCollections[file] = getSubscribedCollectionFromFile(os.path.join(root,file))
     
     return returnedCollections
 
@@ -111,3 +114,45 @@ def isSubcriptionFolderEmpty():
                 return False
     
     return True
+
+def getSubcriptionNameFromFileName(fileNameWithExtension):
+    if fileNameWithExtension.endswith(".iss"):
+        return fileNameWithExtension[:-4]
+    elif fileNameWithExtension.endswith(".iss.disabled"):
+        return fileNameWithExtension[:-13]
+    else:
+        raise Exception(f"Unexpected subscription file name {fileNameWithExtension}")
+
+def activateSubscription(fileNameWithExtension):
+    filePath = os.path.join(subscriptionPath, fileNameWithExtension)
+    if not os.path.exists(filePath) or not fileNameWithExtension.endswith(".iss.disabled"):
+        raise Exception(f"Unexpected subscription to activate {fileNameWithExtension}")
+    else:
+        newFileName = fileNameWithExtension[:-9]
+        newFilePath = os.path.join(subscriptionPath, newFileName)
+        os.rename(filePath,newFilePath)
+        return newFileName
+
+def desactivateSubscription(fileNameWithExtension):
+    filePath = os.path.join(subscriptionPath, fileNameWithExtension)
+    if not os.path.exists(filePath) or not fileNameWithExtension.endswith(".iss"):
+        raise Exception(f"Unexpected subscription to activate {fileNameWithExtension}")
+    else:
+        newFileName = fileNameWithExtension + ".disabled"
+        newFilePath = os.path.join(subscriptionPath, newFileName)
+        os.rename(filePath,newFilePath)
+        return newFileName
+
+def deleteSubscriptionFile(fileNameWithExtension):
+    filePath = os.path.join(subscriptionPath, fileNameWithExtension)
+    if not os.path.exists(filePath):
+        raise Exception(f"Unexpected subscription to delete {fileNameWithExtension}")
+    else:
+        os.remove(filePath)
+
+def importSubcriptionFile(file_path):
+    # Copy the selected file to the 'Subscriptions' folder
+    file_name = os.path.basename(file_path)  # Extract the file name
+    destination_path = os.path.join(subscriptionPath, file_name)
+    shutil.copy(file_path, destination_path)
+    return destination_path

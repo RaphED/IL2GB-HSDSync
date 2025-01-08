@@ -7,7 +7,7 @@ import webbrowser
 from pythonServices.configurationService import configurationFileExists, getConf
 from pythonServices.filesService import getRessourcePath, getIconPath, cleanTemporaryFolder
 
-from GUI.SubscriptionsPanel import SubscriptionPanel
+from GUI.collectionsPanel import CollectionsPanel
 from GUI.parametersPanel import ParametersPanel
 from GUI.consolePanel import ConsolePanel
 from GUI.actionsPanel import ActionPanel
@@ -17,6 +17,7 @@ from GUI.firstLaunchGUI import runFirstLaunchGUI
 
 import ISSsynchronizer
 import ISSScanner
+from pythonServices.messageBrocker import MessageBrocker
 
 class MainGUI:
     
@@ -41,12 +42,17 @@ class MainGUI:
         left_upper_frame = tk.Frame(top_main_frame)
         left_upper_frame.pack(side="left", fill="both")
 
-        self.subscriptionsPanel = SubscriptionPanel(left_upper_frame)
+        #self.subscriptionsPanel = SubscriptionPanel(left_upper_frame)
+        self.collectionsPanel = CollectionsPanel(
+            left_upper_frame,
+            on_loading_start=self.on_collections_loading_start,
+            on_loading_complete=self.on_collections_loading_completed
+        )
 
         # 1.2 - right upper frame
         right_upper_frame = tk.Frame(top_main_frame)
         right_upper_frame.pack(side="right", fill="both")
-        
+                
         self.parametersPanel = ParametersPanel(right_upper_frame)
         self.actionPanel = ActionPanel(right_upper_frame, scanCommand = self.start_scan, syncCommand=self.start_sync)
 
@@ -88,6 +94,16 @@ class MainGUI:
         #OTHER STORED INFORMATION
         self.currentScanResult: ISSsynchronizer.ScanResult = None
 
+        #Once all components are declared, we can load the data
+        #for the moment, only the collections are loaded
+        self.root.after(0, self.collectionsPanel.loadCollections_async)
+
+    #COMPONENTS LISTENERS
+    def on_collections_loading_start(self):
+        MessageBrocker.emitConsoleMessage("Please wait, collections are loading...")
+
+    def on_collections_loading_completed(self):
+        MessageBrocker.emitConsoleMessage("Collections loaded, Scan is now available.")
 
     def updateScanResult(self, scanResult: ISSsynchronizer.ScanResult):
         self.currentScanResult = scanResult

@@ -131,6 +131,7 @@ def getSkinsCatalogFromSource(source) -> list[RemoteSkin]:
     else:
         raise Exception(f"Error downloading the file. Status code: {response.status_code}")
 
+#TODO: remove the source
 def getSpaceUsageOfRemoteSkinCatalog(source, remoteSkinList: list[RemoteSkin]):
     totalDiskSpace = 0
     for skin in remoteSkinList:
