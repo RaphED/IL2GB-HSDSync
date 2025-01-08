@@ -7,6 +7,7 @@ from tkinter import ttk, filedialog, messagebox
 import os
 import shutil
 from pythonServices import localService 
+from pythonServices.filesService import getRessourcePath
 from pythonServices.messageBrocker import MessageBrocker
 
 from pythonServices.subscriptionService import getAllSubscribedCollectionByFileName, getSubscribeCollectionFromRawJson
@@ -88,12 +89,14 @@ class CreateNewISSPanel:
 
 
         #Planes of the current filters
-        self.tree_creating_criterias = ttk.Treeview(frame_inputs, columns=("plane"), show="headings", height=10)
+        self.tree_creating_criterias = ttk.Treeview(frame_inputs, columns=("plane","IL2Group","SkinPack"), show="headings", height=10)
         self.tree_creating_criterias.grid(row=1, column=0, padx=5, pady=5)
 
-        self.tree_creating_criterias.heading("plane", text="Planes matching live query")
+        self.tree_creating_criterias.heading("plane", text="Title")
+        self.tree_creating_criterias.heading("IL2Group", text="IL2Group")
+        self.tree_creating_criterias.heading("SkinPack", text="SkinPack")
         for plane in getSkinsCatalogFromSource("HSD"):
-            self.tree_creating_criterias.insert("", "end", values=(plane.infos["Title"],))
+            self.tree_creating_criterias.insert("", "end", values=(plane.infos["Title"],plane.infos["IL2Group"],plane.infos["SkinPack"]))
 
 
 
