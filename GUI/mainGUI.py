@@ -1,7 +1,7 @@
+import threading
 from tkinter import ttk
 import tkinter as tk
 import logging
-import tk_async_execute as tae
 import webbrowser
 
 from pythonServices.configurationService import configurationFileExists, getConf
@@ -54,7 +54,7 @@ class MainGUI:
         right_upper_frame.pack(side="right", fill="both")
                 
         self.parametersPanel = ParametersPanel(right_upper_frame)
-        self.actionPanel = ActionPanel(right_upper_frame, scanCommand = self.start_scan, syncCommand=self.start_sync)
+        self.actionPanel = ActionPanel(right_upper_frame, scanCommand = self.start_scan_async, syncCommand=self.start_synchronization_async)
 
         # 2 - BOTTOM FRAME
         #2.1 info bar
@@ -93,6 +93,7 @@ class MainGUI:
 
         #OTHER STORED INFORMATION
         self.currentScanResult: ISSsynchronizer.ScanResult = None
+        self.pendingProcessing= False
 
         #Once all components are declared, we can load the data
         #for the moment, only the collections are loaded
@@ -100,58 +101,83 @@ class MainGUI:
 
     #COMPONENTS LISTENERS
     def on_collections_loading_start(self):
+        self.lock_components_actions()
         MessageBrocker.emitConsoleMessage("Please wait, collections are loading...")
 
     def on_collections_loading_completed(self):
+        self.unlock_components_actions()
         MessageBrocker.emitConsoleMessage("Collections loaded, Scan is now available.")
 
-    def updateScanResult(self, scanResult: ISSsynchronizer.ScanResult):
-        self.currentScanResult = scanResult
+    #MANAGE COMPONENTS ACTIONS
+    def lock_components_actions(self):
+        #collections panel
+        self.collectionsPanel.lock_actions()
+        #Action panel
+        self.actionPanel.lockScanButton()
+        self.actionPanel.lockSyncButton()
 
-        if scanResult is None:
-            self.consolePanel.clearPanel()
+    def unlock_components_actions(self):
+        #collections panel
+        self.collectionsPanel.unlock_actions()
+        #Action panel
+        self.actionPanel.unlockScanButton() #Scan button is always available
+        if self.currentScanResult is None: #no scan performed
             self.actionPanel.lockSyncButton()
-            self.actionPanel.setScanLabelText("...")
-        else:
-            #Display the scan result in the console
-            self.consolePanel.addLine(scanResult.toString())
-
-            if scanResult.IsSyncUpToDate():
-                self.actionPanel.lockSyncButton()
-                self.actionPanel.setScanLabelText("Skins are up to date.")
-
-            else:
-                self.actionPanel.unlockSyncButton()
-                stats=scanResult.getDiskUsageStats()
-                byteSizeToBeDownload=sum(stats["missingSkinsSpace"].values())+sum(stats["toBeUpdatedSkinsSpace"].values())+stats["toBeUpdatedCustomPhotos"]
-                stringAddPart=""
-                if byteSizeToBeDownload!=0:
-                    stringAddPart="To download: "+ISSScanner.bytesToString(byteSizeToBeDownload)+"."
-                byteSizeToBeRemoved=stats["toBeRemovedSkinsSpace"]
-                stringRemovePart=""
-                if byteSizeToBeRemoved!=0 and getConf("autoRemoveUnregisteredSkins"):
-                    stringRemovePart="To remove: "+ISSScanner.bytesToString(byteSizeToBeRemoved)+"."
-
-                self.actionPanel.setScanLabelText(stringAddPart+" "+stringRemovePart)# TODO rajouter un vrai print en allant peux être faire un refactif du scanResult pour les avoir propre, possiblement en même temps que les prints dans le scan...
-
-    def start_scan(self):
-        tae.async_execute(self.start_async_scan(), wait=True, visible=False, pop_up=False, callback=None, master=self.root)
-
-    async def start_async_scan(self):
-        self.updateScanResult(None)
-        scanResult = ISSScanner.scanAll()
-        if scanResult is not None:
-            self.updateScanResult(scanResult)
+        elif self.currentScanResult.IsSyncUpToDate(): #scan reveal no update needed
+            self.actionPanel.lockSyncButton()
+        else: #otherwise we have a scan, and an sync to do
+            self.actionPanel.unlockSyncButton()
     
-    def start_sync(self):
+    #SCAN RESULT DISPLAY
+    def cleanScanResult(self):
+        self.currentScanResult = None
+        self.consolePanel.clearPanel()
+        self.actionPanel.setScanLabelText("...")
+
+    def displayScanResult(self):
+        #Display the scan result in the console
+        self.consolePanel.addLine(self.currentScanResult.toString())
+
+        if self.currentScanResult.IsSyncUpToDate():
+            self.actionPanel.setScanLabelText("Skins are up to date.")
+        else:
+            stats=self.currentScanResult.getDiskUsageStats()
+            byteSizeToBeDownload=sum(stats["missingSkinsSpace"].values())+sum(stats["toBeUpdatedSkinsSpace"].values())+stats["toBeUpdatedCustomPhotos"]
+            stringAddPart=""
+            if byteSizeToBeDownload!=0:
+                stringAddPart="To download: "+ISSScanner.bytesToString(byteSizeToBeDownload)+"."
+            byteSizeToBeRemoved=stats["toBeRemovedSkinsSpace"]
+            stringRemovePart=""
+            if byteSizeToBeRemoved!=0 and getConf("autoRemoveUnregisteredSkins"):
+                stringRemovePart="To remove: "+ISSScanner.bytesToString(byteSizeToBeRemoved)+"."
+
+            self.actionPanel.setScanLabelText(stringAddPart+" "+stringRemovePart)# TODO rajouter un vrai print en allant peux être faire un refactif du scanResult pour les avoir propre, possiblement en même temps que les prints dans le scan...
+
+    #MAIN SCAN AND SYNC PROCESSES
+    def start_scan(self):
+        self.cleanScanResult()
+        self.lock_components_actions()
+
+        self.currentScanResult = ISSScanner.scanAll()
+
+        self.displayScanResult()
+        self.unlock_components_actions()
+
+    def start_scan_async(self):
+        threading.Thread(target=self.start_scan).start()
+    
+    def start_synchronization(self):
         if self.currentScanResult is None:
             logging.error("Sync launched with no scan result")
             return
-        tae.async_execute(ISSsynchronizer.updateAll(self.currentScanResult), wait=True, visible=False, pop_up=False, callback=None, master=self.root)
+        
+        self.lock_components_actions()
+        ISSsynchronizer.updateAll(self.currentScanResult)
+        self.currentScanResult = None #the current scan is no more relevant
+        self.unlock_components_actions()
 
-        #once sync done, lock it
-        self.actionPanel.lockSyncButton()
-
+    def start_synchronization_async(self):
+        threading.Thread(target=self.start_synchronization).start()
 #TOOLS
 
 def open_link(link: str):
@@ -166,18 +192,14 @@ def open_link_IRREWelcome():
 #MAIN RUN
 def runMainGUI():
     
-    #make sure the temporary folder is clean -> do not do that due to update !
+    #make sure the temporary folder is clean
     cleanTemporaryFolder()
 
     #check conf file is generated
     if not configurationFileExists():
         runFirstLaunchGUI()
     
-    tae.start()
-
-
     root = tk.Tk()
     mainGUI = MainGUI(root)
 
     root.mainloop()
-    tae.stop()

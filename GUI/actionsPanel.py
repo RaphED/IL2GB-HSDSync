@@ -25,14 +25,20 @@ class ActionPanel:
         self.SummaryScanLabel.config(text=text)
 
     def lockSyncButton(self):
-        
         self.SyncButton["state"] = "disabled"
         self.SyncButton.configure(style='')
     
     def unlockSyncButton(self):
         self.SyncButton.configure(style="Accent.TButton")
-
         self.SyncButton["state"] = "enabled"
+
+    def lockScanButton(self):
+        self.ScanButton["state"] = "disabled"
+        self.ScanButton.configure(style='')
+    
+    def unlockScanButton(self):
+        self.ScanButton.configure(style="Accent.TButton")
+        self.ScanButton["state"] = "enabled"
         
         
 

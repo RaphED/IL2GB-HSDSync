@@ -63,8 +63,7 @@ class CollectionsPanel():
 
     def emit_loading(self):
         #local locks
-        self.import_button["state"] = "disabled"
-        self.create_button["state"] = "disabled"
+        self.lock_actions()
 
         #external emit
         if self.on_loading_start:
@@ -72,12 +71,19 @@ class CollectionsPanel():
 
     def emit_loading_completed(self):
         #local unlocks
-        self.import_button["state"] = "enabled"
-        self.create_button["state"] = "enabled"
+        self.unlock_actions()
 
         #external emit
         if self.on_loading_complete:
             self.root.after(0, self.on_loading_complete)
+
+    def lock_actions(self):
+        self.import_button["state"] = "disabled"
+        self.create_button["state"] = "disabled"
+
+    def unlock_actions(self):
+        self.import_button["state"] = "enabled"
+        self.create_button["state"] = "enabled"
 
     def loadCollections(self):
         
@@ -122,7 +128,7 @@ class CollectionsPanel():
                 ).pack(side=tk.LEFT, padx=2)
             
             text_line = f"{line.name} ({bytesToString(line.size)})"
-            ttk.Label(frame, text=text_line, width=35).pack(side=tk.LEFT, padx=5)
+            ttk.Label(frame, text=text_line, width=38).pack(side=tk.LEFT, padx=5)
             
             CliquableIcon(
                 root=frame, 

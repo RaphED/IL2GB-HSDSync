@@ -27,9 +27,9 @@ if __name__ == "__main__":
             debug_mode = True
     
     #INITIALISE LOGS
-    logLevel = logging.DEBUG
-    if not debug_mode:
-        logLevel = logging.INFO
+    logLevel = logging.INFO
+    if debug_mode:
+        logLevel = logging.DEBUG
  
     logging.basicConfig(
         filename='iss.log',       # Le fichier de log où les messages seront enregistrés
