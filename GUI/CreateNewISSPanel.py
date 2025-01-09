@@ -32,7 +32,7 @@ class CreateNewISSPanel:
         self.tree_creating_criterias.delete(*self.tree_creating_criterias.get_children())
 
         for skin in skins:
-            self.tree_creating_criterias.insert("", "end", values=(skin.getValue("name"),))
+            self.tree_creating_criterias.insert("", "end", values=(skin.getValue("name"),skin.infos["IL2Group"],skin.infos["SkinPack"]))
         self.runningTask=None
 
     def update_dynamic_list(self, *args):
@@ -97,8 +97,6 @@ class CreateNewISSPanel:
         self.tree_creating_criterias.heading("SkinPack", text="SkinPack")
         for plane in getSkinsCatalogFromSource("HSD"):
             self.tree_creating_criterias.insert("", "end", values=(plane.infos["Title"],plane.infos["IL2Group"],plane.infos["SkinPack"]))
-
-
 
 
         # Buttons and comment to add it
@@ -227,7 +225,7 @@ class CreateNewISSPanel:
         self.tree_selected_planes.delete(*self.tree_selected_planes.get_children())
 
         for skin in skins:
-            self.tree_selected_planes.insert("", "end", values=(skin.getValue("name"),))
+            self.tree_selected_planes.insert("", "end", values=(skin.getValue("name"),skin.infos["IL2Group"],skin.infos["SkinPack"]))
 
 
     def save_to_iss(self):
