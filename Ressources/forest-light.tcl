@@ -445,25 +445,25 @@ namespace eval ttk::theme::forest-light {
         ]
 
         ttk::style element create Combobox.field image \
-            [list $I(border-basic) \
-                {readonly disabled} $I(rect-basic) \
-                {readonly pressed} $I(rect-basic) \
-                {readonly focus hover} $I(rect-hover) \
-                {readonly focus} $I(rect-hover) \
-                {readonly hover} $I(rect-hover) \
-                {focus hover} $I(border-accent) \
-                readonly $I(rect-basic) \
-                invalid $I(border-invalid) \
-                disabled $I(border-basic) \
-                focus $I(border-accent) \
-                hover $I(border-hover) \
+            [list $I(check-unsel-basic) \
+                {readonly disabled} $I(check-unsel-basic) \
+                {readonly pressed} $I(check-unsel-basic) \
+                {readonly focus hover} $I(check-unsel-basic) \
+                {readonly focus} $I(check-unsel-basic) \
+                {readonly hover} $I(check-unsel-basic) \
+                {focus hover} $I(check-unsel-basic) \
+                readonly $I(check-unsel-basic) \
+                invalid $I(check-unsel-basic) \
+                disabled $I(check-unsel-basic) \
+                focus $I(check-unsel-basic) \
+                hover $I(check-unsel-basic) \
             ] -border 5 -padding {8 8 28 8}
 
         ttk::style element create Combobox.button image \
-            [list $I(combo-button-basic) \
-                 {!readonly focus} $I(combo-button-focus) \
-                 {readonly focus} $I(combo-button-hover) \
-                 {readonly hover} $I(combo-button-hover)
+            [list $I(check-unsel-basic) \
+                 {!readonly focus} $I(check-unsel-basic) \
+                 {readonly focus} $I(check-unsel-basic) \
+                 {readonly hover} $I(check-unsel-basic)
             ] -border 5 -padding {2 6 6 6}
             
         ttk::style element create Combobox.arrow image $I(down) -width 15 -sticky e
