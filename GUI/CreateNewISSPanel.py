@@ -54,33 +54,38 @@ class CreateNewISSPanel:
         self.window.title("ISS file detail")
         self.window.iconbitmap(getRessourcePath("iss.ico"))
 
-        self.window.geometry("1400x1200")
+        self.window.geometry("1200x1100")
 
         # Call on_close when the window is closed
 
         # Top Inputs in a LabelFrame
         frame_inputs = ttk.LabelFrame(self.window, text="Filters/ Criterias :", padding=10)
         frame_inputs.pack(fill="x", padx=10, pady=5)
-        
+        frame_inputs.grid_rowconfigure(1, weight=1)  # Adjust as needed for the row
+        frame_inputs.grid_columnconfigure(0, weight=1)  # Adjust as needed for the column
+
         frame_queries = ttk.Frame(frame_inputs, padding=5)
         frame_queries.grid(row=0, column=0, padx=5, pady=5)
 
-     
-        self.il2group_var = tk.StringVar()
-        ttk.Label(frame_queries, text="il2Group:").grid(row=0, column=0, sticky="w", padx=5, pady=5)
-        self.entry_il2group = ttk.Entry(frame_queries, textvariable=self.il2group_var,width=20,)
-        self.entry_il2group.grid(row=0, column=1, padx=5, pady=5)
-        
-        self.skinPack_var = tk.StringVar()
-        ttk.Label(frame_queries, text="SkinPack").grid(row=0, column=2, sticky="w", padx=5, pady=5)
-        self.entry_skinPack = ttk.Entry(frame_queries,textvariable=self.skinPack_var, width=20)
-        self.entry_skinPack.grid(row=0, column=3, padx=5, pady=5)        
-        
+             
         self.title_var = tk.StringVar()
-        ttk.Label(frame_queries, text="Title").grid(row=0, column=4, sticky="w", padx=5, pady=5)
+        ttk.Label(frame_queries, text="Title").grid(row=0, column=0, sticky="w", padx=5, pady=5)
         self.entry_title = ttk.Entry(frame_queries, textvariable=self.title_var, width=20)
-        self.entry_title.grid(row=0, column=5, padx=5, pady=5)
+        self.entry_title.grid(row=0, column=1, padx=5, pady=5)
 
+        frame_queries.grid_columnconfigure(2, minsize=200)
+
+        self.il2group_var = tk.StringVar()
+        ttk.Label(frame_queries, text="il2Group:").grid(row=0, column=3, sticky="w", padx=5, pady=5)
+        self.entry_il2group = ttk.Entry(frame_queries, textvariable=self.il2group_var,width=20,)
+        self.entry_il2group.grid(row=0, column=4, padx=5, pady=5)
+        
+        frame_queries.grid_columnconfigure(5, minsize=200)
+
+        self.skinPack_var = tk.StringVar()
+        ttk.Label(frame_queries, text="SkinPack").grid(row=0, column=6, sticky="w", padx=5, pady=5)
+        self.entry_skinPack = ttk.Entry(frame_queries,textvariable=self.skinPack_var, width=20)
+        self.entry_skinPack.grid(row=0, column=7, padx=5, pady=5)        
 
         #Adding listening to input change       
         self.title_var.trace_add("write", self.update_dynamic_list)
@@ -89,12 +94,12 @@ class CreateNewISSPanel:
 
 
         #Planes of the current filters
-        self.tree_creating_criterias = ttk.Treeview(frame_inputs, columns=("plane","IL2Group","SkinPack"), show="headings", height=10)
-        self.tree_creating_criterias.grid(row=1, column=0, padx=5, pady=5)
+        self.tree_creating_criterias = ttk.Treeview(frame_inputs, columns=("plane","IL2Group","SkinPack"), show="headings", height=10,)
+        self.tree_creating_criterias.grid(row=1, columnspan=2, padx=5, pady=5,sticky="nsew")
 
-        self.tree_creating_criterias.heading("plane", text="Title")
-        self.tree_creating_criterias.heading("IL2Group", text="IL2Group")
-        self.tree_creating_criterias.heading("SkinPack", text="SkinPack")
+        self.tree_creating_criterias.heading("plane", text="Title", anchor="w")
+        self.tree_creating_criterias.heading("IL2Group", text="IL2Group", anchor="w")
+        self.tree_creating_criterias.heading("SkinPack", text="SkinPack", anchor="w")
         for plane in getSkinsCatalogFromSource("HSD"):
             self.tree_creating_criterias.insert("", "end", values=(plane.infos["Title"],plane.infos["IL2Group"],plane.infos["SkinPack"]))
 
@@ -107,31 +112,38 @@ class CreateNewISSPanel:
         self.comment_var=tk.StringVar()
         ttk.Label(frame_comment_and_button, text="Comments :").grid(row=0, column=0, sticky="w", padx=5, pady=5)
         self.entry_comment = ttk.Entry(frame_comment_and_button,textvariable=self.comment_var, width=40)
-        self.entry_comment.grid(row=0, column=1, padx=5, pady=5)
+        self.entry_comment.grid(row=0, column=1, padx=5, pady=0)
 
 
         button_add_param = ttk.Button(frame_comment_and_button, text="Save criterias", style="Accent.TButton", command=self.add_parameter)
-        button_add_param.grid(row=0, column=3, columnspan=2, pady=5)
-
+        button_add_param.grid(row=0, column=3, columnspan=2, pady=0)
 
         # Treeview for Parameters in a LabelFrame
-        frame_params = ttk.LabelFrame(self.window, text="Existing Parameters", padding=10)
+        frame_params = ttk.LabelFrame(self.window, text="Existing criterias", padding=10)
         frame_params.pack(fill="x", padx=10, pady=5)
 
         columns = ("comment", "il2Group", "skinPack", "title")
-        self.tree_params = ttk.Treeview(frame_params, columns=columns, show="headings")
+        self.tree_params = ttk.Treeview(frame_params, columns=columns, show="headings", height=5)  # Set height to 5 rows
         self.tree_params.pack(side="left", fill="x", expand=True)
+
+        # Add vertical scrollbar
+        scrollbar = ttk.Scrollbar(frame_params, orient="vertical", command=self.tree_params.yview)
+        scrollbar.pack(side="right", fill="y")
+        self.tree_params.configure(yscrollcommand=scrollbar.set)
 
         # Configure columns
         for col in columns:
             self.tree_params.column(col, width=150, anchor="center")  # Center text in column
-            self.tree_params.heading(col, text=col.capitalize(), anchor="center")  # Left-align text in header
+            self.tree_params.heading(col, text=col.capitalize(), anchor="center")  # Center-align text in header
 
+        # Buttons
         button_delete_param = ttk.Button(frame_params, text="Delete", command=self.delete_parameter)
         button_delete_param.pack(side="right", padx=5)
 
         button_edit_param = ttk.Button(frame_params, text="Edit", command=self.edit_parameter)
         button_edit_param.pack(side="right", padx=5)
+      
+      
         # Plane Selection in a LabelFrame
         frame_planes = ttk.LabelFrame(self.window, text="Resulting plane list", padding=10)
         frame_planes.pack(fill="both", expand=True, padx=10, pady=5)
