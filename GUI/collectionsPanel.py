@@ -44,8 +44,9 @@ class CollectionsPanel():
         self.canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         self.canvas.configure(yscrollcommand=scrollbar.set)
 
-        # Bind mouse wheel events
-        self.canvas.bind_all("<MouseWheel>", self._on_mousewheel)  # Windows
+        # Activate or desactivate mousewheel event
+        self.canvas.bind('<Enter>', self._bind_mousewheel)
+        self.canvas.bind('<Leave>', self._unbind_mousewheel)
         
         self.list_frame = ttk.Frame(self.canvas)
         self.canvas.create_window((0, 0), window=self.list_frame, anchor='nw')
@@ -183,5 +184,14 @@ class CollectionsPanel():
         #TODO : to be really implemented and tested when creation panel done
         CreateNewISSPanel(self.root, on_close=self.loadCollections_async)
 
+    #MOUSE EVENTS (for the scroll)
+    def _bind_mousewheel(self, event):
+        # Activer le scroll quand la souris entre dans le canvas
+        self.canvas.bind_all("<MouseWheel>", self._on_mousewheel)
+    
+    def _unbind_mousewheel(self, event):
+        # Désactiver le scroll quand la souris quitte le canvas
+        self.canvas.unbind_all("<MouseWheel>")
+    
     def _on_mousewheel(self, event):
         self.canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
