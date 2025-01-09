@@ -140,9 +140,8 @@ class CollectionsPanel():
             CliquableIcon(
                 root=frame, 
                 icon_path=getIconPath("magnifying-glass.png"),
-                tooltip_text="See collection details (not implemented yet)",
+                tooltip_text="See/edit collection details",
                 onClick=lambda o=line: self._edit_item(o),
-                disabled=True
             ).pack(side=tk.RIGHT, padx=2)
 
     def import_item(self):
@@ -170,8 +169,7 @@ class CollectionsPanel():
         self._update_list()
 
     def _edit_item(self, item: SubscriptionLine):
-        #TODO : To be implemented
-        pass
+            CreateNewISSPanel(self.root, on_close=self.loadCollections_async, variable=item.fileName)
 
     def _delete_item(self, item: SubscriptionLine):
         answer = messagebox.askyesno(title='confirmation',

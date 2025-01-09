@@ -1,13 +1,13 @@
 from enum import Enum
 import json
+import threading
 import time
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 import os
 import shutil
-import tk_async_execute as tae
-import asyncio
 from pythonServices import localService 
+from pythonServices.filesService import getRessourcePath
 from pythonServices.messageBrocker import MessageBrocker
 
 from pythonServices.subscriptionService import getAllSubscribedCollectionByFileName, getSubscribeCollectionFromRawJson
@@ -18,7 +18,7 @@ import tkinter as tk
 from tkinter import ttk
 
 class CreateNewISSPanel:
-    async def actualise_dynamic_planes(self):      
+    def actualise_dynamic_planes(self):      
         il2Group = self.entry_il2group.get()
         skinPack = self.entry_skinPack.get()
         title = self.entry_title.get()
@@ -33,16 +33,13 @@ class CreateNewISSPanel:
 
         for skin in skins:
             self.tree_creating_criterias.insert("", "end", values=(skin.getValue("name"),))
-        print("We passed in the entire function so it didn't really destroy")
         self.runningTask=None
 
     def update_dynamic_list(self, *args):
         if self.runningTask:
-            tae.utils.stop()
-            print("destroyed but I don't think so lol...")
-            tae.utils.start()
-
-        self.runningTask=tae.async_execute(self.actualise_dynamic_planes(), wait=False, visible=False, pop_up=False, callback=None, master=self.window)
+            self.runningTask.stop()
+            
+        self.runningTask=threading.Thread(target=self.actualise_dynamic_planes()).start()
 
     def __init__(self, parent: tk.Tk,on_close,variable=None):
         self.runningTask=None
@@ -54,7 +51,9 @@ class CreateNewISSPanel:
 
         # Create a Toplevel window
         self.window = tk.Toplevel(parent)
-        self.window.title("Create New ISS Subscription")
+        self.window.title("ISS file detail")
+        self.window.iconbitmap(getRessourcePath("iss.ico"))
+
         self.window.geometry("1400x1200")
 
         # Call on_close when the window is closed
@@ -83,10 +82,6 @@ class CreateNewISSPanel:
         self.entry_title.grid(row=0, column=5, padx=5, pady=5)
 
 
-
-
-        # //parent.after(100, self.poll_asyncio)
-
         #Adding listening to input change       
         self.title_var.trace_add("write", self.update_dynamic_list)
         self.skinPack_var.trace_add("write", self.update_dynamic_list)
@@ -94,12 +89,14 @@ class CreateNewISSPanel:
 
 
         #Planes of the current filters
-        self.tree_creating_criterias = ttk.Treeview(frame_inputs, columns=("plane"), show="headings", height=10)
+        self.tree_creating_criterias = ttk.Treeview(frame_inputs, columns=("plane","IL2Group","SkinPack"), show="headings", height=10)
         self.tree_creating_criterias.grid(row=1, column=0, padx=5, pady=5)
 
-        self.tree_creating_criterias.heading("plane", text="Planes matching live query")
+        self.tree_creating_criterias.heading("plane", text="Title")
+        self.tree_creating_criterias.heading("IL2Group", text="IL2Group")
+        self.tree_creating_criterias.heading("SkinPack", text="SkinPack")
         for plane in getSkinsCatalogFromSource("HSD"):
-            self.tree_creating_criterias.insert("", "end", values=(plane.infos["Title"],))
+            self.tree_creating_criterias.insert("", "end", values=(plane.infos["Title"],plane.infos["IL2Group"],plane.infos["SkinPack"]))
 
 
 
@@ -117,12 +114,6 @@ class CreateNewISSPanel:
 
         button_add_param = ttk.Button(frame_comment_and_button, text="Save criterias", style="Accent.TButton", command=self.add_parameter)
         button_add_param.grid(row=0, column=3, columnspan=2, pady=5)
-
-
-
-
-
-
 
 
         # Treeview for Parameters in a LabelFrame
@@ -152,7 +143,7 @@ class CreateNewISSPanel:
         self.tree_selected_planes = ttk.Treeview(frame_planes, columns=("plane"), show="headings", height=10)
         self.tree_selected_planes.grid(row=0, column=2, padx=5, pady=5)
 
-        self.tree_selected_planes.heading("plane", text="Selected Planes")
+        self.tree_selected_planes.heading("plane", text="Plane name")
 
         # Save button
         frame_controls = ttk.Frame(self.window)
@@ -189,8 +180,7 @@ class CreateNewISSPanel:
 
                 self.tree_params.insert("", "end", values=(comment, il2Group, skinPack, title))
 
-            tae.async_execute(self.actualiseSelectedPlanes(), wait=False, visible=False, pop_up=False, callback=None, master=self.window)
-
+            threading.Thread(target=self.actualiseSelectedPlanes()).start()
     
 
     def add_parameter(self):
@@ -205,11 +195,9 @@ class CreateNewISSPanel:
             else: 
                 self.tree_params.item(self.editting_item_id, values=(comment, il2Group, skinPack, title))
                 self.editting_item_id=None
-        tae.async_execute(self.actualiseSelectedPlanes(), wait=False, visible=False, pop_up=False, callback=None, master=self.window)
-        # self.il2group_var.set("") permet de reset mais ca fait pas mal de process en back qui sont aps cool
-        # self.skinPack_var.set("")
-        # self.title_var.set("")
-        # self.comment_var.set("")
+        
+        threading.Thread(target=self.actualiseSelectedPlanes()).start()
+
 
     def delete_parameter(self):
         selected_item = self.tree_params.selection()
@@ -230,7 +218,7 @@ class CreateNewISSPanel:
 
 
     
-    async def actualiseSelectedPlanes(self):
+    def actualiseSelectedPlanes(self):
         rawjson=treeview_to_json(self.tree_params)
         collections= getSubscribeCollectionFromRawJson(rawjson,"test")
         skins=getSkinsFromSourceMatchingWithSubscribedCollections("HSD", collections)
@@ -266,11 +254,12 @@ class CreateNewISSPanel:
                 json_file.write(data)
         except Exception as e:
             messagebox.showerror("Error", f"An error occurred while saving the file: {str(e)}")
-        
-        tae.async_execute(self.close_after_4sec(), wait=False, visible=False, pop_up=False, callback=None, master=self.window)
+                
+        threading.Thread(target=self.close_async()).start()
 
-    async def close_after_4sec(self):
-        time.sleep(2)
+
+    def close_async(self):
+        time.sleep(0.5)
         self.window.destroy()
         self.on_close()
 
