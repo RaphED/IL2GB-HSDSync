@@ -1,9 +1,9 @@
 import tkinter as tk
 from tkinter import ttk, filedialog
+from PIL import Image, ImageTk
 
-from GUI.Components.clickableIcon import CliquableIcon
 from GUI.Components.tooltip import Tooltip
-from pythonServices.configurationService import getConf, update_config_param, allowedCockpitNotesModes, checkIL2InstallPath
+from pythonServices.configurationService import getConf, update_config_param, cockpitNotesModes, checkIL2InstallPath
 from pythonServices.filesService import getIconPath
 
 class ParametersPanel:
@@ -13,15 +13,15 @@ class ParametersPanel:
         # Style configuration
         style = ttk.Style()
         style.configure("Path.TLabel",
-                       cursor="hand2",
-                       font=("Arial", 9, "underline"),
-                       padding=5)
+            cursor="hand2",
+            font=("Arial", 9, "underline"),
+            padding=5)
         style.configure("PathError.TLabel",
-                       foreground="white",
-                       background="#ff4d4d",
-                       cursor="hand2",
-                       font=("Arial", 9, "underline"),
-                       padding=5)
+            foreground="white",
+            background="#ff4d4d",
+            cursor="hand2",
+            font=("Arial", 9, "underline"),
+            padding=5)
 
         label = ttk.Label(text="Parameters", font=("Arial", 10, "bold"))
         label.pack(side="left", fill="x", padx=5)
@@ -38,18 +38,17 @@ class ParametersPanel:
         path_content_frame.pack(fill="both", expand=True)
         
         # Icon (path placeholder)
-        self.icon_path = CliquableIcon(path_content_frame,
-            icon_path=getIconPath("IL2.png"),
-            onClick=self.modify_path
-        )
+        self.icon_path_image = ImageTk.PhotoImage(Image.open(getIconPath("IL2.png")).convert('RGBA').resize((24, 24), Image.Resampling.LANCZOS))
+        self.icon_path = tk.Label(path_content_frame, image=self.icon_path_image)
         self.icon_path.pack(side="left", padx=5)
         
+
         # Clickable path label
         self.path_label = ttk.Label(path_content_frame, 
                                   style="Path.TLabel",
                                   cursor="hand2")
         self.path_label.pack(side="left", fill="x", expand=True)
-        Tooltip(self.path_label, "Your IL2 Path. Click to modify")
+        Tooltip(self.path_label, "Your IL2 Path\nClick to modify")
         
         # Click event configuration
         self.path_label.bind("<Button-1>", lambda e: self.modify_path())
@@ -64,7 +63,7 @@ class ParametersPanel:
         toggle_removeSkins_button.pack(side="left", padx=5)
         toggle_removeSkins_label = tk.Label(toggle_removeSkins_frame, text="Auto remove unregistered skins", anchor="w")
         toggle_removeSkins_label.pack(side="left", padx=0)
-        Tooltip(toggle_removeSkins_label, text="When unchecked, all the skins not in the subscription files will be left in your game directory.\nWhen checked, all these skins will be definitely removed after the synchronization.")
+        Tooltip(toggle_removeSkins_label, text="When unchecked, all the skins not in the subscription files will be left in your game directory\nWhen checked, all these skins will be definitely removed after the synchronization")
         
         toggle_applyCensorship_frame = tk.Frame(params_label_frame)
         toggle_applyCensorship_frame.pack(fill="x", pady=5)
@@ -73,22 +72,26 @@ class ParametersPanel:
         self.toggle_applyCensorship_button.pack(side="left", padx=5)
         toggle_applyCensorship_label = tk.Label(toggle_applyCensorship_frame, text="Apply censorship", anchor="w")
         toggle_applyCensorship_label.pack(side="left", padx=0)
-        Tooltip(toggle_applyCensorship_label, text="When unchecked, you will get all the skins.\nWhen checked, you will not get the skins with restricted symbols.")
+        Tooltip(toggle_applyCensorship_label, text="When unchecked, you will get all the skins\nWhen checked, you will not get the skins with restricted symbols")
 
-        dropdown_frame = tk.Frame(params_label_frame)
-        dropdown_frame.pack(fill="x", pady=5)
-        tk.Label(dropdown_frame, text="Cockpit Photo", anchor="w").pack(side="left", padx=5)
-        self.dropdown_var = tk.StringVar(value=getConf("cockpitNotesMode"))
-        self.dropdown = ttk.Combobox(
-            dropdown_frame,
-            textvariable=self.dropdown_var,
-            values=allowedCockpitNotesModes,
+        cokpit_note_frame = tk.Frame(params_label_frame)
+        cokpit_note_frame.pack(fill="x", pady=5)
+        self.cockpit_note_image = ImageTk.PhotoImage(Image.open(getIconPath("cokpit-note.png")).convert('RGBA').resize((24, 24), Image.Resampling.LANCZOS))
+        self.icon_cokpitNote = tk.Label(cokpit_note_frame, image=self.cockpit_note_image)
+        self.icon_cokpitNote.pack(side="left", padx=5)
+        
+        self.cokpitNote_dropdown = ttk.Combobox(
+            cokpit_note_frame,
+            values=[cockpitNotesModes[mode] for mode in cockpitNotesModes.keys()],
             state="readonly",
+            width=50
         )
-        self.dropdown.pack(side="right", padx=5)
-        self.dropdown.bind("<<ComboboxSelected>>", self.on_dropdown_change)
+        Tooltip(self.cokpitNote_dropdown, text="Option to replace cockpit photos by technical notes")
+        self.cokpitNote_dropdown.set(cockpitNotesModes[getConf("cockpitNotesMode")])
+        self.cokpitNote_dropdown.pack(side="right", padx=5)
+        self.cokpitNote_dropdown.bind("<<ComboboxSelected>>", self.on_cokpitNote_dropdown_change)
 
-    def short_path(self, fullPath, maxLength=55):
+    def short_path(self, fullPath, maxLength=50):
         if len(fullPath) > maxLength:
             return f"{fullPath[:maxLength]}..."
         return fullPath
@@ -117,5 +120,10 @@ class ParametersPanel:
     def modify_apply_censorship(self):
         update_config_param("applyCensorship", self.toggle_applyCensorship_var.get())
     
-    def on_dropdown_change(self, event):
-        update_config_param("cockpitNotesMode", self.dropdown_var.get())
+    def on_cokpitNote_dropdown_change(self, event):
+        #find the cokpit not mode associated to the text
+        selected_mode = next(mode for mode in cockpitNotesModes.keys()
+                           if cockpitNotesModes[mode] == self.cokpitNote_dropdown.get())
+        update_config_param("cockpitNotesMode", selected_mode)
+        self.cokpitNote_dropdown.selection_clear()
+        #self.root.focus_set()

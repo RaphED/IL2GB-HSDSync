@@ -24,7 +24,8 @@ class Tooltip:
             "borderwidth": 1,
             "padx": padx,
             "pady": pady,
-            "font": font
+            "font": font,
+            "justify": "left"
         }
         
         self.tooltip_window = None

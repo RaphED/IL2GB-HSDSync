@@ -13,7 +13,12 @@ default_config = {
     "applyCensorship": False
 }
 
-allowedCockpitNotesModes = ["noSync", "originalPhotos", "officialNumbers", "technochatNumbers"]
+cockpitNotesModes = {
+    "noSync": "No synchronization, keep current images",
+    "originalPhotos": "Original IL2 game photos",
+    "officialNumbers": "Parameters from IL2 specifications (C6_lefuneste)",
+    "technochatNumbers": "Parameters from technochat measurements (C6_lefuneste)"
+}
 
 
 # Global variable to hold the configuration in memory
