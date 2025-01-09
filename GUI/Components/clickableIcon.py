@@ -60,7 +60,7 @@ class CliquableIcon(tk.Label):
         
         #force an opacity factor if disabled
         if self.disabled:
-            opacityFactor = 50
+            opacityFactor = 150
 
         self.current_opacityFactor = opacityFactor
         
@@ -130,3 +130,11 @@ class CliquableIcon(tk.Label):
         if self.tooltip:
             self.tooltip.destroy()
             self.tooltip = None
+
+    def enable(self):
+        self.disabled = False
+        self.master.after(0, self.displayIcon)
+    
+    def disable(self):
+        self.disabled = True
+        self.master.after(0, self.displayIcon)

@@ -61,6 +61,7 @@ class CollectionsPanel():
         self.list_frame.bind('<Configure>',
             lambda e: self.canvas.configure(scrollregion=self.canvas.bbox('all')))
         
+        self.collections_buttons_registry:list[CliquableIcon] = []
 
     def emit_loading(self):
         #local locks
@@ -81,10 +82,14 @@ class CollectionsPanel():
     def lock_actions(self):
         self.import_button["state"] = "disabled"
         self.create_button["state"] = "disabled"
+        for button in self.collections_buttons_registry:
+            button.disable()
 
     def unlock_actions(self):
         self.import_button["state"] = "enabled"
         self.create_button["state"] = "enabled"
+        for button in self.collections_buttons_registry:
+            button.enable()
 
     def loadCollections(self):
         
@@ -108,42 +113,51 @@ class CollectionsPanel():
     def _update_list(self):
         for widget in self.list_frame.winfo_children():
             widget.destroy()
-            
+
+        self.collections_buttons_registry = []
+
         for line in self.subscriptionLines:
             frame = ttk.Frame(self.list_frame)
             frame.pack(fill=tk.X, padx=5, pady=2)
 
+            toggle_button = None
             if line.state:
-                CliquableIcon(
+                toggle_button = CliquableIcon(
                     root=frame,
                     icon_path=getIconPath("plain-circle.png"),
                     tooltip_text="Click here to disable collection (won't be synchonised)",
                     onClick=lambda o=line: self._toggle_item(o)
-                ).pack(side=tk.LEFT, padx=2)
+                )
             else:
-                CliquableIcon(
+                toggle_button = CliquableIcon(
                     root=frame, 
                     icon_path=getIconPath("circle.png"),
                     tooltip_text="Click here to activate collection",
                     onClick=lambda o=line: self._toggle_item(o)
-                ).pack(side=tk.LEFT, padx=2)
+                )
+            toggle_button.pack(side=tk.LEFT, padx=2)
+            self.collections_buttons_registry.append(toggle_button)
             
             text_line = f"{line.name} ({bytesToString(line.size)})"
             ttk.Label(frame, text=text_line, width=38).pack(side=tk.LEFT, padx=5)
             
-            CliquableIcon(
+            trash_button = CliquableIcon(
                 root=frame, 
                 icon_path=getIconPath("trash-can.png"),
                 tooltip_text="Remove collection",
                 onClick=lambda o=line: self._delete_item(o)
-            ).pack(side=tk.RIGHT, padx=2)
+            )
+            trash_button.pack(side=tk.RIGHT, padx=2)
+            self.collections_buttons_registry.append(trash_button)
             
-            CliquableIcon(
+            edit_button = CliquableIcon(
                 root=frame, 
                 icon_path=getIconPath("magnifying-glass.png"),
                 tooltip_text="See/edit collection details",
                 onClick=lambda o=line: self._edit_item(o),
-            ).pack(side=tk.RIGHT, padx=2)
+            )
+            edit_button.pack(side=tk.RIGHT, padx=2)
+            self.collections_buttons_registry.append(edit_button)
 
     def import_item(self):
         file_path = filedialog.askopenfilename(
