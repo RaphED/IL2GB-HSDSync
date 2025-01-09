@@ -132,26 +132,10 @@ class MainGUI:
     def cleanScanResult(self):
         self.currentScanResult = None
         self.consolePanel.clearPanel()
-        self.actionPanel.setScanLabelText("...")
 
     def displayScanResult(self):
         #Display the scan result in the console
         self.consolePanel.addLine(self.currentScanResult.toString())
-
-        if self.currentScanResult.IsSyncUpToDate():
-            self.actionPanel.setScanLabelText("Skins are up to date.")
-        else:
-            stats=self.currentScanResult.getDiskUsageStats()
-            byteSizeToBeDownload=sum(stats["missingSkinsSpace"].values())+sum(stats["toBeUpdatedSkinsSpace"].values())+stats["toBeUpdatedCustomPhotos"]
-            stringAddPart=""
-            if byteSizeToBeDownload!=0:
-                stringAddPart="To download: "+ISSScanner.bytesToString(byteSizeToBeDownload)+"."
-            byteSizeToBeRemoved=stats["toBeRemovedSkinsSpace"]
-            stringRemovePart=""
-            if byteSizeToBeRemoved!=0 and getConf("autoRemoveUnregisteredSkins"):
-                stringRemovePart="To remove: "+ISSScanner.bytesToString(byteSizeToBeRemoved)+"."
-
-            self.actionPanel.setScanLabelText(stringAddPart+" "+stringRemovePart)# TODO rajouter un vrai print en allant peux être faire un refactif du scanResult pour les avoir propre, possiblement en même temps que les prints dans le scan...
 
     #MAIN SCAN AND SYNC PROCESSES
     def start_scan(self):
