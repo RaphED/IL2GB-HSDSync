@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk, filedialog
 
 from GUI.Components.clickableIcon import CliquableIcon
+from GUI.Components.tooltip import Tooltip
 from pythonServices.configurationService import getConf, update_config_param, allowedCockpitNotesModes, checkIL2InstallPath
 from pythonServices.filesService import getIconPath
 
@@ -48,15 +49,10 @@ class ParametersPanel:
                                   style="Path.TLabel",
                                   cursor="hand2")
         self.path_label.pack(side="left", fill="x", expand=True)
+        Tooltip(self.path_label, "Your IL2 Path. Click to modify")
         
         # Click event configuration
         self.path_label.bind("<Button-1>", lambda e: self.modify_path())
-        
-        # Tooltip setup with delay
-        self.tooltip = None
-        self.tooltip_id = None
-        self.path_label.bind("<Enter>", self.schedule_tooltip)
-        self.path_label.bind("<Leave>", self.hide_tooltip)
         
         self.update_pathLabel()
 
@@ -87,44 +83,6 @@ class ParametersPanel:
         )
         self.dropdown.pack(side="right", padx=5)
         self.dropdown.bind("<<ComboboxSelected>>", self.on_dropdown_change)
-
-    def schedule_tooltip(self, event):
-        if self.tooltip_id:
-            self.path_label.after_cancel(self.tooltip_id)
-        self.tooltip_id = self.path_label.after(500, lambda: self.show_tooltip(event))
-
-    def show_tooltip(self, event):
-        if self.tooltip:
-            return
-        
-        self.tooltip = tk.Toplevel(self.path_label)
-        self.tooltip.overrideredirect(True)
-        
-        # Prevents tooltip from triggering Enter/Leave events
-        self.tooltip.bind("<Enter>", lambda e: "break")
-        self.tooltip.bind("<Leave>", lambda e: "break")
-        
-        label = tk.Label(self.tooltip,
-                        text="Your IL2 Path. Click to modify",
-                        background="#ffffe0",
-                        relief="solid",
-                        borderwidth=1,
-                        padx=5,
-                        pady=2)
-        label.pack()
-        
-        # Position tooltip below the widget
-        x = self.path_label.winfo_rootx()
-        y = self.path_label.winfo_rooty() + self.path_label.winfo_height() + 5
-        self.tooltip.geometry(f"+{x}+{y}")
-
-    def hide_tooltip(self, event):
-        if self.tooltip_id:
-            self.path_label.after_cancel(self.tooltip_id)
-            self.tooltip_id = None
-        if self.tooltip:
-            self.tooltip.destroy()
-            self.tooltip = None
 
     def short_path(self, fullPath, maxLength=55):
         if len(fullPath) > maxLength:

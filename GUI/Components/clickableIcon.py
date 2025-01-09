@@ -1,6 +1,7 @@
 import tkinter as tk
-from tkinter import ttk
 from PIL import Image, ImageTk
+
+from GUI.Components.tooltip import Tooltip
 
 class CliquableIcon(tk.Label):
     def __init__(self, root, icon_path: str, 
@@ -24,8 +25,9 @@ class CliquableIcon(tk.Label):
         self.base_opacityFactor = opacityFactor
         self.disabled = disabled
 
-        self.tooltip = None
-        self.tooltip_text = tooltip_text
+        if tooltip_text is not None:
+            Tooltip(widget=self, text=tooltip_text)
+        
         self.onClickCommand = onClick
 
         #Fade parameters
@@ -40,9 +42,6 @@ class CliquableIcon(tk.Label):
         if onClick is not None:
             self.bind('<Button-1>', self.runOnClickCommand)
         
-        if tooltip_text is not None:
-            self.bind('<Enter>', self.show_tooltip)
-            self.bind('<Leave>', self.hide_tooltip)
         #todo : manage tooltip + fadein/out 
         if onMouseOverOpacityFactor != opacityFactor:
             self.bind('<Enter>', self.start_fade_in)
@@ -104,32 +103,6 @@ class CliquableIcon(tk.Label):
                 ms=self.fade_step_ms,
                 func=lambda: self.fade_to(target_opacityFactor)
             )
-    
-    def show_tooltip(self, event=None):
-        """Displays the tooltip"""
-        x, y, _, _ = self.bbox("insert")
-        x += self.winfo_rootx() + 25
-        y += self.winfo_rooty() + 25
-        
-        # Create new window for tooltip
-        self.tooltip = tk.Toplevel(self.master)
-        self.tooltip.wm_overrideredirect(True)
-        self.tooltip.wm_geometry(f"+{x}+{y}")
-        
-        label = ttk.Label(self.tooltip, text=self.tooltip_text, 
-            padding=4,
-            justify='left',
-            background="#ffffe0", 
-            relief='solid', 
-            borderwidth=1
-        )
-        label.pack()
-    
-    def hide_tooltip(self, event=None):
-        """Hides the tooltip"""
-        if self.tooltip:
-            self.tooltip.destroy()
-            self.tooltip = None
 
     def enable(self):
         self.disabled = False
