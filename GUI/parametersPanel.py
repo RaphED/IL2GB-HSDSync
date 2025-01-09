@@ -59,17 +59,21 @@ class ParametersPanel:
         # Rest of the interface
         toggle_removeSkins_frame = tk.Frame(params_label_frame)
         toggle_removeSkins_frame.pack(fill="x", pady=5)
-        tk.Label(toggle_removeSkins_frame, text="Auto remove unregistered skins", anchor="w").pack(side="left", padx=5)
         self.toggle_removeSkins_var = tk.BooleanVar(value=getConf("autoRemoveUnregisteredSkins"))
-        self.toggle_removeSkins_button = ttk.Checkbutton(toggle_removeSkins_frame, variable=self.toggle_removeSkins_var, onvalue=True, offvalue=False, command=self.modify_auto_remove)
-        self.toggle_removeSkins_button.pack(side="right", padx=5)
-
+        toggle_removeSkins_button = ttk.Checkbutton(toggle_removeSkins_frame, variable=self.toggle_removeSkins_var, onvalue=True, offvalue=False, command=self.modify_auto_remove)
+        toggle_removeSkins_button.pack(side="left", padx=5)
+        toggle_removeSkins_label = tk.Label(toggle_removeSkins_frame, text="Auto remove unregistered skins", anchor="w")
+        toggle_removeSkins_label.pack(side="left", padx=0)
+        Tooltip(toggle_removeSkins_label, text="When unchecked, all the skins not in the subscription files will be left in your game directory.\nWhen checked, all these skins will be definitely removed after the synchronization.")
+        
         toggle_applyCensorship_frame = tk.Frame(params_label_frame)
         toggle_applyCensorship_frame.pack(fill="x", pady=5)
-        tk.Label(toggle_applyCensorship_frame, text="Apply censorship", anchor="w").pack(side="left", padx=5)
         self.toggle_applyCensorship_var = tk.BooleanVar(value=getConf("applyCensorship"))
         self.toggle_applyCensorship_button = ttk.Checkbutton(toggle_applyCensorship_frame, variable=self.toggle_applyCensorship_var, onvalue=True, offvalue=False, command=self.modify_apply_censorship)
-        self.toggle_applyCensorship_button.pack(side="right", padx=5)
+        self.toggle_applyCensorship_button.pack(side="left", padx=5)
+        toggle_applyCensorship_label = tk.Label(toggle_applyCensorship_frame, text="Apply censorship", anchor="w")
+        toggle_applyCensorship_label.pack(side="left", padx=0)
+        Tooltip(toggle_applyCensorship_label, text="When unchecked, you will get all the skins.\nWhen checked, you will not get the skins with restricted symbols.")
 
         dropdown_frame = tk.Frame(params_label_frame)
         dropdown_frame.pack(fill="x", pady=5)
