@@ -51,7 +51,7 @@ class MainGUI:
 
         # 1.2 - right upper frame
         right_upper_frame = tk.Frame(top_main_frame)
-        right_upper_frame.pack(side="right", fill="both")
+        right_upper_frame.pack(side="right", fill="both", expand=True)
                 
         self.parametersPanel = ParametersPanel(right_upper_frame)
         self.actionPanel = ActionPanel(right_upper_frame, scanCommand = self.start_scan_async, syncCommand=self.start_synchronization_async)
@@ -135,7 +135,8 @@ class MainGUI:
 
     def displayScanResult(self):
         #Display the scan result in the console
-        self.consolePanel.addLine(self.currentScanResult.toString())
+        if self.currentScanResult is not None:
+            self.consolePanel.addLine(self.currentScanResult.toString())
 
     #MAIN SCAN AND SYNC PROCESSES
     def start_scan(self):

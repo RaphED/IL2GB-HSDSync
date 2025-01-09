@@ -280,7 +280,7 @@ def scanCustomPhotos():
 def scanAll():
     #check conf is proper
     if not checkIL2InstallPath():
-        MessageBrocker.emitConsoleMessage("!!! INVALID IL2 path !!!\nPlease modify the pass from the parameters panel")
+        MessageBrocker.emitConsoleMessage("!!! INVALID IL2 path !!!\nPlease modify the path from the parameters panel")
         MessageBrocker.emitConsoleMessage("SCAN Cancelled")
         return None
 
