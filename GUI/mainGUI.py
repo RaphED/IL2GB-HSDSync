@@ -4,7 +4,7 @@ import tkinter as tk
 import logging
 import webbrowser
 
-from pythonServices.configurationService import configurationFileExists, getConf
+from pythonServices.configurationService import configurationFileExists
 from pythonServices.filesService import getRessourcePath, getIconPath, cleanTemporaryFolder
 
 from GUI.collectionsPanel import CollectionsPanel
@@ -31,7 +31,7 @@ class MainGUI:
         
         self.root.tk.call("source",getRessourcePath("forest-light.tcl"))
         style.theme_use("forest-light")
-
+        
         self.root.title("InterSquadron Skin Synchronizer")
         self.root.geometry("850x600")
         
@@ -112,6 +112,8 @@ class MainGUI:
     def lock_components_actions(self):
         #collections panel
         self.collectionsPanel.lock_actions()
+        #parameters panel
+        self.parametersPanel.lock_actions()
         #Action panel
         self.actionPanel.lockScanButton()
         self.actionPanel.lockSyncButton()
@@ -119,6 +121,8 @@ class MainGUI:
     def unlock_components_actions(self):
         #collections panel
         self.collectionsPanel.unlock_actions()
+        #parameters panel
+        self.parametersPanel.unlock_actions()
         #Action panel
         self.actionPanel.unlockScanButton() #Scan button is always available
         if self.currentScanResult is None: #no scan performed

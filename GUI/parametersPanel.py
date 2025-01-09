@@ -50,17 +50,14 @@ class ParametersPanel:
         self.path_label.pack(side="left", fill="x", expand=True)
         Tooltip(self.path_label, "Your IL2 Path\nClick to modify")
         
-        # Click event configuration
-        self.path_label.bind("<Button-1>", lambda e: self.modify_path())
-        
         self.update_pathLabel()
 
         # Rest of the interface
         toggle_removeSkins_frame = tk.Frame(params_label_frame)
         toggle_removeSkins_frame.pack(fill="x", pady=5)
         self.toggle_removeSkins_var = tk.BooleanVar(value=getConf("autoRemoveUnregisteredSkins"))
-        toggle_removeSkins_button = ttk.Checkbutton(toggle_removeSkins_frame, variable=self.toggle_removeSkins_var, onvalue=True, offvalue=False, command=self.modify_auto_remove)
-        toggle_removeSkins_button.pack(side="left", padx=5)
+        self.toggle_removeSkins_button = ttk.Checkbutton(toggle_removeSkins_frame, variable=self.toggle_removeSkins_var, onvalue=True, offvalue=False, command=self.modify_auto_remove)
+        self.toggle_removeSkins_button.pack(side="left", padx=5)
         toggle_removeSkins_label = tk.Label(toggle_removeSkins_frame, text="Auto remove unregistered skins", anchor="w")
         toggle_removeSkins_label.pack(side="left", padx=0)
         Tooltip(toggle_removeSkins_label, text="When unchecked, all the skins not in the subscription files will be left in your game directory\nWhen checked, all these skins will be definitely removed after the synchronization")
@@ -84,7 +81,7 @@ class ParametersPanel:
             cokpit_note_frame,
             values=[cockpitNotesModes[mode] for mode in cockpitNotesModes.keys()],
             state="readonly",
-            width=50
+            width=50,
         )
         Tooltip(self.cokpitNote_dropdown, text="Option to replace cockpit photos by technical notes")
         self.cokpitNote_dropdown.set(cockpitNotesModes[getConf("cockpitNotesMode")])
@@ -126,4 +123,16 @@ class ParametersPanel:
                            if cockpitNotesModes[mode] == self.cokpitNote_dropdown.get())
         update_config_param("cockpitNotesMode", selected_mode)
         self.cokpitNote_dropdown.selection_clear()
-        #self.root.focus_set()
+
+    def lock_actions(self):
+        self.cokpitNote_dropdown.configure(state="disabled")
+        self.toggle_applyCensorship_button.configure(state="disabled")
+        self.toggle_removeSkins_button.configure(state="disabled")
+        self.path_label.unbind("<Button-1>")
+
+    def unlock_actions(self):
+        self.cokpitNote_dropdown.configure(state="readonly")
+        self.toggle_applyCensorship_button.configure(state="enabled")
+        self.toggle_removeSkins_button.configure(state="enabled")
+        # Click event configuration
+        self.path_label.bind("<Button-1>", lambda e: self.modify_path())
