@@ -22,7 +22,7 @@ class ParametersPanel:
             cursor="hand2",
             font=("Arial", 9, "underline"),
             padding=5)
-
+        
         label = ttk.Label(text="Parameters", font=("Arial", 10, "bold"))
         label.pack(side="left", fill="x", padx=5)
         params_label_frame = ttk.LabelFrame(root, labelwidget=label, padding=(5, 5))

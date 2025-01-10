@@ -99,13 +99,13 @@ class ScanResult:
 
         if self.IsSyncUpToDate():
             returnString += f"Disk space used by your skins : {bytesToString(beforeUpdateDiskSpace)}\n"
-            returnString += f"Disk space used by your unregistered skins : {bytesToString(diskSpaceStats["toBeRemovedSkinsSpace"])}\n"
+            returnString += f"Disk space used by your unregistered skins : {bytesToString(diskSpaceStats["toBeRemovedSkinsSpace"])}"
         else:
             returnString += f"Disk space used by your skins (before update) : {bytesToString(beforeUpdateDiskSpace)}\n"
             returnString += f"Disk space used by your unregistered skins ({unregistered_remove_message}): {bytesToString(diskSpaceStats["toBeRemovedSkinsSpace"])}\n"
             
             returnString += f"To be downloaded : {bytesToString(toBeDownloaded)}\n"
-            returnString += f"Disk space used by your skins (after update) : {bytesToString(afterUpdateDiskSpace)} ({bytesToString(spaceDelta, forceSign=True)})\n"
+            returnString += f"Disk space used by your skins (after update) : {bytesToString(afterUpdateDiskSpace)} ({bytesToString(spaceDelta, forceSign=True)})"
 
         return returnString
     

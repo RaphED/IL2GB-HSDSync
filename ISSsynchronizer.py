@@ -88,7 +88,7 @@ def updateCustomPhotos(toBeUpdatedPhotos):
         MessageBrocker.emitProgress(_progress) #TEMP PROGRESS
 
 def updateAll(scanResult: ScanResult):
-    MessageBrocker.emitConsoleMessage("SYNCHRONIZATION BEGINS...")
+    MessageBrocker.emitConsoleMessage("\nSYNCHRONIZATION BEGINS...")
     MessageBrocker.emitProgress(0) #TEMP PROGRESS
 
     if customPhotoSyncIsActive():
