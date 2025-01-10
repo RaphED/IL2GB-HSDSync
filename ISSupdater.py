@@ -1,5 +1,4 @@
 import subprocess
-import sys
 import time
 import os
 import logging
@@ -47,7 +46,6 @@ def replaceAndLaunchMainExe(prerelease = False):
         #add a timer to make sure previous main exe is stopped
         #TODO : perform a while checker
         time.sleep(5)
-
         #copy the file next to the exe to replace with another name
         mainExeFilePath = os.path.join(os.path.curdir, "ISS.exe")
         
@@ -58,8 +56,4 @@ def replaceAndLaunchMainExe(prerelease = False):
 
     except Exception as e:
         logging.error(e)
-        sys.exit()
 
-if __name__ == "__main__":
-
-    replaceAndLaunchMainExe()
