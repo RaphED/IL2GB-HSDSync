@@ -1,6 +1,7 @@
 import os
 import sys
 import shutil
+import uuid
 import requests
 import hashlib
 import logging
@@ -31,7 +32,7 @@ def cleanTemporaryFolder():
                 
 
 # Function to download a file from a URL and save it to a temporary directory
-def downloadFile(url, expectedMD5 = None):
+def downloadFile(url, expectedMD5 = None, prefix_with_uuid=False):
     
     tempDir = getTempFolderFullPath()
     #create the temp directory if not exist
@@ -40,7 +41,10 @@ def downloadFile(url, expectedMD5 = None):
     
     response = requests.get(url, stream=True)
     response.raise_for_status()  # Raise an exception for HTTP errors
-    temp_file_path = os.path.join(tempDir, os.path.basename(url))
+    file_name = os.path.basename(url)
+    if prefix_with_uuid:
+        file_name = str(uuid.uuid4()) + "_" + file_name
+    temp_file_path = os.path.join(tempDir, file_name)
 
     with open(temp_file_path, 'wb') as f:
         for chunk in response.iter_content(chunk_size=8192):#TODO : check the chunk size is a good one

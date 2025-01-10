@@ -60,7 +60,7 @@ def getSubscribedCollectionFromFile(subscriptionFilePath):
                     )
                 )
             else:   #OPTION 2 : this is a link to remote iss file
-                downloadedFile = downloadFile(proxyFile)
+                downloadedFile = downloadFile(proxyFile, prefix_with_uuid=True)
                 subscribedCollectionlist += getSubscribedCollectionFromFile(downloadedFile)
 
         
