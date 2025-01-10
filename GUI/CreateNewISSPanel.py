@@ -142,22 +142,8 @@ class CreateNewISSPanel:
 
         button_edit_param = ttk.Button(frame_params, text="Edit", command=self.edit_parameter)
         button_edit_param.pack(side="right", padx=5)
-      
 
-        # Plane Selection in a LabelFrame
-        frame_planes = ttk.LabelFrame(self.window, text="Resulting plane list", padding=10)
-        frame_planes.pack(fill="both", expand=True, padx=10, pady=5)
-
-
-        #Planes 
-        self.tree_selected_planes = ttk.Treeview(frame_planes, columns=("plane","IL2Group","SkinPack"), show="headings", height=10,)
-        self.tree_selected_planes.pack(fill="both",padx=5, pady=5)
-
-        self.tree_selected_planes.heading("plane", text="Title", anchor="w")
-        self.tree_selected_planes.heading("IL2Group", text="IL2Group", anchor="w")
-        self.tree_selected_planes.heading("SkinPack", text="SkinPack", anchor="w")
-
-
+        
         # Save button
         frame_controls = ttk.Frame(self.window)
         frame_controls.pack(pady=10, fill="both", anchor="center", side="bottom")
@@ -174,6 +160,22 @@ class CreateNewISSPanel:
         # Button
         button_save = ttk.Button(frame_controls, text="Save to .ISS", style="Accent.TButton", command=self.save_to_iss)
         button_save.grid(row=0, column=2, padx=5, pady=5)
+      
+
+        # Plane Selection in a LabelFrame
+        frame_planes = ttk.LabelFrame(self.window, text="Resulting plane list", padding=10)
+        frame_planes.pack(fill="both", expand=True, padx=10, pady=5)
+
+
+        #Planes 
+        self.tree_selected_planes = ttk.Treeview(frame_planes, columns=("plane","IL2Group","SkinPack"), show="headings", height=10,)
+        self.tree_selected_planes.pack(fill="both",padx=5, pady=5)
+
+        self.tree_selected_planes.heading("plane", text="Title", anchor="w")
+        self.tree_selected_planes.heading("IL2Group", text="IL2Group", anchor="w")
+        self.tree_selected_planes.heading("SkinPack", text="SkinPack", anchor="w")
+
+
         # Populate sample planes
 
         self.variable=variable
