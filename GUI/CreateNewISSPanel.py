@@ -20,8 +20,14 @@ from tkinter import ttk
 class CreateNewISSPanel:
     def actualise_dynamic_planes(self):      
         il2Group = self.entry_il2group.get()
+        if len(il2Group)>0 : il2Group="*"+il2Group+"*"
+        
         skinPack = self.entry_skinPack.get()
+        if len(skinPack)>0 : skinPack="*"+skinPack+"*"
+
         title = self.entry_title.get()
+        if len(title)>0 : title="*"+title+"*"
+
         comment = self.entry_comment.get()
 
         rawjson=element_to_json(comment, il2Group, skinPack, title)
