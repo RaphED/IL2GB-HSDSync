@@ -54,38 +54,38 @@ class CreateNewISSPanel:
         self.window.title("ISS file detail")
         self.window.iconbitmap(getRessourcePath("iss.ico"))
 
-        self.window.geometry("1200x1100")
+        self.window.geometry("1200x980")
 
         # Call on_close when the window is closed
 
         # Top Inputs in a LabelFrame
-        frame_inputs = ttk.LabelFrame(self.window, text="Filters/ Criterias :", padding=10)
+        frame_inputs = ttk.LabelFrame(self.window, text="Filters/ Criterias :", padding=5)
         frame_inputs.pack(fill="x", padx=10, pady=5)
         frame_inputs.grid_rowconfigure(1, weight=1)  # Adjust as needed for the row
         frame_inputs.grid_columnconfigure(0, weight=1)  # Adjust as needed for the column
 
-        frame_queries = ttk.Frame(frame_inputs, padding=5)
-        frame_queries.grid(row=0, column=0, padx=5, pady=5)
+        frame_queries = ttk.Frame(frame_inputs, padding=0)
+        frame_queries.grid(row=0, column=0, padx=0, pady=0)
 
              
         self.title_var = tk.StringVar()
-        ttk.Label(frame_queries, text="Title").grid(row=0, column=0, sticky="w", padx=5, pady=5)
+        ttk.Label(frame_queries, text="Title").grid(row=0, column=0, sticky="w", padx=5, pady=0)
         self.entry_title = ttk.Entry(frame_queries, textvariable=self.title_var, width=20)
-        self.entry_title.grid(row=0, column=1, padx=5, pady=5)
+        self.entry_title.grid(row=0, column=1, padx=5, pady=0)
 
-        frame_queries.grid_columnconfigure(2, minsize=200)
+        frame_queries.grid_columnconfigure(2, minsize=180)
 
         self.il2group_var = tk.StringVar()
-        ttk.Label(frame_queries, text="il2Group:").grid(row=0, column=3, sticky="w", padx=5, pady=5)
+        ttk.Label(frame_queries, text="il2Group:").grid(row=0, column=3, sticky="w", padx=5, pady=0)
         self.entry_il2group = ttk.Entry(frame_queries, textvariable=self.il2group_var,width=20,)
-        self.entry_il2group.grid(row=0, column=4, padx=5, pady=5)
+        self.entry_il2group.grid(row=0, column=4, padx=5, pady=0)
         
-        frame_queries.grid_columnconfigure(5, minsize=200)
+        frame_queries.grid_columnconfigure(5, minsize=180)
 
         self.skinPack_var = tk.StringVar()
-        ttk.Label(frame_queries, text="SkinPack").grid(row=0, column=6, sticky="w", padx=5, pady=5)
+        ttk.Label(frame_queries, text="SkinPack").grid(row=0, column=6, sticky="w", padx=5, pady=0)
         self.entry_skinPack = ttk.Entry(frame_queries,textvariable=self.skinPack_var, width=20)
-        self.entry_skinPack.grid(row=0, column=7, padx=5, pady=5)        
+        self.entry_skinPack.grid(row=0, column=7, padx=5, pady=0)        
 
         #Adding listening to input change       
         self.title_var.trace_add("write", self.update_dynamic_list)
