@@ -5,4 +5,5 @@ temp
 Subscriptions
 *.pyc
 ISS-config.json
+file_hashes.json
 iss.log

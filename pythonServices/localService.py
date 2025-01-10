@@ -1,8 +1,8 @@
 import os
 import hashlib
-import shutil
 import json
 import logging
+
 
 from pythonServices.configurationService import getConf
 from pythonServices.filesService import moveFile, deleteFile
@@ -59,7 +59,7 @@ def getSkinsList():
                 "name": ddsFileName[:-4], #remove extention to get the name
                 "mainFileName": ddsFileName,
                 "mainFileSize": filestats.st_size,
-                "mainFileMd5": hashlib.md5(open(fileFullPath, "rb").read()).hexdigest()
+                "mainFileMd5": manage_file_md5(fileFullPath)
             })
 
         #then if there are secondary files, attack them
@@ -71,7 +71,7 @@ def getSkinsList():
                 if skin["mainFileName"][:-4] == ddsSecondaryFileName[:-6]:
                     skinList[index]["secondaryFileName"] = ddsSecondaryFileName
                     skinList[index]["secondaryFileSize"] = filestats.st_size
-                    skinList[index]["secondaryFileMd5"] = hashlib.md5(open(fileFullPath, "rb").read()).hexdigest()
+                    skinList[index]["secondaryFileMd5"] = manage_file_md5(fileFullPath)
                     break
                     #TODO: manage the case of an orphan secondary file
     
@@ -131,7 +131,7 @@ def getCustomPhotosListFromPath(path):
 
         notesList.append({
             "aircraft": aircraft,
-            "md5": hashlib.md5(open(os.path.join(root,currentPhotoFile), "rb").read()).hexdigest()
+            "md5": manage_file_md5(os.path.join(root,currentPhotoFile))
         })
         
     return notesList
@@ -150,3 +150,62 @@ def moveCustomPhotoFromPathToDestination(src_path, aircraft):
     destinationPath = os.path.join(getCustomPhotosDirectory(), aircraft, "Textures")
     return moveFile(src_path, destinationPath)
 
+def calculate_metadata_hash(file_path):
+    """Calculate a hash based on file metadata."""
+    stat = os.stat(file_path)
+    metadata = {
+        'size': stat.st_size,
+        'mtime': stat.st_mtime,
+        'ctime': stat.st_ctime,
+        'mode': stat.st_mode
+    }
+    # Create a consistent string representation of metadata
+    metadata_str = f"{metadata['size']}_{metadata['mtime']}_{metadata['ctime']}_{metadata['mode']}"
+    return hashlib.md5(metadata_str.encode()).hexdigest()
+
+def calculate_full_md5(file_path):
+    """Calculate the full MD5 of the entire file."""
+    hash_md5 = hashlib.md5()
+    with open(file_path, "rb") as f:
+        while chunk := f.read(4096):
+            hash_md5.update(chunk)
+    return hash_md5.hexdigest()
+
+def manage_file_md5(file_path, json_file="file_hashes.json"):
+    """
+    Manage file hashes using metadata as a quick check before full MD5 calculation.
+    Returns the full MD5 hash of the file.
+    """
+    # Load the JSON file into memory if it hasn't been done already
+    if not hasattr(manage_file_md5, "json_data"):
+        try:
+            with open(json_file, 'r') as f:
+                manage_file_md5.json_data = json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError):
+            manage_file_md5.json_data = {}
+    
+    # Calculate metadata hash
+    metadata_hash = calculate_metadata_hash(file_path)
+    
+    # Check if the file exists in cache and metadata matches
+    if file_path in manage_file_md5.json_data:
+        stored_data = manage_file_md5.json_data[file_path]
+        
+        if stored_data['metadata_hash'] == metadata_hash:
+            # Si les métadonnées correspondent, on retourne le MD5 stocké
+            return stored_data['full_md5']
+    
+    # Si le fichier n'existe pas dans le cache ou si les métadonnées sont différentes
+    full_md5 = calculate_full_md5(file_path)
+    
+    # Mettre à jour le cache
+    manage_file_md5.json_data[file_path] = {
+        'metadata_hash': metadata_hash,
+        'full_md5': full_md5
+    }
+    
+    # Sauvegarder dans le fichier JSON
+    with open(json_file, 'w') as f:
+        json.dump(manage_file_md5.json_data, f, indent=4)
+    
+    return full_md5
