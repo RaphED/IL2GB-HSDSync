@@ -48,7 +48,7 @@ class ParametersPanel:
                                   style="Path.TLabel",
                                   cursor="hand2")
         self.path_label.pack(side="left", fill="x", expand=True)
-        Tooltip(self.path_label, "Your IL2 Path\nClick to modify")
+        Tooltip(self.path_label, "Click to specify the game directory")
         
         self.update_pathLabel()
 
@@ -60,7 +60,7 @@ class ParametersPanel:
         self.toggle_removeSkins_button.pack(side="left", padx=5)
         toggle_removeSkins_label = tk.Label(toggle_removeSkins_frame, text="Auto remove unregistered skins", anchor="w")
         toggle_removeSkins_label.pack(side="left", padx=0)
-        Tooltip(toggle_removeSkins_label, text="When unchecked, all the skins not in the subscription files will be left in your game directory\nWhen checked, all these skins will be definitely removed after the synchronization")
+        Tooltip(toggle_removeSkins_label, text="Check to use ISS as the only custom skins manager - all other skins will be deleted")
         
         toggle_applyCensorship_frame = tk.Frame(params_label_frame)
         toggle_applyCensorship_frame.pack(fill="x", pady=5)
@@ -69,7 +69,7 @@ class ParametersPanel:
         self.toggle_applyCensorship_button.pack(side="left", padx=5)
         toggle_applyCensorship_label = tk.Label(toggle_applyCensorship_frame, text="Apply censorship", anchor="w")
         toggle_applyCensorship_label.pack(side="left", padx=0)
-        Tooltip(toggle_applyCensorship_label, text="When unchecked, you will get all the skins\nWhen checked, you will not get the skins with restricted symbols")
+        Tooltip(toggle_applyCensorship_label, text="Check to download only the censored versions of skins - as specified in HSD")
 
         cokpit_note_frame = tk.Frame(params_label_frame)
         cokpit_note_frame.pack(fill="x", pady=5)
@@ -83,7 +83,7 @@ class ParametersPanel:
             state="readonly",
             width=50,
         )
-        Tooltip(self.cokpitNote_dropdown, text="Option to replace cockpit photos by technical notes")
+        Tooltip(self.cokpitNote_dropdown, text="Select the cockpit photos collection - some include notes on the plane's operational limits")
         self.cokpitNote_dropdown.set(cockpitNotesModes[getConf("cockpitNotesMode")])
         self.cokpitNote_dropdown.pack(side="right", padx=5)
         self.cokpitNote_dropdown.bind("<<ComboboxSelected>>", self.on_cokpitNote_dropdown_change)
