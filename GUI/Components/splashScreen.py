@@ -13,6 +13,9 @@ class SplashScreen:
         self.splash = tk.Toplevel()
         self.splash.overrideredirect(True)
 
+        self.splash.attributes('-topmost', True)
+        self.splash.grab_set()
+
         self.splash.geometry(f"{self.size_x}x{self.size_y}")
 
         # Créer un label pour l'image de chargement
