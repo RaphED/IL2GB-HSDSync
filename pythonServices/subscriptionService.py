@@ -148,6 +148,8 @@ def deleteSubscriptionFile(fileNameWithExtension):
 def importSubcriptionFile(file_path):
     # Copy the selected file to the 'Subscriptions' folder
     file_name = os.path.basename(file_path)  # Extract the file name
+    if os.path.exists(file_path):
+        raise Exception("You already have an iss file with the same name")
     destination_path = os.path.join(subscriptionPath, file_name)
     shutil.copy(file_path, destination_path)
     return destination_path

@@ -199,8 +199,11 @@ class CollectionsPanel():
             filetypes=[("Subscriptions","*.iss")]
         )
         if file_path:  # Ensure the user selected a file
-            # Ensure the 'Subscriptions' folder exists
-            importedFilePath = importSubcriptionFile(file_path)
+            try:
+                importedFilePath = importSubcriptionFile(file_path)
+            except Exception as e:
+                messagebox.showerror("Cannot import iss file", f"Error while importing the iss file.\n{e}")
+                return
             #load only the new file (not clean, as it would be better to do it from the subscription service)
             collections = getSubscribedCollectionFromFile(importedFilePath)
             #To be improved : add it in the proper position
