@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import font,ttk
+from tkinter import ttk
 
 class ActionPanel:
 
@@ -8,13 +8,13 @@ class ActionPanel:
         self.root = root
 
         frame = tk.Frame(root)
-        frame.pack(expand=True)
+        frame.pack(side=tk.RIGHT)
 
         self.ScanButton = ttk.Button(frame, text="Scan", style="Accent.TButton", command=scanCommand)
-        self.ScanButton.pack(side=tk.TOP, padx=10, pady=20)
+        self.ScanButton.pack(side=tk.LEFT, padx=10, pady=10)
 
         self.SyncButton = ttk.Button(frame, text="Synchronize", style="Accent.TButton", command=syncCommand)
-        self.SyncButton.pack(side=tk.TOP, padx=10, pady=20)
+        self.SyncButton.pack(side=tk.RIGHT, padx=10, pady=10)
         self.lockSyncButton()
 
     def lockSyncButton(self):

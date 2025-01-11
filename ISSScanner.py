@@ -76,12 +76,6 @@ class ScanResult:
         if len(self.toBeRemovedSkins) == 0:
             returnString +="- None -\n"
 
-        returnString += "\n*************** Scan result ***************\n\n"
-        if self.IsSyncUpToDate():
-            returnString += "Skins are up to date.\n"
-        else:
-            returnString += "Synchronisation required !\n"
-        
         returnString += "\n*********** Disk space analysis ***********\n\n"
         
         beforeUpdateDiskSpace = diskSpaceStats["previouslyInstalledSkinsSpace"]
@@ -103,9 +97,15 @@ class ScanResult:
         else:
             returnString += f"Disk space used by your skins (before update) : {bytesToString(beforeUpdateDiskSpace)}\n"
             returnString += f"Disk space used by your unregistered skins ({unregistered_remove_message}): {bytesToString(diskSpaceStats["toBeRemovedSkinsSpace"])}\n"
-            
-            returnString += f"To be downloaded : {bytesToString(toBeDownloaded)}\n"
             returnString += f"Disk space used by your skins (after update) : {bytesToString(afterUpdateDiskSpace)} ({bytesToString(spaceDelta, forceSign=True)})"
+        
+        
+        returnString += "\n\n*************** Scan result ***************\n\n"
+        if self.IsSyncUpToDate():
+            returnString += "Skins are up to date.\n"
+        else:
+            returnString += "Synchronisation required!\n"
+            returnString += f"To be downloaded : {bytesToString(toBeDownloaded)}\n"
 
         return returnString
     

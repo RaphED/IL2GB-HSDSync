@@ -42,6 +42,7 @@ class CollectionsPanel():
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         
         self.canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        self.canvas.configure(height=152)
         self.canvas.configure(yscrollcommand=scrollbar.set)
 
         # Activate or desactivate mousewheel event
@@ -54,16 +55,16 @@ class CollectionsPanel():
         bottom_frame = tk.Frame(collection_frame)
         bottom_frame.pack(pady=0)
         self.import_button = ttk.Button(bottom_frame, text="Import new file", command=self.import_item)
-        self.import_button.pack(side=tk.LEFT, pady=10, padx=10)
+        self.import_button.pack(side=tk.LEFT, pady=5, padx=10)
         self.create_button = ttk.Button(bottom_frame, text="Create new collection", command=self.create_new_ISS)
-        self.create_button.pack(side=tk.RIGHT, pady=10, padx=10)
+        self.create_button.pack(side=tk.RIGHT, pady=5, padx=10)
         
         self.list_frame.bind('<Configure>',
             lambda e: self.canvas.configure(scrollregion=self.canvas.bbox('all')))
         
         self.collections_buttons_registry:list[CliquableIcon] = []
 
-    def emit_loading(self):
+    def emit_loading(self): 
         #local locks
         self.lock_actions()
 

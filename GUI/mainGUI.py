@@ -42,7 +42,6 @@ class MainGUI:
         left_upper_frame = tk.Frame(top_main_frame)
         left_upper_frame.pack(side="left", fill="both")
 
-        #self.subscriptionsPanel = SubscriptionPanel(left_upper_frame)
         self.collectionsPanel = CollectionsPanel(
             left_upper_frame,
             on_loading_start=self.on_collections_loading_start,
@@ -54,7 +53,6 @@ class MainGUI:
         right_upper_frame.pack(side="right", fill="both", expand=True)
                 
         self.parametersPanel = ParametersPanel(right_upper_frame)
-        self.actionPanel = ActionPanel(right_upper_frame, scanCommand = self.start_scan_async, syncCommand=self.start_synchronization_async)
 
         # 2 - BOTTOM FRAME
         #2.1 info bar
@@ -90,6 +88,8 @@ class MainGUI:
         bottom_main_frame.pack(side="bottom", fill="both", expand=True)
 
         self.consolePanel = ConsolePanel(bottom_main_frame)
+
+        self.actionPanel = ActionPanel(bottom_main_frame, scanCommand = self.start_scan_async, syncCommand=self.start_synchronization_async)
 
         #OTHER STORED INFORMATION
         self.currentScanResult: ISSsynchronizer.ScanResult = None
