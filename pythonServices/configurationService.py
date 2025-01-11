@@ -16,8 +16,8 @@ default_config = {
 cockpitNotesModes = {
     "noSync": "No synchronization, keep current images",
     "originalPhotos": "Original IL2 game photos",
-    "officialNumbers": "Parameters from IL2 specifications (C6_lefuneste)",
-    "technochatNumbers": "Parameters from technochat measurements (C6_lefuneste)"
+    "officialNumbers": "Cockpit notes from IL2 specifications (C6_lefuneste)",
+    "technochatNumbers": "Cockpit notes from technochat measurements (C6_lefuneste)"
 }
 
 

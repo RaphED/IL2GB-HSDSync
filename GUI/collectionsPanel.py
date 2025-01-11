@@ -134,14 +134,14 @@ class CollectionsPanel():
                 toggle_button = CliquableIcon(
                     root=frame,
                     icon_path=getIconPath("plain-circle.png"),
-                    tooltip_text="Click here to disable collection (won't be synchonised)",
+                    tooltip_text="Click to disable collection (won't be synchonised)",
                     onClick=lambda o=line: self._toggle_item(o)
                 )
             else:
                 toggle_button = CliquableIcon(
                     root=frame, 
                     icon_path=getIconPath("circle.png"),
-                    tooltip_text="Click here to activate collection",
+                    tooltip_text="Click to activate collection",
                     onClick=lambda o=line: self._toggle_item(o)
                 )
             toggle_button.pack(side=tk.LEFT, padx=2)
