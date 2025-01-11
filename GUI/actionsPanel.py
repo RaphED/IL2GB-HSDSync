@@ -10,7 +10,7 @@ class ActionPanel:
         frame = tk.Frame(root)
         frame.pack(side=tk.RIGHT)
 
-        self.ScanButton = ttk.Button(frame, text="Scan", style="Accent.TButton", command=scanCommand)
+        self.ScanButton = ttk.Button(frame, text="Scan", command=scanCommand)
         self.ScanButton.pack(side=tk.LEFT, padx=10, pady=10)
 
         self.SyncButton = ttk.Button(frame, text="Synchronize", style="Accent.TButton", command=syncCommand)
@@ -27,10 +27,8 @@ class ActionPanel:
 
     def lockScanButton(self):
         self.ScanButton["state"] = "disabled"
-        self.ScanButton.configure(style='')
     
     def unlockScanButton(self):
-        self.ScanButton.configure(style="Accent.TButton")
         self.ScanButton["state"] = "enabled"
         
         

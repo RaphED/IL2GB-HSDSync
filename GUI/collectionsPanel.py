@@ -23,10 +23,11 @@ class SubscriptionLine():
         self.size = getSpaceUsageOfRemoteSkinCatalog(None, concernedRemoteSkins)    
 
 class CollectionsPanel():
-    def __init__(self, root, on_loading_complete=None, on_loading_start=None):
+    def __init__(self, root, on_loading_complete=None, on_loading_start=None, on_collections_change=None):
         self.root = root
         self.on_loading_complete = on_loading_complete
         self.on_loading_start = on_loading_start
+        self.on_collections_change = on_collections_change
         self.subscriptionLines: list[SubscriptionLine] = []
 
         label = ttk.Label(text="Collections", font=("Arial", 10,"bold"))
@@ -79,6 +80,11 @@ class CollectionsPanel():
         #external emit
         if self.on_loading_complete:
             self.root.after(0, self.on_loading_complete)
+            
+    def emit_collections_change(self):
+        #external emit
+        if self.on_collections_change:
+            self.root.after(0, self.on_collections_change)
 
     def lock_actions(self):
         self.import_button["state"] = "disabled"
@@ -173,6 +179,7 @@ class CollectionsPanel():
             #To be improved : add it in the proper position
             self.subscriptionLines.append(SubscriptionLine(os.path.basename(importedFilePath), collections))
             self.root.after(0, self._update_list)
+            self.on_collections_change()
 
     def _toggle_item(self, item: SubscriptionLine):
         if item.state:
@@ -183,6 +190,7 @@ class CollectionsPanel():
             item.state = True
         
         self._update_list()
+        self.emit_collections_change()
 
     def _edit_item(self, item: SubscriptionLine):
             CreateNewISSPanel(self.root, on_close=self.loadCollections_async, variable=item.fileName)
@@ -194,6 +202,7 @@ class CollectionsPanel():
             deleteSubscriptionFile(item.fileName)
             self.subscriptionLines = [l for l in self.subscriptionLines if l.name != item.name]
             self._update_list()
+            self.emit_collections_change()
 
     def create_new_ISS(self):
         #TODO : to be really implemented and tested when creation panel done

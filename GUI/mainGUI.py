@@ -45,14 +45,15 @@ class MainGUI:
         self.collectionsPanel = CollectionsPanel(
             left_upper_frame,
             on_loading_start=self.on_collections_loading_start,
-            on_loading_complete=self.on_collections_loading_completed
+            on_loading_complete=self.on_collections_loading_completed,
+            on_collections_change=self.on_collections_change
         )
 
         # 1.2 - right upper frame
         right_upper_frame = tk.Frame(top_main_frame)
         right_upper_frame.pack(side="right", fill="both", expand=True)
                 
-        self.parametersPanel = ParametersPanel(right_upper_frame)
+        self.parametersPanel = ParametersPanel(right_upper_frame, on_parameters_change=self.on_parameters_change)
 
         # 2 - BOTTOM FRAME
         #2.1 info bar
@@ -106,7 +107,14 @@ class MainGUI:
 
     def on_collections_loading_completed(self):
         self.unlock_components_actions()
-        MessageBrocker.emitConsoleMessage("Collections loaded, Scan is now available.")
+        MessageBrocker.emitConsoleMessage("Collections loaded.")
+        self.root.after(0, self.start_scan_async) #immediatly launch a scan after the modification
+
+    def on_collections_change(self):
+        self.root.after(0, self.start_scan_async) #immediatly launch a scan after the modification
+    
+    def on_parameters_change(self):
+        self.root.after(0, self.start_scan_async) #immediatly launch a scan after the modification
 
     #MANAGE COMPONENTS ACTIONS
     def lock_components_actions(self):

@@ -7,8 +7,9 @@ from pythonServices.configurationService import getConf, update_config_param, co
 from pythonServices.filesService import getIconPath
 
 class ParametersPanel:
-    def __init__(self, root: tk):
+    def __init__(self, root: tk, on_parameters_change=None):
         self.root = root
+        self.on_parameters_change = on_parameters_change
 
         # Style configuration
         style = ttk.Style()
@@ -88,6 +89,11 @@ class ParametersPanel:
         self.cokpitNote_dropdown.pack(side=tk.LEFT, padx=5)
         self.cokpitNote_dropdown.bind("<<ComboboxSelected>>", self.on_cokpitNote_dropdown_change)
 
+    def emit_collections_change(self):
+        #external emit
+        if self.on_parameters_change:
+            self.root.after(0, self.on_parameters_change)
+    
     def short_path(self, fullPath, maxLength=50):
         if len(fullPath) > maxLength:
             return f"{fullPath[:maxLength]}..."
@@ -110,12 +116,15 @@ class ParametersPanel:
         if len(file_path) > 0:
             update_config_param("IL2GBGameDirectory", file_path)
             self.update_pathLabel()
+            self.emit_collections_change()
     
     def modify_auto_remove(self):
         update_config_param("autoRemoveUnregisteredSkins", self.toggle_removeSkins_var.get())
+        self.emit_collections_change()
 
     def modify_apply_censorship(self):
         update_config_param("applyCensorship", self.toggle_applyCensorship_var.get())
+        self.emit_collections_change()
     
     def on_cokpitNote_dropdown_change(self, event):
         #find the cokpit not mode associated to the text
@@ -123,6 +132,7 @@ class ParametersPanel:
                            if cockpitNotesModes[mode] == self.cokpitNote_dropdown.get())
         update_config_param("cockpitNotesMode", selected_mode)
         self.cokpitNote_dropdown.selection_clear()
+        self.emit_collections_change()
 
     def lock_actions(self):
         self.cokpitNote_dropdown.configure(state="disabled")
