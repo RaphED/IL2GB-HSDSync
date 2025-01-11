@@ -228,6 +228,9 @@ class CreateNewISSPanel:
         selected_item = self.tree_params.selection()
         for item in selected_item:
             self.tree_params.delete(item)
+        
+        threading.Thread(target=self.actualiseSelectedPlanes()).start()
+
     
     def edit_parameter(self):
         selected_items = self.tree_params.selection()
