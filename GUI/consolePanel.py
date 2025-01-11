@@ -1,6 +1,4 @@
 import tkinter as tk
-import re
-from typing import List, Tuple, Dict
 
 from pythonServices.messageBrocker import MessageBrocker
 
@@ -8,10 +6,23 @@ class ConsolePanel:
     def __init__(self, root: tk):
         self.root = root
         
-        self.text_widget = tk.Text(self.root, wrap="char", height=15)
-        self.text_widget.pack(expand=True, fill="both")
+        # Create a frame to hold both Text and Scrollbar
+        self.frame = tk.Frame(self.root)
+        self.frame.pack(expand=True, fill="both")
         
-        # Configuration des tags pour le formatage
+        # Create Scrollbar widget
+        self.scrollbar = tk.Scrollbar(self.frame)
+        self.scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        
+        # Create Text widget and connect it to Scrollbar
+        self.text_widget = tk.Text(self.frame, wrap="char", height=15, 
+                                 yscrollcommand=self.scrollbar.set)
+        self.text_widget.pack(side=tk.LEFT, expand=True, fill="both")
+        
+        # Configure Scrollbar to scroll the Text widget
+        self.scrollbar.config(command=self.text_widget.yview)
+        
+        # Configure tags for formatting
         self.text_widget.tag_configure("red", foreground="red")
         self.text_widget.tag_configure("green", foreground="green")
         self.text_widget.tag_configure("blue", foreground="blue")
@@ -22,34 +33,34 @@ class ConsolePanel:
         MessageBrocker.registerConsoleHook(self.addLine)
 
     def parse_and_insert_text(self, text: str):
-        """Parse le texte et insère avec les tags appropriés"""
-        # Si pas de balises, insérer directement
+        """Parse text and insert with appropriate tags"""
+        # If no tags, insert directly
         if '<' not in text:
             self.text_widget.insert(tk.END, text)
             return
 
         current_pos = 0
-        current_tags = []  # Liste des tags actifs
+        current_tags = []  # List of active tags
 
         while current_pos < len(text):
-            # Chercher la prochaine balise (ouvrante ou fermante)
+            # Look for next tag (opening or closing)
             next_tag_pos = text.find('<', current_pos)
             
             if next_tag_pos == -1:
-                # Plus de balises, insérer le reste du texte avec les tags courants
+                # No more tags, insert remaining text with current tags
                 remaining_text = text[current_pos:]
                 if remaining_text:
                     self.text_widget.insert(tk.END, remaining_text, tuple(current_tags))
                 break
             
-            # Insérer le texte avant la balise avec les tags courants
+            # Insert text before the tag with current tags
             if next_tag_pos > current_pos:
                 content = text[current_pos:next_tag_pos]
                 self.text_widget.insert(tk.END, content, tuple(current_tags))
             
-            # Traiter la balise
+            # Process the tag
             if text[next_tag_pos:next_tag_pos+2] == '</':
-                # Balise fermante
+                # Closing tag
                 end_pos = text.find('>', next_tag_pos)
                 if end_pos == -1:
                     break
@@ -58,7 +69,7 @@ class ConsolePanel:
                     current_tags.remove(tag)
                 current_pos = end_pos + 1
             else:
-                # Balise ouvrante
+                # Opening tag
                 end_pos = text.find('>', next_tag_pos)
                 if end_pos == -1:
                     break
