@@ -15,7 +15,7 @@ class ConsolePanel:
         self.text_widget.tag_configure("red", foreground="red")
         self.text_widget.tag_configure("green", foreground="green")
         self.text_widget.tag_configure("blue", foreground="blue")
-        self.text_widget.tag_configure("orange", foreground="orange")
+        self.text_widget.tag_configure("chocolate", foreground="chocolate")
         self.text_widget.tag_configure("bold", font=("TkDefaultFont", 10, "bold"))
         self.text_widget.tag_configure("italic", font=("TkDefaultFont", 10, "italic"))
 

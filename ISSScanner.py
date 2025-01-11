@@ -72,7 +72,7 @@ class ScanResult:
         returnString += "\n"
         
         for skin in self.toBeRemovedSkins:
-            returnString += f"<orange>{skin['name']}</orange>\n"
+            returnString += f"<chocolate>{skin['name']}</chocolate>\n"
         if len(self.toBeRemovedSkins) == 0:
             returnString +="- None -\n"
 
