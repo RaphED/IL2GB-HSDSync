@@ -36,15 +36,14 @@ class CollectionsPanel():
         collection_frame.pack(fill=tk.BOTH,padx=2, pady=2)
 
         collection_list_frame = ttk.Frame(collection_frame)
-        collection_list_frame.pack()
+        collection_list_frame.pack(padx=0, pady=0)
         
         self.canvas = tk.Canvas(collection_list_frame)
-        scrollbar = ttk.Scrollbar(collection_list_frame, orient=tk.VERTICAL, command=self.canvas.yview)
-        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        self.scrollbar = ttk.Scrollbar(collection_list_frame, orient=tk.VERTICAL, command=self.canvas.yview)
         
         self.canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         self.canvas.configure(height=152)
-        self.canvas.configure(yscrollcommand=scrollbar.set)
+        self.canvas.configure(yscrollcommand=self.scrollbar.set)
 
         # Activate or desactivate mousewheel event
         self.canvas.bind('<Enter>', self._bind_mousewheel)
@@ -62,6 +61,9 @@ class CollectionsPanel():
         
         self.list_frame.bind('<Configure>',
             lambda e: self.canvas.configure(scrollregion=self.canvas.bbox('all')))
+        
+        # Bind to check scrollbar visibility after content changes
+        self.list_frame.bind('<Configure>', self._on_frame_configure)
         
         self.collections_buttons_registry:list[CliquableIcon] = []
 
@@ -125,7 +127,7 @@ class CollectionsPanel():
 
         for line in self.subscriptionLines:
             frame = ttk.Frame(self.list_frame)
-            frame.pack(fill=tk.X, padx=5, pady=2)
+            frame.pack(fill=tk.X, padx=5, pady=1)
 
             toggle_button = None
             if line.state:
@@ -165,6 +167,31 @@ class CollectionsPanel():
             )
             edit_button.pack(side=tk.RIGHT, padx=2)
             self.collections_buttons_registry.append(edit_button)
+        
+        # Check scrollbar visibility after updating the list
+        self.root.after(10, self._update_scrollbar_visibility)
+
+    def _update_scrollbar_visibility(self):
+        # Get the height of the content and the canvas
+        content_height = self.list_frame.winfo_reqheight()
+        canvas_height = self.canvas.winfo_height()
+        
+        # Show/hide scrollbar based on content height
+        if content_height > canvas_height:
+            self.scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+            self.canvas.configure(yscrollcommand=self.scrollbar.set)
+        else:
+            self.scrollbar.pack_forget()
+            self.canvas.configure(yscrollcommand=None)
+            # Reset view to top when hiding scrollbar
+            self.canvas.yview_moveto(0)
+
+    def _on_frame_configure(self, event=None):
+        # Update the scrollregion to encompass the inner frame
+        self.canvas.configure(scrollregion=self.canvas.bbox('all'))
+        
+        # Check if scrolling is needed
+        self._update_scrollbar_visibility()
 
     def import_item(self):
         file_path = filedialog.askopenfilename(
