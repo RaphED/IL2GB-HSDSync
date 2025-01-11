@@ -45,7 +45,7 @@ def deleteUnregisteredSkins(scanResult: ScanResult):
 
 def updateSingleSkinFromRemote(source, remoteSkin: remoteService.RemoteSkin):
 
-    MessageBrocker.emitConsoleMessage(f"Downloading {remoteSkin.getValue("name")}...")
+    MessageBrocker.emitConsoleMessage(f"<blue>Downloading {remoteSkin.getValue("name")}...</blue>")
 
     #download to temp the skin
     downloadedFiles = remoteService.downloadSkinToTempDir(source, remoteSkin)
@@ -59,7 +59,7 @@ def updateSingleSkinFromRemote(source, remoteSkin: remoteService.RemoteSkin):
 
 def deleteSkinFromLocal(localSkinInfo):
     localService.removeSkin(localSkinInfo)
-    MessageBrocker.emitConsoleMessage(f"Deleted skin : {localSkinInfo["name"]}")
+    MessageBrocker.emitConsoleMessage(f"<orange>Deleted skin : {localSkinInfo["name"]}</orange>")
 
 
 def updateCustomPhotos(toBeUpdatedPhotos):
@@ -88,7 +88,7 @@ def updateCustomPhotos(toBeUpdatedPhotos):
         MessageBrocker.emitProgress(_progress) #TEMP PROGRESS
 
 def updateAll(scanResult: ScanResult):
-    MessageBrocker.emitConsoleMessage("\nSYNCHRONIZATION BEGINS...")
+    MessageBrocker.emitConsoleMessage("\nSYNCHRONIZATION BEGINS...\n")
     MessageBrocker.emitProgress(0) #TEMP PROGRESS
 
     if customPhotoSyncIsActive():
@@ -100,4 +100,4 @@ def updateAll(scanResult: ScanResult):
     updateRegisteredSkins(scanResult)
 
     MessageBrocker.emitProgress(1) #TEMP PROGRESS
-    MessageBrocker.emitConsoleMessage("SYNCHRONIZATION FINISHED")
+    MessageBrocker.emitConsoleMessage("\n<green><bold>SYNCHRONIZATION FINISHED</bold></green>")
