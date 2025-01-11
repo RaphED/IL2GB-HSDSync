@@ -206,9 +206,15 @@ class CreateNewISSPanel:
 
     def add_parameter(self):
         comment = self.entry_comment.get()
+        
         il2Group = self.entry_il2group.get()
+        if len(il2Group)>0 : il2Group="*"+il2Group+"*"
+        
         skinPack = self.entry_skinPack.get()
+        if len(skinPack)>0 : skinPack="*"+skinPack+"*"
+
         title = self.entry_title.get()
+        if len(title)>0 : title="*"+title+"*"
 
         if title or il2Group or skinPack:
             if self.editting_item_id==None:
