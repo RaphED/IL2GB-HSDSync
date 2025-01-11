@@ -1,4 +1,4 @@
-from pythonServices.configurationService import getConf, customPhotoSyncIsActive, checkIL2InstallPath
+from pythonServices.configurationService import getConf, customPhotoSyncIsActive, checkIL2InstallPath, cockpitNotesModes
 import pythonServices.localService as localService
 import pythonServices.remoteService as remoteService
 from pythonServices.subscriptionService import SubscribedCollection, getAllSubscribedCollection
@@ -45,23 +45,23 @@ class ScanResult:
 
         if customPhotoSyncIsActive():
             returnString += f"\n************ Cockpit notes ************\n"
-            returnString += f"** Selected mode : {getConf("cockpitNotesMode")}\n\n"
+            returnString += f"Selected images : {cockpitNotesModes[getConf("cockpitNotesMode")]}\n\n"
             if len(self.toBeUpdatedCockpitNotes) == 0:
-                returnString += "All custom photos are up to date\n"
+                returnString += "<bold>All custom photos are up to date</bold>\n"
             else:
-                returnString += f"{len(self.toBeUpdatedCockpitNotes)} custom photos are to be updated ({bytesToString(diskSpaceStats["toBeUpdatedCustomPhotos"])})\n"
+                returnString += f"<bold>{len(self.toBeUpdatedCockpitNotes)} custom photos are to be updated ({bytesToString(diskSpaceStats["toBeUpdatedCustomPhotos"])})</bold>\n"
 
         for source in self.getUsedSources():
             returnString += f"\n*********** Sync with {source} ***********\n"
-            returnString += f"\nMissing skins: ({bytesToString(sum(diskSpaceStats["missingSkinsSpace"].values()))})\n"
+            returnString += f"\nMissing skins ({bytesToString(sum(diskSpaceStats["missingSkinsSpace"].values()))}) :\n"
             for skin in self.missingSkins[source]:
-                returnString += f"\t- {skin.getValue("name")}\n"
+                returnString += f"<blue>{skin.getValue("name")}</blue>\n"
             if len(self.missingSkins[source]) == 0:
                 returnString +="- None -\n"
 
-            returnString += f"\nTo be updated skins: ({bytesToString(sum(diskSpaceStats["toBeUpdatedSkinsSpace"].values()))})\n"
+            returnString += f"\nTo be updated skins ({bytesToString(sum(diskSpaceStats["toBeUpdatedSkinsSpace"].values()))}) :\n"
             for skin in self.toBeUpdatedSkins[source]:
-                returnString += f"\t- {skin.getValue("name")}\n"
+                returnString += f"<blue>{skin.getValue("name")}</blue>\n"
             if len(self.toBeUpdatedSkins[source]) == 0:
                 returnString +="- None -\n"
 
@@ -72,7 +72,7 @@ class ScanResult:
         returnString += "\n"
         
         for skin in self.toBeRemovedSkins:
-            returnString += f"\t- {skin['name']}\n"
+            returnString += f"<orange>{skin['name']}</orange>\n"
         if len(self.toBeRemovedSkins) == 0:
             returnString +="- None -\n"
 
@@ -100,14 +100,14 @@ class ScanResult:
             returnString += f"Disk space used by your skins (after update) : {bytesToString(afterUpdateDiskSpace)} ({bytesToString(spaceDelta, forceSign=True)})"
         
         
-        returnString += "\n\n*************** Scan result ***************\n\n"
+        returnString += "\n\n<bold>*************** Scan result ***************</bold>\n\n"
         if self.IsSyncUpToDate():
-            returnString += "Skins are up to date.\n"
+            returnString += "<green><bold>Skins are up to date.</bold></green>\n"
         else:
-            returnString += "Synchronisation required!\n"
-            returnString += f"To be downloaded : {bytesToString(toBeDownloaded)}\n"
+            returnString += "<red><bold>Synchronisation required!</bold></red>\n"
+            returnString += f"<bold>To be downloaded : {bytesToString(toBeDownloaded)}</bold>\n"
 
-        return returnString
+        return returnString 
     
     def IsSyncUpToDate(self):
         if sum([len(self.missingSkins[source]) for source in self.missingSkins.keys()]) != 0:

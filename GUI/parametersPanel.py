@@ -94,7 +94,7 @@ class ParametersPanel:
         if self.on_parameters_change:
             self.root.after(0, self.on_parameters_change)
     
-    def short_path(self, fullPath, maxLength=50):
+    def short_path(self, fullPath, maxLength=55):
         if len(fullPath) > maxLength:
             return f"{fullPath[:maxLength]}..."
         return fullPath
