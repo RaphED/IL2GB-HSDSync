@@ -202,7 +202,9 @@ class CollectionsPanel():
             deleteSubscriptionFile(item.fileName)
             self.subscriptionLines = [l for l in self.subscriptionLines if l.name != item.name]
             self._update_list()
-            self.emit_collections_change()
+            #only perform change if the collection is activated
+            if item.state:
+                self.emit_collections_change()
 
     def create_new_ISS(self):
         #TODO : to be really implemented and tested when creation panel done
