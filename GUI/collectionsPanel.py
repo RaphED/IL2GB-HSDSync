@@ -193,7 +193,7 @@ class CollectionsPanel():
         self.emit_collections_change()
 
     def _edit_item(self, item: SubscriptionLine):
-            CreateNewISSPanel(self.root, on_close=self.loadCollections_async, variable=item.fileName)
+            CreateNewISSPanel(self.root, on_close=self.loadCollections_async, iss_file_name=item.fileName)
 
     def _delete_item(self, item: SubscriptionLine):
         answer = messagebox.askyesno(title='confirmation',

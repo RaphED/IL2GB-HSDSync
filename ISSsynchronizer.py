@@ -59,7 +59,7 @@ def updateSingleSkinFromRemote(source, remoteSkin: remoteService.RemoteSkin):
 
 def deleteSkinFromLocal(localSkinInfo):
     localService.removeSkin(localSkinInfo)
-    MessageBrocker.emitConsoleMessage(f"<orange>Deleted skin : {localSkinInfo["name"]}</orange>")
+    MessageBrocker.emitConsoleMessage(f"<chocolate>Deleted skin : {localSkinInfo["name"]}</chocolate>")
 
 
 def updateCustomPhotos(toBeUpdatedPhotos):

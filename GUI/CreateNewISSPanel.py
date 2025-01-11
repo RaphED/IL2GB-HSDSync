@@ -1,53 +1,20 @@
-from enum import Enum
 import json
 import threading
 import time
 import tkinter as tk
-from tkinter import ttk, filedialog, messagebox
-import os
-import shutil
-from pythonServices import localService 
+from tkinter import ttk, messagebox
+import os 
 from pythonServices.filesService import getRessourcePath
-from pythonServices.messageBrocker import MessageBrocker
 
-from pythonServices.subscriptionService import getAllSubscribedCollectionByFileName, getSubscribeCollectionFromRawJson
-from pythonServices.remoteService import getSkinsCatalogFromSource, getSpaceUsageOfRemoteSkinCatalog, RemoteSkin
-from ISSScanner import getSkinsFromSourceMatchingWithSubscribedCollections, bytesToString
+from pythonServices.subscriptionService import getSubcriptionNameFromFileName, getSubscribeCollectionFromRawJson, saveSubscriptionFile
+from pythonServices.remoteService import getSkinsCatalogFromSource
+from ISSScanner import getSkinsFromSourceMatchingWithSubscribedCollections
 
 import tkinter as tk
 from tkinter import ttk
 
 class CreateNewISSPanel:
-    def actualise_dynamic_planes(self):      
-        il2Group = self.entry_il2group.get()
-        if len(il2Group)>0 : il2Group="*"+il2Group.strip('*')+"*"
-        
-        skinPack = self.entry_skinPack.get()
-        if len(skinPack)>0 : skinPack="*"+skinPack.strip('*')+"*"
-
-        title = self.entry_title.get()
-        if len(title)>0 : title="*"+title.strip('*')+"*"
-
-        comment = self.entry_comment.get()
-
-        rawjson=element_to_json(comment, il2Group, skinPack, title)
-        collections= getSubscribeCollectionFromRawJson(rawjson,"test")
-        skins=getSkinsFromSourceMatchingWithSubscribedCollections("HSD", collections)
-        
-        # Add these slins to the view below so the user can see the implied skins
-        self.tree_creating_criterias.delete(*self.tree_creating_criterias.get_children())
-
-        for skin in skins:
-            self.tree_creating_criterias.insert("", "end", values=(skin.getValue("name"),skin.infos["IL2Group"],skin.infos["SkinPack"]))
-        self.runningTask=None
-
-    def update_dynamic_list(self, *args):
-        if self.runningTask:
-            self.runningTask.stop()
-            
-        self.runningTask=threading.Thread(target=self.actualise_dynamic_planes()).start()
-
-    def __init__(self, parent: tk.Tk,on_close,variable=None):
+    def __init__(self, parent: tk.Tk,on_close,iss_file_name=None):
         self.runningTask=None
        
 
@@ -161,6 +128,9 @@ class CreateNewISSPanel:
         # Entry field
         self.filename_var=tk.StringVar()
         entry_filename = ttk.Entry(frame_controls, textvariable=self.filename_var)
+        #for the moment, we do not allow chaging name in edit mode
+        if iss_file_name is not None:
+            entry_filename.configure(state="disabled")
         entry_filename.grid(row=0, column=1, padx=5, pady=5)
 
         # Button
@@ -184,10 +154,10 @@ class CreateNewISSPanel:
 
         # Populate sample planes
 
-        self.variable=variable
-        if variable!=None:
-            self.filename_var.set(variable)
-            subscriptionPath = os.path.join(os.getcwd(),"Subscriptions",variable)
+        self.edited_iss_fileName = iss_file_name
+        if iss_file_name!=None:
+            self.filename_var.set(getSubcriptionNameFromFileName(iss_file_name))
+            subscriptionPath = os.path.join(os.getcwd(),"Subscriptions",iss_file_name)
 
             file = open(subscriptionPath, "r")
             rawJsonData = json.load(file)
@@ -203,6 +173,34 @@ class CreateNewISSPanel:
 
             threading.Thread(target=self.actualiseSelectedPlanes()).start()
     
+    def actualise_dynamic_planes(self):      
+        il2Group = self.entry_il2group.get()
+        if len(il2Group)>0 : il2Group="*"+il2Group.strip('*')+"*"
+        
+        skinPack = self.entry_skinPack.get()
+        if len(skinPack)>0 : skinPack="*"+skinPack.strip('*')+"*"
+
+        title = self.entry_title.get()
+        if len(title)>0 : title="*"+title.strip('*')+"*"
+
+        comment = self.entry_comment.get()
+
+        rawjson=element_to_json(comment, il2Group, skinPack, title)
+        collections= getSubscribeCollectionFromRawJson(rawjson,"test")
+        skins=getSkinsFromSourceMatchingWithSubscribedCollections("HSD", collections)
+        
+        # Add these slins to the view below so the user can see the implied skins
+        self.tree_creating_criterias.delete(*self.tree_creating_criterias.get_children())
+
+        for skin in skins:
+            self.tree_creating_criterias.insert("", "end", values=(skin.getValue("name"),skin.infos["IL2Group"],skin.infos["SkinPack"]))
+        self.runningTask=None
+
+    def update_dynamic_list(self, *args):
+        if self.runningTask:
+            self.runningTask.stop()
+            
+        self.runningTask=threading.Thread(target=self.actualise_dynamic_planes()).start()
 
     def add_parameter(self):
         comment = self.entry_comment.get()
@@ -258,29 +256,22 @@ class CreateNewISSPanel:
 
 
     def save_to_iss(self):
-        # Ensure the Subscriptions folder exists
-        subscriptionPath = os.path.join(os.getcwd(), "Subscriptions")
-        if not os.path.exists(subscriptionPath):
-            messagebox.showwarning("Error : folder subscription not found !")
         
-        # Get the filename
-        filename = self.filename_var.get()
-        if not filename.endswith(".iss"):
-            filename += ".iss"
-        file_path = os.path.join(subscriptionPath, filename)
-
-        # Check if file already exists
-        if os.path.exists(file_path) and self.variable!=filename:
-            messagebox.showwarning("File Exists", f"The file '{filename}' already exists in the Subscriptions folder.")
+        #generate the file name if we are in creation mode
+        if self.edited_iss_fileName is None:
+            self.edited_iss_fileName = self.filename_var.get() + ".iss"
+        
+        if self.filename_var.get() == "":
+            messagebox.showerror("Collection name is required", "Please set a collection name before saving your file")
             return
 
         # Convert treeview data to JSON and save to file
         data = treeview_to_json(self.tree_params)  # Ensure this method returns the desired data as a dictionary or list
         try:
-            with open(file_path, "w") as json_file:
-                json_file.write(data)
+            saveSubscriptionFile(self.edited_iss_fileName, json_content=data)
         except Exception as e:
             messagebox.showerror("Error", f"An error occurred while saving the file: {str(e)}")
+            return
                 
         threading.Thread(target=self.close_async()).start()
 

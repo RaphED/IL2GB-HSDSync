@@ -92,11 +92,14 @@ def getAllSubscribedCollection() -> list[SubscribedCollection]:
         
     return returnedCollections
 
+def createSubcriptionFolderIsNotExist():
+    if not os.path.exists(subscriptionPath):
+        os.makedirs(subscriptionPath)
+
 def getAllSubscribedCollectionByFileName(getDisabledFiles = False) -> dict[str, list[SubscribedCollection]]:
     returnedCollections = dict[str, list[SubscribedCollection]]()
     #create subsciption path of not exists
-    if not os.path.exists(subscriptionPath):
-        os.makedirs(subscriptionPath)
+    createSubcriptionFolderIsNotExist()
     
     for root, dirs, files in os.walk(subscriptionPath):
         for file in files:
@@ -106,14 +109,6 @@ def getAllSubscribedCollectionByFileName(getDisabledFiles = False) -> dict[str, 
                 returnedCollections[file] = getSubscribedCollectionFromFile(os.path.join(root,file))
     
     return returnedCollections
-
-def isSubcriptionFolderEmpty():
-    for root, dirs, files in os.walk(subscriptionPath):
-        for file in files:
-            if file.endswith(".iss"): #We only consider files with iss extension
-                return False
-    
-    return True
 
 def getSubcriptionNameFromFileName(fileNameWithExtension):
     if fileNameWithExtension.endswith(".iss"):
@@ -156,3 +151,10 @@ def importSubcriptionFile(file_path):
     destination_path = os.path.join(subscriptionPath, file_name)
     shutil.copy(file_path, destination_path)
     return destination_path
+
+def saveSubscriptionFile(fileNameWithExtension, json_content):
+    createSubcriptionFolderIsNotExist()
+
+    filePath = os.path.join(subscriptionPath, fileNameWithExtension)
+    with open(filePath, "w") as json_file:
+            json_file.write(json_content)
