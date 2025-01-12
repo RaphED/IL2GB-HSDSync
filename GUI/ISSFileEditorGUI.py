@@ -57,7 +57,7 @@ class ISSFileEditorWindow:
         frame_params = ttk.LabelFrame(main_container, text="Collection criterias", padding=10)
         frame_params.grid(row=0, column=1, sticky="nsew", padx=5)
 
-        columns = ("comment", "il2Group", "skinPack", "title")
+        columns = ("il2Group", "skinPack", "title")
         self.tree_params = ttk.Treeview(frame_params, columns=columns, show="headings", height=25)
         self.tree_params.pack(fill="both", expand=True)
 
@@ -156,12 +156,11 @@ class ISSFileEditorWindow:
 
             for rawSubscription in rawJsonData:
                 criteria = rawSubscription.get("criteria", {})
-                comment = rawSubscription.get("comment", "")
                 il2Group = criteria.get("IL2Group", "")
                 skinPack = criteria.get("SkinPack", "")
                 title = criteria.get("Title", "")
 
-                self.tree_params.insert("", "end", values=(comment, il2Group, skinPack, title))
+                self.tree_params.insert("", "end", values=(il2Group, skinPack, title))
 
             threading.Thread(target=self.actualiseSelectedPlanes()).start()
     
@@ -175,9 +174,7 @@ class ISSFileEditorWindow:
         title = self.entry_title.get()
         if len(title)>0 : title="*"+title.strip('*')+"*"
 
-        comment = self.entry_comment.get()
-
-        rawjson=element_to_json(comment, il2Group, skinPack, title)
+        rawjson=element_to_json(il2Group, skinPack, title)
         collections= getSubscribeCollectionFromRawJson(rawjson,"test")
         skins=getSkinsFromSourceMatchingWithSubscribedCollections("HSD", collections)
         
@@ -195,7 +192,6 @@ class ISSFileEditorWindow:
         self.runningTask=threading.Thread(target=self.actualise_dynamic_planes()).start()
 
     def add_criteria(self):
-        comment = self.entry_comment.get()
         
         il2Group = self.entry_il2group.get()
         if len(il2Group)>0 : il2Group="*"+il2Group.strip('*')+"*"
@@ -208,9 +204,9 @@ class ISSFileEditorWindow:
 
         if title or il2Group or skinPack:
             if self.editting_item_id==None:
-                self.tree_params.insert("", "end", values=(comment, il2Group, skinPack, title))
+                self.tree_params.insert("", "end", values=(il2Group, skinPack, title))
             else: 
-                self.tree_params.item(self.editting_item_id, values=(comment, il2Group, skinPack, title))
+                self.tree_params.item(self.editting_item_id, values=(il2Group, skinPack, title))
                 self.editting_item_id=None
         
         threading.Thread(target=self.actualiseSelectedPlanes()).start()
@@ -231,9 +227,9 @@ class ISSFileEditorWindow:
                 item_data = self.tree_params.item(item_id)
                 values = item_data["values"]
                 self.editting_item_id=item_id
-        self.il2group_var.set(values[1])
-        self.skinPack_var.set(values[2])
-        self.title_var.set(values[3])
+        self.il2group_var.set(values[0])
+        self.skinPack_var.set(values[1])
+        self.title_var.set(values[2])
 
 
     
@@ -276,9 +272,9 @@ class ISSFileEditorWindow:
         self.on_close()
 
 
-def element_to_json(comment, il2Group, skinPack, title):   
+def element_to_json(il2Group, skinPack, title):   
     result = []
-    entry = {"source": "HSD","comment": comment, "criteria": {}}
+    entry = {"source": "HSD", "criteria": {}}
     if il2Group:
         entry["criteria"]["IL2Group"] = il2Group
     if skinPack:
@@ -296,8 +292,8 @@ def treeview_to_json(treeview):
 
     result = []
     for row in rows:
-        comment, il2Group, skinPack, title = row
-        entry = {"source": "HSD","comment": comment, "criteria": {}}
+        il2Group, skinPack, title = row
+        entry = {"source": "HSD", "criteria": {}}
         if il2Group:
             entry["criteria"]["IL2Group"] = il2Group
         if skinPack:
