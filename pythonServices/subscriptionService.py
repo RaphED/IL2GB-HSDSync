@@ -33,8 +33,9 @@ class SubscribedCollection:
                 logging.warning(f"Unexpected criteron '{criterion}' for skin source '{remoteSkinInfo.source}' and collection '{self.subcriptionName}'")
                 return False
             #transform * in .*
-            matchingRegExp =self.criteria[criterion].replace("*", ".*") 
-            if not re.match(matchingRegExp,remoteSkinInfo.infos[criterion]):
+            matchingRegExp =self.criteria[criterion].replace("*", ".*")
+            #match is not key sensitive
+            if not re.match(matchingRegExp.lower(),remoteSkinInfo.infos[criterion].lower()):
                 return False
         return True
     
@@ -54,7 +55,7 @@ def getSubscribedCollectionFromFile(subscriptionFilePath):
             if proxyFile is None:   #OPTION 1 : this is a normal collection
                 subscribedCollectionlist.append(
                     SubscribedCollection(
-                        subcriptionName=os.path.basename(subscriptionFilePath).replace(".iss", ""),
+                        subcriptionName=os.path.basename(subscriptionFilePath).replace(".iss", "").replace(".disabled", ""),
                         source=rawSubscription.get("source"),
                         criteria=rawSubscription["criteria"]
                     )

@@ -53,7 +53,7 @@ def getSourceParam(source, param, censored):
 class RemoteSkin:
     def __init__(self, source) -> None:
         self.source = source
-        self.infos = dict()
+        self.infos = dict[str,str]()
 
     def addRawData(self, key, value) -> None:
         self.infos[key] = value
