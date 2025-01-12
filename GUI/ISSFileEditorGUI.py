@@ -53,32 +53,27 @@ class ISSFileEditorWindow:
         self.tree_selected_planes.column("IL2Group", width=150, minwidth=100)  # Colonne IL2Group moyenne
         self.tree_selected_planes.column("SkinPack", width=200, minwidth=150)  # Colonne SkinPack moyenne
 
-        # 2. Parameters Panel (Middle)
-        frame_params = ttk.LabelFrame(main_container, text="Collection criterias", padding=10)
-        frame_params.grid(row=0, column=1, sticky="nsew", padx=5)
+        # 2. Criteria Panel (Middle)
+        frame_criteria = ttk.LabelFrame(main_container, text="Collection criterias", padding=10)
+        frame_criteria.grid(row=0, column=1, sticky="nsew", padx=5)
 
         columns = ("il2Group", "skinPack", "title")
-        self.tree_params = ttk.Treeview(frame_params, columns=columns, show="headings", height=25)
-        self.tree_params.pack(fill="both", expand=True)
-
-        # Add vertical scrollbar
-        scrollbar = ttk.Scrollbar(frame_params, orient="vertical", command=self.tree_params.yview)
-        scrollbar.pack(side="right", fill="y")
-        self.tree_params.configure(yscrollcommand=scrollbar.set)
+        self.tree_criteria = ttk.Treeview(frame_criteria, columns=columns, show="headings", height=25)
+        self.tree_criteria.pack(fill="both", expand=True)
 
         # Configure columns
         for col in columns:
-            self.tree_params.column(col, width=100, anchor="center")
-            self.tree_params.heading(col, text=col.capitalize(), anchor="center")
+            self.tree_criteria.column(col, width=100, anchor="center")
+            self.tree_criteria.heading(col, text=col.capitalize(), anchor="center")
 
-        button_frame = ttk.Frame(frame_params)
-        button_frame.pack(fill="x", pady=5)
+        frame_criteria_bottom = ttk.Frame(frame_criteria)
+        frame_criteria_bottom.pack(fill="x", pady=5)
         
-        button_delete_criteria = ttk.Button(button_frame, text="Delete", command=self.delete_criteria)
-        button_delete_criteria.pack(side="right", padx=5)
+        button_delete_criteria = ttk.Button(frame_criteria_bottom, text="Delete", command=self.delete_criteria)
+        button_delete_criteria.pack(side=tk.RIGHT, padx=5)
 
-        button_edit_criteria = ttk.Button(button_frame, text="Edit", command=self.edit_criteria)
-        button_edit_criteria.pack(side="right", padx=5)
+        button_edit_criteria = ttk.Button(frame_criteria_bottom, text="Edit", command=self.edit_criteria)
+        button_edit_criteria.pack(side=tk.RIGHT, padx=5)
 
         # 3. Explorer Panel (Right)
         frame_explorer = ttk.LabelFrame(main_container, text="HSD skins explorer", padding=10)
@@ -162,7 +157,7 @@ class ISSFileEditorWindow:
                 skinPack = criteria.get("SkinPack", "")
                 title = criteria.get("Title", "")
 
-                self.tree_params.insert("", "end", values=(il2Group, skinPack, title))
+                self.tree_criteria.insert("", "end", values=(il2Group, skinPack, title))
 
             threading.Thread(target=self.actualiseSelectedPlanes()).start()
     
@@ -220,27 +215,27 @@ class ISSFileEditorWindow:
 
         if title or il2Group or skinPack:
             if self.editting_item_id==None:
-                self.tree_params.insert("", "end", values=(il2Group, skinPack, title))
+                self.tree_criteria.insert("", "end", values=(il2Group, skinPack, title))
             else: 
-                self.tree_params.item(self.editting_item_id, values=(il2Group, skinPack, title))
+                self.tree_criteria.item(self.editting_item_id, values=(il2Group, skinPack, title))
                 self.editting_item_id=None
         
         threading.Thread(target=self.actualiseSelectedPlanes()).start()
 
 
     def delete_criteria(self):
-        selected_item = self.tree_params.selection()
+        selected_item = self.tree_criteria.selection()
         for item in selected_item:
-            self.tree_params.delete(item)
+            self.tree_criteria.delete(item)
         
         threading.Thread(target=self.actualiseSelectedPlanes()).start()
 
     
     def edit_criteria(self):
-        selected_items = self.tree_params.selection()
+        selected_items = self.tree_criteria.selection()
         if len(selected_items)==1:
             for item_id in selected_items:
-                item_data = self.tree_params.item(item_id)
+                item_data = self.tree_criteria.item(item_id)
                 values = item_data["values"]
                 self.editting_item_id=item_id
         self.il2group_var.set(values[0])
@@ -250,7 +245,7 @@ class ISSFileEditorWindow:
 
     
     def actualiseSelectedPlanes(self):
-        rawjson=treeview_to_json(self.tree_params)
+        rawjson=treeview_to_json(self.tree_criteria)
         collections= getSubscribeCollectionFromRawJson(rawjson,"test")
         skins=getSkinsFromSourceMatchingWithSubscribedCollections("HSD", collections)
         
@@ -272,7 +267,7 @@ class ISSFileEditorWindow:
             return
 
         # Convert treeview data to JSON and save to file
-        data = treeview_to_json(self.tree_params)  # Ensure this method returns the desired data as a dictionary or list
+        data = treeview_to_json(self.tree_criteria)  # Ensure this method returns the desired data as a dictionary or list
         try:
             saveSubscriptionFile(self.edited_iss_fileName, json_content=data)
         except Exception as e:
