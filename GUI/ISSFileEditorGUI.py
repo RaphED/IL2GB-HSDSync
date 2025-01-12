@@ -1,6 +1,5 @@
 import json
 import threading
-import time
 import tkinter as tk
 from tkinter import ttk, messagebox
 import os 
@@ -15,13 +14,14 @@ import tkinter as tk
 from tkinter import ttk
 
 class ISSFileEditorWindow:
-    def __init__(self, parent: tk.Tk, on_close, iss_file_name=None):
+    def __init__(self, root: tk.Tk, on_close, iss_file_name=None):
+        self.root = root
         self.runningTask = None
         self.editting_item_id = None
         self.on_close = on_close
 
         # Create a Toplevel window
-        self.window = tk.Toplevel(parent)
+        self.window = tk.Toplevel(self.root)
         self.window.title("ISS file editor")
         self.window.iconbitmap(getRessourcePath("iss.ico"))
         self.window.geometry("1500x800")
@@ -30,6 +30,19 @@ class ISSFileEditorWindow:
         style.configure("Treeview", font=("Helvetica", 8))
         style.configure("Bundle.TFrame", background="#FFFFE0")
         style.configure("Bundle.TLabel", background="#FFFFE0")
+
+        # Bottom controls (filename and save)
+        frame_controls = ttk.Frame(self.window)
+        frame_controls.pack(pady=10, fill="x", padx=10)
+
+        ttk.Label(frame_controls, text="File name:").pack(side=tk.LEFT)
+        self.filename_var = tk.StringVar()
+        entry_filename = ttk.Entry(frame_controls, textvariable=self.filename_var)
+        if iss_file_name is not None:
+            entry_filename.configure(state="disabled")
+        entry_filename.pack(side=tk.LEFT, padx=5, fill="x")
+        button_save = ttk.Button(frame_controls, text="Save iss file", style="Accent.TButton", command=self.save_to_iss)
+        button_save.pack(side=tk.LEFT, padx=5)
 
         # Create main horizontal container
         main_container = ttk.Frame(self.window)
@@ -40,51 +53,9 @@ class ISSFileEditorWindow:
         main_container.grid_columnconfigure(1, weight=1)
         main_container.grid_columnconfigure(2, weight=1)
 
-        # 1. Plane Selection Panel (Left)
-        frame_planes = ttk.LabelFrame(main_container, text="Skins in the collection", padding=10)
-        frame_planes.grid(row=0, column=0, sticky="nsew", padx=5)
-
-        self.tree_selected_planes = ttk.Treeview(frame_planes, columns=("plane","IL2Group","SkinPack"), show="headings", height=30)
-        self.tree_selected_planes.pack(fill="both", expand=True, padx=5, pady=5)
-
-        self.tree_selected_planes.heading("plane", text="Title", anchor="w")
-        self.tree_selected_planes.heading("IL2Group", text="IL2Group", anchor="w")
-        self.tree_selected_planes.heading("SkinPack", text="SkinPack", anchor="w")
-
-        #set colomn widths
-        self.tree_selected_planes.column("plane", width=300, minwidth=200)  # Colonne Title plus large
-        self.tree_selected_planes.column("IL2Group", width=150, minwidth=100)  # Colonne IL2Group moyenne
-        self.tree_selected_planes.column("SkinPack", width=200, minwidth=150)  # Colonne SkinPack moyenne
-
-        # 2. Criteria Panel (Middle)
-        frame_criteria = ttk.LabelFrame(main_container, text="Collection Bundles", padding=10)
-        frame_criteria.grid(row=0, column=1, sticky="nsew", padx=5)
-
-        self.criteria_list_frame = ttk.Frame(frame_criteria)
-        self.criteria_list_frame.pack(fill="both", expand=True)
-
-        canvas = tk.Canvas(self.criteria_list_frame)
-        scrollbar = ttk.Scrollbar(self.criteria_list_frame, orient="vertical", command=canvas.yview)
-        scrollable_frame = ttk.Frame(canvas)
-
-        scrollable_frame.bind(
-            "<Configure>",
-            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
-        )
-
-        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
-        canvas.configure(yscrollcommand=scrollbar.set)
-
-        # Packing des widgets
-        scrollbar.pack(side="right", fill="y")
-        canvas.pack(side="left", fill="both", expand=True)
-
-        self.scrollable_frame = scrollable_frame
-        self.criteria_count = 0
-
-        # 3. Explorer Panel (Right)
+        # 1. Catalog Explorer Panel (left)
         frame_explorer = ttk.LabelFrame(main_container, text="HSD skins explorer", padding=10)
-        frame_explorer.grid(row=0, column=2, sticky="nsew", padx=5)
+        frame_explorer.grid(row=0, column=0, sticky="nsew", padx=5)
 
         # Queries frame
         frame_queries = ttk.Frame(frame_explorer)
@@ -133,21 +104,50 @@ class ISSFileEditorWindow:
         frame_explorer_lower_panel = ttk.Frame(frame_explorer)
         frame_explorer_lower_panel.pack(fill="x", pady=10)
 
-        button_add_criteria = ttk.Button(frame_explorer_lower_panel, text="<- Add criteria to collection", style="Accent.TButton", command=self.add_criteria)
-        button_add_criteria.pack()
+        button_add_bundle = ttk.Button(frame_explorer_lower_panel, text="Add criteria to collection ->", style="Accent.TButton", command=self.add_bundle)
+        button_add_bundle.pack()
 
-        # Bottom controls (filename and save)
-        frame_controls = ttk.Frame(self.window)
-        frame_controls.pack(pady=10, fill="x", padx=10)
+        # 2. Criteria Panel (Middle)
+        frame_criteria = ttk.LabelFrame(main_container, text="Collection Bundles", padding=10)
+        frame_criteria.grid(row=0, column=1, sticky="nsew", padx=5)
 
-        button_save = ttk.Button(frame_controls, text="Save iss file", style="Accent.TButton", command=self.save_to_iss)
-        button_save.pack(side=tk.RIGHT, padx=5)
-        self.filename_var = tk.StringVar()
-        entry_filename = ttk.Entry(frame_controls, textvariable=self.filename_var)
-        if iss_file_name is not None:
-            entry_filename.configure(state="disabled")
-        entry_filename.pack(side=tk.RIGHT, padx=5, fill="x")
-        ttk.Label(frame_controls, text="File name:").pack(side=tk.RIGHT)
+        self.criteria_list_frame = ttk.Frame(frame_criteria)
+        self.criteria_list_frame.pack(fill="both", expand=True)
+
+        canvas = tk.Canvas(self.criteria_list_frame)
+        scrollbar = ttk.Scrollbar(self.criteria_list_frame, orient="vertical", command=canvas.yview)
+        scrollable_frame = ttk.Frame(canvas)
+
+        scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
+
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+
+        # Packing des widgets
+        scrollbar.pack(side="right", fill="y")
+        canvas.pack(side="left", fill="both", expand=True)
+
+        self.scrollable_frame = scrollable_frame
+        self.criteria_count = 0
+
+        # 3. Collection content
+        frame_planes = ttk.LabelFrame(main_container, text="Skins in the collection", padding=10)
+        frame_planes.grid(row=0, column=2, sticky="nsew", padx=5)
+
+        self.tree_selected_planes = ttk.Treeview(frame_planes, columns=("plane","IL2Group","SkinPack"), show="headings", height=30)
+        self.tree_selected_planes.pack(fill="both", expand=True, padx=5, pady=5)
+
+        self.tree_selected_planes.heading("plane", text="Title", anchor="w")
+        self.tree_selected_planes.heading("IL2Group", text="IL2Group", anchor="w")
+        self.tree_selected_planes.heading("SkinPack", text="SkinPack", anchor="w")
+
+        #set colomn widths
+        self.tree_selected_planes.column("plane", width=300, minwidth=200)  # Colonne Title plus large
+        self.tree_selected_planes.column("IL2Group", width=150, minwidth=100)  # Colonne IL2Group moyenne
+        self.tree_selected_planes.column("SkinPack", width=200, minwidth=150)  # Colonne SkinPack moyenne       
 
         # Load existing file if editing
         self.edited_iss_fileName = iss_file_name
@@ -164,7 +164,7 @@ class ISSFileEditorWindow:
                 skinPack = criteria.get("SkinPack", "")
                 title = criteria.get("Title", "")
 
-                self.add_criteria_to_list(il2Group=il2Group, skinPack=skinPack, title=title)
+                self.add_bundle_to_list(il2Group=il2Group, skinPack=skinPack, title=title)
 
             threading.Thread(target=self.actualiseSelectedPlanes()).start()
     
@@ -209,7 +209,7 @@ class ISSFileEditorWindow:
         self.il2group_var.set(values[1])  # IL2Group
         self.skinPack_var.set(values[2])  # SkinPack
 
-    def add_criteria_to_list(self, il2Group="", skinPack="", title=""):
+    def add_bundle_to_list(self, il2Group="", skinPack="", title=""):
         criteria_frame = ttk.Frame(self.scrollable_frame, style="Bundle.TFrame")
         criteria_frame.pack(fill="x", padx=5, pady=5)
 
@@ -247,7 +247,7 @@ class ISSFileEditorWindow:
                 criteria.append(child.data)
         return criteria
 
-    def add_criteria(self):
+    def add_bundle(self):
         il2Group = self.entry_il2group.get()
         if len(il2Group) > 0: il2Group = "*" + il2Group.strip('*') + "*"
         
@@ -259,12 +259,12 @@ class ISSFileEditorWindow:
         
         if title or il2Group or skinPack:
             if self.editting_item_id is None:
-                self.add_criteria_to_list(il2Group, skinPack, title)
+                self.add_bundle_to_list(il2Group, skinPack, title)
             else:
                 for child in self.scrollable_frame.winfo_children():
                     if hasattr(child, 'id') and child.id == self.editting_item_id:
                         child.destroy()
-                        self.add_criteria_to_list(il2Group, skinPack, title)
+                        self.add_bundle_to_list(il2Group, skinPack, title)
                 self.editting_item_id = None
         
         threading.Thread(target=self.actualiseSelectedPlanes).start()
@@ -311,12 +311,10 @@ class ISSFileEditorWindow:
         except Exception as e:
             messagebox.showerror("Error", f"An error occurred while saving the file: {str(e)}")
             return
-                
-        threading.Thread(target=self.close_async()).start()
 
+        self.root.after(500, self.close_window)
 
-    def close_async(self):
-        time.sleep(0.5)
+    def close_window(self):
         self.window.destroy()
         self.on_close()
 
