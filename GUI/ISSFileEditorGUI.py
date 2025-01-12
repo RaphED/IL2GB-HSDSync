@@ -13,7 +13,7 @@ from ISSScanner import getSkinsFromSourceMatchingWithSubscribedCollections
 import tkinter as tk
 from tkinter import ttk
 
-class CreateNewISSPanel:
+class ISSFileEditorWindow:
     def __init__(self, parent: tk.Tk, on_close, iss_file_name=None):
         self.runningTask = None
         self.editting_item_id = None
@@ -21,7 +21,7 @@ class CreateNewISSPanel:
 
         # Create a Toplevel window
         self.window = tk.Toplevel(parent)
-        self.window.title("ISS file detail")
+        self.window.title("ISS file editor")
         self.window.iconbitmap(getRessourcePath("iss.ico"))
         self.window.geometry("1500x800")
 
@@ -38,7 +38,7 @@ class CreateNewISSPanel:
         main_container.grid_columnconfigure(2, weight=1)
 
         # 1. Plane Selection Panel (Left)
-        frame_planes = ttk.LabelFrame(main_container, text="Resulting plane list", padding=10)
+        frame_planes = ttk.LabelFrame(main_container, text="Skins in the collection", padding=10)
         frame_planes.grid(row=0, column=0, sticky="nsew", padx=5)
 
         self.tree_selected_planes = ttk.Treeview(frame_planes, columns=("plane","IL2Group","SkinPack"), show="headings", height=30)
@@ -54,7 +54,7 @@ class CreateNewISSPanel:
         self.tree_selected_planes.column("SkinPack", width=200, minwidth=150)  # Colonne SkinPack moyenne
 
         # 2. Parameters Panel (Middle)
-        frame_params = ttk.LabelFrame(main_container, text="Existing criterias", padding=10)
+        frame_params = ttk.LabelFrame(main_container, text="Collection criterias", padding=10)
         frame_params.grid(row=0, column=1, sticky="nsew", padx=5)
 
         columns = ("comment", "il2Group", "skinPack", "title")
@@ -74,18 +74,18 @@ class CreateNewISSPanel:
         button_frame = ttk.Frame(frame_params)
         button_frame.pack(fill="x", pady=5)
         
-        button_delete_param = ttk.Button(button_frame, text="Delete", command=self.delete_parameter)
-        button_delete_param.pack(side="right", padx=5)
+        button_delete_criteria = ttk.Button(button_frame, text="Delete", command=self.delete_criteria)
+        button_delete_criteria.pack(side="right", padx=5)
 
-        button_edit_param = ttk.Button(button_frame, text="Edit", command=self.edit_parameter)
-        button_edit_param.pack(side="right", padx=5)
+        button_edit_criteria = ttk.Button(button_frame, text="Edit", command=self.edit_criteria)
+        button_edit_criteria.pack(side="right", padx=5)
 
-        # 3. Inputs Panel (Right)
-        frame_inputs = ttk.LabelFrame(main_container, text="Filters/ Criterias :", padding=10)
-        frame_inputs.grid(row=0, column=2, sticky="nsew", padx=5)
+        # 3. Explorer Panel (Right)
+        frame_explorer = ttk.LabelFrame(main_container, text="HSD skins explorer", padding=10)
+        frame_explorer.grid(row=0, column=2, sticky="nsew", padx=5)
 
         # Queries frame
-        frame_queries = ttk.Frame(frame_inputs)
+        frame_queries = ttk.Frame(frame_explorer)
         frame_queries.pack(fill="x", pady=5)
 
         # Title
@@ -111,7 +111,7 @@ class CreateNewISSPanel:
         self.il2group_var.trace_add("write", self.update_dynamic_list)
 
         # Dynamic criteria tree
-        self.tree_creating_criterias = ttk.Treeview(frame_inputs, columns=("plane","IL2Group","SkinPack"), show="headings", height=15)
+        self.tree_creating_criterias = ttk.Treeview(frame_explorer, columns=("plane","IL2Group","SkinPack"), show="headings", height=15)
         self.tree_creating_criterias.pack(fill="both", expand=True, pady=10)
 
         self.tree_creating_criterias.heading("plane", text="Title", anchor="w")
@@ -125,23 +125,18 @@ class CreateNewISSPanel:
         for plane in getSkinsCatalogFromSource("HSD"):
             self.tree_creating_criterias.insert("", "end", values=(plane.infos["Title"],plane.infos["IL2Group"],plane.infos["SkinPack"]))
 
-        # Comment and Save buttons
-        frame_comment = ttk.Frame(frame_inputs)
-        frame_comment.pack(fill="x", pady=10)
+        # Send to criteria panel
+        frame_explorer_lower_panel = ttk.Frame(frame_explorer)
+        frame_explorer_lower_panel.pack(fill="x", pady=10)
 
-        self.comment_var = tk.StringVar()
-        ttk.Label(frame_comment, text="Comments :").pack(side="left")
-        self.entry_comment = ttk.Entry(frame_comment, textvariable=self.comment_var)
-        self.entry_comment.pack(side="left", fill="x", expand=True, padx=5)
-
-        button_add_param = ttk.Button(frame_comment, text="Save criterias", style="Accent.TButton", command=self.add_parameter)
-        button_add_param.pack(side="right")
+        button_add_criteria = ttk.Button(frame_explorer_lower_panel, text="<- Add criteria to collection", style="Accent.TButton", command=self.add_criteria)
+        button_add_criteria.pack()
 
         # Bottom controls (filename and save)
         frame_controls = ttk.Frame(self.window)
         frame_controls.pack(pady=10, fill="x", padx=10)
 
-        button_save = ttk.Button(frame_controls, text="Save to .ISS", style="Accent.TButton", command=self.save_to_iss)
+        button_save = ttk.Button(frame_controls, text="Save iss file", style="Accent.TButton", command=self.save_to_iss)
         button_save.pack(side=tk.RIGHT, padx=5)
         self.filename_var = tk.StringVar()
         entry_filename = ttk.Entry(frame_controls, textvariable=self.filename_var)
@@ -199,7 +194,7 @@ class CreateNewISSPanel:
             
         self.runningTask=threading.Thread(target=self.actualise_dynamic_planes()).start()
 
-    def add_parameter(self):
+    def add_criteria(self):
         comment = self.entry_comment.get()
         
         il2Group = self.entry_il2group.get()
@@ -221,7 +216,7 @@ class CreateNewISSPanel:
         threading.Thread(target=self.actualiseSelectedPlanes()).start()
 
 
-    def delete_parameter(self):
+    def delete_criteria(self):
         selected_item = self.tree_params.selection()
         for item in selected_item:
             self.tree_params.delete(item)
@@ -229,7 +224,7 @@ class CreateNewISSPanel:
         threading.Thread(target=self.actualiseSelectedPlanes()).start()
 
     
-    def edit_parameter(self):
+    def edit_criteria(self):
         selected_items = self.tree_params.selection()
         if len(selected_items)==1:
             for item_id in selected_items:
@@ -239,7 +234,6 @@ class CreateNewISSPanel:
         self.il2group_var.set(values[1])
         self.skinPack_var.set(values[2])
         self.title_var.set(values[3])
-        self.comment_var.set(values[0])
 
 
     

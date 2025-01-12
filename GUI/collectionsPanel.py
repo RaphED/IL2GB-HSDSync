@@ -5,7 +5,7 @@ import threading
 from tkinter import messagebox
 from tkinter import filedialog
 
-from GUI.CreateNewISSPanel import CreateNewISSPanel
+from GUI.ISSFileEditorGUI import ISSFileEditorWindow
 from ISSScanner import bytesToString, getSkinsFromSourceMatchingWithSubscribedCollections
 from pythonServices.filesService import getIconPath
 from pythonServices.remoteService import getSpaceUsageOfRemoteSkinCatalog
@@ -223,7 +223,7 @@ class CollectionsPanel():
         self.emit_collections_change()
 
     def _edit_item(self, item: SubscriptionLine):
-            CreateNewISSPanel(self.root, on_close=self.loadCollections_async, iss_file_name=item.fileName)
+            ISSFileEditorWindow(self.root, on_close=self.loadCollections_async, iss_file_name=item.fileName)
 
     def _delete_item(self, item: SubscriptionLine):
         answer = messagebox.askyesno(title='confirmation',
@@ -238,7 +238,7 @@ class CollectionsPanel():
 
     def create_new_ISS(self):
         #TODO : to be really implemented and tested when creation panel done
-        CreateNewISSPanel(self.root, on_close=self.loadCollections_async)
+        ISSFileEditorWindow(self.root, on_close=self.loadCollections_async)
 
     #MOUSE EVENTS (for the scroll)
     def _bind_mousewheel(self, event):
