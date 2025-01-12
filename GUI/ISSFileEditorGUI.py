@@ -111,19 +111,21 @@ class ISSFileEditorWindow:
         self.il2group_var.trace_add("write", self.update_dynamic_list)
 
         # Dynamic criteria tree
-        self.tree_creating_criterias = ttk.Treeview(frame_explorer, columns=("plane","IL2Group","SkinPack"), show="headings", height=15)
-        self.tree_creating_criterias.pack(fill="both", expand=True, pady=10)
+        self.tree_skin_explorer = ttk.Treeview(frame_explorer, columns=("plane","IL2Group","SkinPack"), show="headings", height=15)
+        self.tree_skin_explorer.pack(fill="both", expand=True, pady=10)
 
-        self.tree_creating_criterias.heading("plane", text="Title", anchor="w")
-        self.tree_creating_criterias.heading("IL2Group", text="IL2Group", anchor="w")
-        self.tree_creating_criterias.heading("SkinPack", text="SkinPack", anchor="w")
+        self.tree_skin_explorer.heading("plane", text="Title", anchor="w")
+        self.tree_skin_explorer.heading("IL2Group", text="IL2Group", anchor="w")
+        self.tree_skin_explorer.heading("SkinPack", text="SkinPack", anchor="w")
 
-        self.tree_creating_criterias.column("plane", width=200, minwidth=200)  # Colonne Title plus large
-        self.tree_creating_criterias.column("IL2Group", width=150, minwidth=150)  # Colonne IL2Group moyenne
-        self.tree_creating_criterias.column("SkinPack", width=200, minwidth=150)  # Colonne SkinPack moyenne
+        self.tree_skin_explorer.column("plane", width=200, minwidth=200)  # Colonne Title plus large
+        self.tree_skin_explorer.column("IL2Group", width=150, minwidth=150)  # Colonne IL2Group moyenne
+        self.tree_skin_explorer.column("SkinPack", width=200, minwidth=150)  # Colonne SkinPack moyenne
+
+        self.tree_skin_explorer.bind('<Double-1>', self.on_double_click_tree_skins_explorer)
 
         for plane in getSkinsCatalogFromSource("HSD"):
-            self.tree_creating_criterias.insert("", "end", values=(plane.infos["Title"],plane.infos["IL2Group"],plane.infos["SkinPack"]))
+            self.tree_skin_explorer.insert("", "end", values=(plane.infos["Title"],plane.infos["IL2Group"],plane.infos["SkinPack"]))
 
         # Send to criteria panel
         frame_explorer_lower_panel = ttk.Frame(frame_explorer)
@@ -179,10 +181,10 @@ class ISSFileEditorWindow:
         skins=getSkinsFromSourceMatchingWithSubscribedCollections("HSD", collections)
         
         # Add these slins to the view below so the user can see the implied skins
-        self.tree_creating_criterias.delete(*self.tree_creating_criterias.get_children())
+        self.tree_skin_explorer.delete(*self.tree_skin_explorer.get_children())
 
         for skin in skins:
-            self.tree_creating_criterias.insert("", "end", values=(skin.getValue("name"),skin.infos["IL2Group"],skin.infos["SkinPack"]))
+            self.tree_skin_explorer.insert("", "end", values=(skin.getValue("name"),skin.infos["IL2Group"],skin.infos["SkinPack"]))
         self.runningTask=None
 
     def update_dynamic_list(self, *args):
@@ -190,6 +192,20 @@ class ISSFileEditorWindow:
             self.runningTask.stop()
             
         self.runningTask=threading.Thread(target=self.actualise_dynamic_planes()).start()
+
+    def on_double_click_tree_skins_explorer(self, event):
+        # Get the selected item
+        selected_item = self.tree_skin_explorer.selection()
+        if not selected_item:
+            return
+        
+        # Get values from the selected row
+        values = self.tree_skin_explorer.item(selected_item[0])["values"]
+        
+        # Update the entry fields
+        self.title_var.set(values[0])  # Title
+        self.il2group_var.set(values[1])  # IL2Group
+        self.skinPack_var.set(values[2])  # SkinPack
 
     def add_criteria(self):
         
