@@ -4,11 +4,12 @@ import time
 import tkinter as tk
 from tkinter import ttk, messagebox
 import os 
-from pythonServices.filesService import getRessourcePath
+from pythonServices.filesService import getIconPath, getRessourcePath
 
 from pythonServices.subscriptionService import getSubcriptionNameFromFileName, getSubscribeCollectionFromRawJson, saveSubscriptionFile
 from pythonServices.remoteService import getSkinsCatalogFromSource
 from ISSScanner import getSkinsFromSourceMatchingWithSubscribedCollections
+from GUI.Components.clickableIcon import CliquableIcon
 
 import tkinter as tk
 from tkinter import ttk
@@ -27,6 +28,8 @@ class ISSFileEditorWindow:
 
         style = ttk.Style()
         style.configure("Treeview", font=("Helvetica", 8))
+        style.configure("Bundle.TFrame", background="#FFFFE0")
+        style.configure("Bundle.TLabel", background="#FFFFE0")
 
         # Create main horizontal container
         main_container = ttk.Frame(self.window)
@@ -54,26 +57,30 @@ class ISSFileEditorWindow:
         self.tree_selected_planes.column("SkinPack", width=200, minwidth=150)  # Colonne SkinPack moyenne
 
         # 2. Criteria Panel (Middle)
-        frame_criteria = ttk.LabelFrame(main_container, text="Collection criterias", padding=10)
+        frame_criteria = ttk.LabelFrame(main_container, text="Collection Bundles", padding=10)
         frame_criteria.grid(row=0, column=1, sticky="nsew", padx=5)
 
-        columns = ("il2Group", "skinPack", "title")
-        self.tree_criteria = ttk.Treeview(frame_criteria, columns=columns, show="headings", height=25)
-        self.tree_criteria.pack(fill="both", expand=True)
+        self.criteria_list_frame = ttk.Frame(frame_criteria)
+        self.criteria_list_frame.pack(fill="both", expand=True)
 
-        # Configure columns
-        for col in columns:
-            self.tree_criteria.column(col, width=100, anchor="center")
-            self.tree_criteria.heading(col, text=col.capitalize(), anchor="center")
+        canvas = tk.Canvas(self.criteria_list_frame)
+        scrollbar = ttk.Scrollbar(self.criteria_list_frame, orient="vertical", command=canvas.yview)
+        scrollable_frame = ttk.Frame(canvas)
 
-        frame_criteria_bottom = ttk.Frame(frame_criteria)
-        frame_criteria_bottom.pack(fill="x", pady=5)
-        
-        button_delete_criteria = ttk.Button(frame_criteria_bottom, text="Delete", command=self.delete_criteria)
-        button_delete_criteria.pack(side=tk.RIGHT, padx=5)
+        scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
 
-        button_edit_criteria = ttk.Button(frame_criteria_bottom, text="Edit", command=self.edit_criteria)
-        button_edit_criteria.pack(side=tk.RIGHT, padx=5)
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+
+        # Packing des widgets
+        scrollbar.pack(side="right", fill="y")
+        canvas.pack(side="left", fill="both", expand=True)
+
+        self.scrollable_frame = scrollable_frame
+        self.criteria_count = 0
 
         # 3. Explorer Panel (Right)
         frame_explorer = ttk.LabelFrame(main_container, text="HSD skins explorer", padding=10)
@@ -157,7 +164,7 @@ class ISSFileEditorWindow:
                 skinPack = criteria.get("SkinPack", "")
                 title = criteria.get("Title", "")
 
-                self.tree_criteria.insert("", "end", values=(il2Group, skinPack, title))
+                self.add_criteria_to_list(il2Group=il2Group, skinPack=skinPack, title=title)
 
             threading.Thread(target=self.actualiseSelectedPlanes()).start()
     
@@ -202,58 +209,89 @@ class ISSFileEditorWindow:
         self.il2group_var.set(values[1])  # IL2Group
         self.skinPack_var.set(values[2])  # SkinPack
 
-    def add_criteria(self):
+    def add_criteria_to_list(self, il2Group="", skinPack="", title=""):
+        criteria_frame = ttk.Frame(self.scrollable_frame, style="Bundle.TFrame")
+        criteria_frame.pack(fill="x", padx=5, pady=5)
+
+        criteria_frame.data = (il2Group, skinPack, title)
+        criteria_frame.id = self.criteria_count
+        self.criteria_count += 1
         
+        label_text = ""
+        if il2Group: label_text += f"IL2Group: {il2Group}\n"
+        if skinPack: label_text += f"SkinPack: {skinPack}\n"
+        if title: label_text += f"Title: {title}"
+        
+        label = ttk.Label(criteria_frame, text=label_text, style="Bundle.TLabel")
+        label.pack(side="left", fill="x", expand=True)
+
+        trashButton = CliquableIcon(
+            root=criteria_frame, 
+            icon_path=getIconPath("trash-can.png"),
+            onClick=lambda o=criteria_frame: self.delete_bundle(o)
+        )
+        trashButton.pack(side=tk.BOTTOM)
+        trashButton = CliquableIcon(
+            root=criteria_frame, 
+            icon_path=getIconPath("edit.png"),
+            onClick=lambda o=criteria_frame: self.edit_bundle(o)
+        )
+        trashButton.pack(side=tk.BOTTOM)
+        
+        return criteria_frame
+
+    def get_all_criteria(self):
+        criteria = []
+        for child in self.scrollable_frame.winfo_children():
+            if hasattr(child, 'data'):
+                criteria.append(child.data)
+        return criteria
+
+    def add_criteria(self):
         il2Group = self.entry_il2group.get()
-        if len(il2Group)>0 : il2Group="*"+il2Group.strip('*')+"*"
+        if len(il2Group) > 0: il2Group = "*" + il2Group.strip('*') + "*"
         
         skinPack = self.entry_skinPack.get()
-        if len(skinPack)>0 : skinPack="*"+skinPack.strip('*')+"*"
-
+        if len(skinPack) > 0: skinPack = "*" + skinPack.strip('*') + "*"
+        
         title = self.entry_title.get()
-        if len(title)>0 : title="*"+title.strip('*')+"*"
-
+        if len(title) > 0: title = "*" + title.strip('*') + "*"
+        
         if title or il2Group or skinPack:
-            if self.editting_item_id==None:
-                self.tree_criteria.insert("", "end", values=(il2Group, skinPack, title))
-            else: 
-                self.tree_criteria.item(self.editting_item_id, values=(il2Group, skinPack, title))
-                self.editting_item_id=None
+            if self.editting_item_id is None:
+                self.add_criteria_to_list(il2Group, skinPack, title)
+            else:
+                for child in self.scrollable_frame.winfo_children():
+                    if hasattr(child, 'id') and child.id == self.editting_item_id:
+                        child.destroy()
+                        self.add_criteria_to_list(il2Group, skinPack, title)
+                self.editting_item_id = None
         
-        threading.Thread(target=self.actualiseSelectedPlanes()).start()
+        threading.Thread(target=self.actualiseSelectedPlanes).start()
 
-
-    def delete_criteria(self):
-        selected_item = self.tree_criteria.selection()
-        for item in selected_item:
-            self.tree_criteria.delete(item)
-        
-        threading.Thread(target=self.actualiseSelectedPlanes()).start()
-
+    def delete_bundle(self, bundle):
+        for child in self.scrollable_frame.winfo_children():
+            if hasattr(child, 'id') and child.id == bundle.id:
+                child.destroy()
+        self.criteria_count -= 1
+        threading.Thread(target=self.actualiseSelectedPlanes).start()
     
-    def edit_criteria(self):
-        selected_items = self.tree_criteria.selection()
-        if len(selected_items)==1:
-            for item_id in selected_items:
-                item_data = self.tree_criteria.item(item_id)
-                values = item_data["values"]
-                self.editting_item_id=item_id
-        self.il2group_var.set(values[0])
-        self.skinPack_var.set(values[1])
-        self.title_var.set(values[2])
-
-
+    def edit_bundle(self, bundle):
+        self.il2group_var.set(bundle.data[0])
+        self.skinPack_var.set(bundle.data[1])
+        self.title_var.set(bundle.data[2])
+        self.editting_item_id = bundle.id
     
     def actualiseSelectedPlanes(self):
-        rawjson=treeview_to_json(self.tree_criteria)
-        collections= getSubscribeCollectionFromRawJson(rawjson,"test")
-        skins=getSkinsFromSourceMatchingWithSubscribedCollections("HSD", collections)
+        criteria_list = self.get_all_criteria()
+        rawjson = criteria_to_json(criteria_list)
+        collections = getSubscribeCollectionFromRawJson(rawjson, "test")
+        skins = getSkinsFromSourceMatchingWithSubscribedCollections("HSD", collections)
         
-        # Add these slins to the view below so the user can see the implied skins
         self.tree_selected_planes.delete(*self.tree_selected_planes.get_children())
-
+        
         for skin in skins:
-            self.tree_selected_planes.insert("", "end", values=(skin.getValue("name"),skin.infos["IL2Group"],skin.infos["SkinPack"]))
+            self.tree_selected_planes.insert("", "end", values=(skin.getValue("name"), skin.infos["IL2Group"], skin.infos["SkinPack"]))
 
 
     def save_to_iss(self):
@@ -267,7 +305,7 @@ class ISSFileEditorWindow:
             return
 
         # Convert treeview data to JSON and save to file
-        data = treeview_to_json(self.tree_criteria)  # Ensure this method returns the desired data as a dictionary or list
+        data = criteria_to_json(self.get_all_criteria())  # Ensure this method returns the desired data as a dictionary or list
         try:
             saveSubscriptionFile(self.edited_iss_fileName, json_content=data)
         except Exception as e:
@@ -295,15 +333,10 @@ def element_to_json(il2Group, skinPack, title):
     result.append(entry)
     return json.dumps(result)
 
-def treeview_to_json(treeview):
-    rows = []
-    for row_id in treeview.get_children():
-        row_values = treeview.item(row_id)["values"]
-        rows.append(row_values)
-
+def criteria_to_json(criteria_list):
     result = []
-    for row in rows:
-        il2Group, skinPack, title = row
+    for criteria in criteria_list:
+        il2Group, skinPack, title = criteria
         entry = {"source": "HSD", "criteria": {}}
         if il2Group:
             entry["criteria"]["IL2Group"] = il2Group
@@ -311,7 +344,5 @@ def treeview_to_json(treeview):
             entry["criteria"]["SkinPack"] = skinPack
         if title:
             entry["criteria"]["Title"] = title
-
         result.append(entry)
-
     return json.dumps(result)
