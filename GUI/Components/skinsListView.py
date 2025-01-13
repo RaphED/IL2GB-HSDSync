@@ -11,6 +11,10 @@ class SkinsListView(ttk.Frame):
         self.root = root
         self.on_skin_double_click = on_skin_double_click
 
+        
+        style = ttk.Style()
+        style.configure("Treeview", font=("Helvetica", 8))
+
         # Container principal qui doit s'étendre
         self.tree_frame = ttk.Frame(self)
         self.tree_frame.pack(fill="both", expand=True, pady=0)

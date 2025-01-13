@@ -25,9 +25,16 @@ class ISSFileEditorWindow:
         self.window.geometry("1500x800")
 
         style = ttk.Style()
-        style.configure("Treeview", font=("Helvetica", 8))
-        style.configure("Bundle.TFrame", background="#FFFFE0")
-        style.configure("Bundle.TLabel", background="#FFFFE0")
+        style.configure("Bundle.TFrame",
+            background="#f8f9fa",
+            relief="raised",
+            borderwidth=2,
+        )
+        style.configure("Bundle.TLabel", 
+            font=("Helvetica", 9),
+            background="#f8f9fa",
+            padding=(5, 2)
+        )
 
         # Bottom controls (filename and save)
         frame_controls = ttk.Frame(self.window)
@@ -76,8 +83,8 @@ class ISSFileEditorWindow:
         frame_explorer_lower_panel = ttk.Frame(frame_explorer)
         frame_explorer_lower_panel.pack(fill="x", pady=5)
         
-        button_add_bundle = ttk.Button(frame_explorer_lower_panel, text="Add these skins in a new bundle", style="Accent.TButton", command=self.add_SubcribeCollectionFromFilters)
-        button_add_bundle.pack(side=tk.RIGHT)
+        self.button_add_bundle = ttk.Button(frame_explorer_lower_panel, text="Add these skins in a new bundle", style="Accent.TButton", command=self.add_SubcribeCollectionFromFilters)
+        self.button_add_bundle.pack(side=tk.RIGHT)
 
         # 2. Collection Bundle Panel (Middle)
         frame_criteria = ttk.LabelFrame(main_container, text="Collection Bundles", padding=10)
@@ -163,6 +170,14 @@ class ISSFileEditorWindow:
         skins=getSkinsFromSourceMatchingWithSubscribedCollections("HSD", [self.explorer_temp_collection])
         self.explorer_skins_list.loadSkinsList(skins)
 
+        self.button_add_bundle["state"] = "disabled"
+        self.button_add_bundle.configure(style='')
+        for filter in self.explorer_filters_values.keys():
+            if self.explorer_filters_values[filter].get() != "":
+                self.button_add_bundle.configure(style="Accent.TButton")
+                self.button_add_bundle["state"] = "enabled"
+                break
+
         self.runningTask=None
 
     def update_temp_collection_from_filters(self, *args):
@@ -199,7 +214,7 @@ class ISSFileEditorWindow:
             if title: label_text += f"Title: {title}"
             
             label = ttk.Label(criteria_frame, text=label_text, style="Bundle.TLabel")
-            label.pack(side="left", fill="x", expand=True)
+            label.pack(side="left", fill="x", expand=True, padx=5, pady=5)
 
             trashButton = CliquableIcon(
                 root=criteria_frame, 
@@ -207,14 +222,14 @@ class ISSFileEditorWindow:
                 tooltip_text="Remove bundle",
                 onClick=lambda i=index: self.remove_SubcribeCollection(i) #use the index of the collection
             )
-            trashButton.pack(side=tk.BOTTOM)
-            trashButton = CliquableIcon(
-                root=criteria_frame, 
-                icon_path=getIconPath("edit.png"),
-                tooltip_text="Edit Bundle. Not yet developped...",
-                disabled=True
-            )
-            trashButton.pack(side=tk.BOTTOM)
+            trashButton.pack(side=tk.RIGHT, padx=2)
+            # trashButton = CliquableIcon(
+            #     root=criteria_frame, 
+            #     icon_path=getIconPath("edit.png"),
+            #     tooltip_text="Edit Bundle. Not yet developped...",
+            #     disabled=True
+            # )
+            # trashButton.pack(side=tk.BOTTOM)
 
             #Click on the bundle send criteria to the filters
             label.bind('<Button-1>', lambda event: self.load_SubcribeCollection_in_filters(collection))
@@ -230,6 +245,7 @@ class ISSFileEditorWindow:
         )
 
         self.update_collection_criteria_from_filter_values(newCollection)
+
         self.subscribedCollection.append(newCollection)
 
         self.root.after(0, self.update_bundle_list)
