@@ -7,6 +7,7 @@ from pythonServices.remoteService import getSpaceUsageOfRemoteSkinCatalog
 from pythonServices.subscriptionService import SubscribedCollection, getSubcriptionNameFromFileName, getSubcriptionFilePathFromFileName, getSubscribedCollectionFromFilePath, saveSubscriptionFile
 from ISSScanner import bytesToString, getSkinsFromSourceMatchingWithSubscribedCollections
 from GUI.Components.clickableIcon import CliquableIcon
+from GUI.Components.skinsListView import SkinsListView
 
 import tkinter as tk
 from tkinter import ttk
@@ -68,27 +69,13 @@ class ISSFileEditorWindow:
         self.add_research_filter("SkinPack")
 
         # Dynamic criteria tree
-        self.tree_skin_explorer = ttk.Treeview(frame_explorer, columns=("plane","IL2Group","SkinPack"), show="headings", height=15)
-        self.tree_skin_explorer.pack(fill="both", expand=True, pady=10)
-
-        self.tree_skin_explorer.heading("plane", text="Title", anchor="w")
-        self.tree_skin_explorer.heading("IL2Group", text="IL2Group", anchor="w")
-        self.tree_skin_explorer.heading("SkinPack", text="SkinPack", anchor="w")
-
-        self.tree_skin_explorer.column("plane", width=200, minwidth=200)  # Colonne Title plus large
-        self.tree_skin_explorer.column("IL2Group", width=150, minwidth=150)  # Colonne IL2Group moyenne
-        self.tree_skin_explorer.column("SkinPack", width=200, minwidth=150)  # Colonne SkinPack moyenne
-
-        self.tree_skin_explorer.bind('<Double-1>', self.on_double_click_tree_skins_explorer)
+        self.explorer_skins_list = SkinsListView(frame_explorer, on_skin_double_click=self.on_double_click_tree_skins_explorer)
+        self.explorer_skins_list.pack(fill="both", expand=True, pady=10)
 
         # Send to criteria panel
         frame_explorer_lower_panel = ttk.Frame(frame_explorer)
-        frame_explorer_lower_panel.pack(fill="x", pady=10)
-
-        self.skins_explorer_count_label = tk.Label(frame_explorer_lower_panel)
-        self.skins_explorer_count_label.pack(side=tk.LEFT)
-        self.skins_explorer_size_label = tk.Label(frame_explorer_lower_panel)
-        self.skins_explorer_size_label.pack(side=tk.LEFT)
+        frame_explorer_lower_panel.pack(fill="x", pady=5)
+        
         button_add_bundle = ttk.Button(frame_explorer_lower_panel, text="Add these skins in a new bundle", style="Accent.TButton", command=self.add_SubcribeCollectionFromFilters)
         button_add_bundle.pack(side=tk.RIGHT)
 
@@ -119,28 +106,11 @@ class ISSFileEditorWindow:
         frame_subcription_content = ttk.LabelFrame(main_container, text="Skins in the collection", padding=10)
         frame_subcription_content.grid(row=0, column=2, sticky="nsew", padx=5)
 
-        self.tree_selected_planes = ttk.Treeview(frame_subcription_content, columns=("plane","IL2Group","SkinPack"), show="headings", height=30)
-        self.tree_selected_planes.pack(fill="both", expand=True, padx=5, pady=5)
-
-        self.tree_selected_planes.heading("plane", text="Title", anchor="w")
-        self.tree_selected_planes.heading("IL2Group", text="IL2Group", anchor="w")
-        self.tree_selected_planes.heading("SkinPack", text="SkinPack", anchor="w")
-
-        #set colomn widths
-        self.tree_selected_planes.column("plane", width=300, minwidth=200)  # Colonne Title plus large
-        self.tree_selected_planes.column("IL2Group", width=150, minwidth=100)  # Colonne IL2Group moyenne
-        self.tree_selected_planes.column("SkinPack", width=200, minwidth=150)  # Colonne SkinPack moyenne       
+        self.subsciption_skins_list = SkinsListView(frame_subcription_content)
+        self.subsciption_skins_list.pack(fill="both", expand=True, pady=10)
 
         #the description of the collection content
         self.subscribedCollection = []
-
-        frame_planes_bottom = ttk.Frame(frame_subcription_content)
-        frame_planes_bottom.pack(fill="x", pady=10)
-
-        self.skins_in_subscription_count_label = tk.Label(frame_planes_bottom)
-        self.skins_in_subscription_count_label.pack(side=tk.LEFT)
-        self.skins_in_subscription_size_label = tk.Label(frame_planes_bottom)
-        self.skins_in_subscription_size_label.pack(side=tk.LEFT)
         
         # Load existing file if editing
         self.edited_iss_fileName = iss_file_name
@@ -191,15 +161,8 @@ class ISSFileEditorWindow:
 
     def actualise_explorer_result(self):
         skins=getSkinsFromSourceMatchingWithSubscribedCollections("HSD", [self.explorer_temp_collection])
-        
-        # Add these slins to the view below so the user can see the implied skins
-        self.tree_skin_explorer.delete(*self.tree_skin_explorer.get_children())
+        self.explorer_skins_list.loadSkinsList(skins)
 
-        for skin in skins:
-            self.tree_skin_explorer.insert("", "end", values=(skin.infos["Title"],skin.infos["IL2Group"],skin.infos["SkinPack"]))
-        
-        self.skins_explorer_count_label.configure(text=f"Skins count : {len(skins)}")
-        self.skins_explorer_size_label.configure(text=f"({bytesToString(getSpaceUsageOfRemoteSkinCatalog(source="HSD", remoteSkinList=skins))})")
         self.runningTask=None
 
     def update_temp_collection_from_filters(self, *args):
@@ -210,18 +173,11 @@ class ISSFileEditorWindow:
 
         self.runningTask=threading.Thread(target=self.actualise_explorer_result()).start()
 
-    def on_double_click_tree_skins_explorer(self, event):
-        # Get the selected item
-        selected_item = self.tree_skin_explorer.selection()
-        if not selected_item:
-            return
-        
-        # Get values from the selected row
-        values = self.tree_skin_explorer.item(selected_item[0])["values"]
+    def on_double_click_tree_skins_explorer(self, object):
         # Update the entry fields
-        self.explorer_filters_values["Title"].set(values[0])
-        self.explorer_filters_values["IL2Group"].set(values[1]) 
-        self.explorer_filters_values["SkinPack"].set(values[2])
+        self.explorer_filters_values["Title"].set(object["Title"])
+        self.explorer_filters_values["IL2Group"].set(object["IL2Group"]) 
+        self.explorer_filters_values["SkinPack"].set(object["SkinPack"])
 
     def update_bundle_list(self):
         #clear the list
@@ -255,7 +211,7 @@ class ISSFileEditorWindow:
             trashButton = CliquableIcon(
                 root=criteria_frame, 
                 icon_path=getIconPath("edit.png"),
-                tooltip_text="Edit Bundle. Desactivated as not yet developped",
+                tooltip_text="Edit Bundle. Not yet developped...",
                 disabled=True
             )
             trashButton.pack(side=tk.BOTTOM)
@@ -288,14 +244,7 @@ class ISSFileEditorWindow:
     
     def actualise_subscription_skins_list(self):
         skins = getSkinsFromSourceMatchingWithSubscribedCollections("HSD", self.subscribedCollection)
-        
-        self.tree_selected_planes.delete(*self.tree_selected_planes.get_children())
-        
-        for skin in skins:
-            self.tree_selected_planes.insert("", "end", values=(skin.infos["Title"], skin.infos["IL2Group"], skin.infos["SkinPack"]))
-        
-        self.skins_in_subscription_count_label.configure(text=f"Skins count : {len(skins)}")
-        self.skins_in_subscription_size_label.configure(text=f"({bytesToString(getSpaceUsageOfRemoteSkinCatalog(source="HSD", remoteSkinList=skins))})")
+        self.subsciption_skins_list.loadSkinsList(skins)
 
     def save_to_iss(self):
         
