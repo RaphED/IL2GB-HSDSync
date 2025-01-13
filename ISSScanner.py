@@ -148,7 +148,7 @@ def bytesToString(bytesSize: int, forceSign: bool = False):
 
 
 def getSkinsFromSourceMatchingWithSubscribedCollections(source, subscribedCollectionList: list[SubscribedCollection]):
-    subscribedSkins = list()
+    subscribedSkins = list[remoteService.RemoteSkin]()
     applyCensorship = getConf("applyCensorship")
     for skin in remoteService.getSkinsCatalogFromSource(source):
         #check if the skin matches with a subcription

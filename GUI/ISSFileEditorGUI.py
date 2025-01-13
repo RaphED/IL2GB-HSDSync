@@ -3,8 +3,9 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from pythonServices.filesService import getIconPath, getRessourcePath
 
+from pythonServices.remoteService import getSpaceUsageOfRemoteSkinCatalog
 from pythonServices.subscriptionService import SubscribedCollection, getSubcriptionNameFromFileName, getSubcriptionFilePathFromFileName, getSubscribedCollectionFromFilePath, saveSubscriptionFile
-from ISSScanner import getSkinsFromSourceMatchingWithSubscribedCollections
+from ISSScanner import bytesToString, getSkinsFromSourceMatchingWithSubscribedCollections
 from GUI.Components.clickableIcon import CliquableIcon
 
 import tkinter as tk
@@ -84,8 +85,12 @@ class ISSFileEditorWindow:
         frame_explorer_lower_panel = ttk.Frame(frame_explorer)
         frame_explorer_lower_panel.pack(fill="x", pady=10)
 
+        self.skins_explorer_count_label = tk.Label(frame_explorer_lower_panel)
+        self.skins_explorer_count_label.pack(side=tk.LEFT)
+        self.skins_explorer_size_label = tk.Label(frame_explorer_lower_panel)
+        self.skins_explorer_size_label.pack(side=tk.LEFT)
         button_add_bundle = ttk.Button(frame_explorer_lower_panel, text="Add these skins in a new bundle", style="Accent.TButton", command=self.add_SubcribeCollectionFromFilters)
-        button_add_bundle.pack()
+        button_add_bundle.pack(side=tk.RIGHT)
 
         # 2. Collection Bundle Panel (Middle)
         frame_criteria = ttk.LabelFrame(main_container, text="Collection Bundles", padding=10)
@@ -110,11 +115,11 @@ class ISSFileEditorWindow:
         scrollbar.pack(side="right", fill="y")
         canvas.pack(side="left", fill="both", expand=True)
 
-        # 3. Collection content
-        frame_planes = ttk.LabelFrame(main_container, text="Skins in the collection", padding=10)
-        frame_planes.grid(row=0, column=2, sticky="nsew", padx=5)
+        # 3. Subscription content
+        frame_subcription_content = ttk.LabelFrame(main_container, text="Skins in the collection", padding=10)
+        frame_subcription_content.grid(row=0, column=2, sticky="nsew", padx=5)
 
-        self.tree_selected_planes = ttk.Treeview(frame_planes, columns=("plane","IL2Group","SkinPack"), show="headings", height=30)
+        self.tree_selected_planes = ttk.Treeview(frame_subcription_content, columns=("plane","IL2Group","SkinPack"), show="headings", height=30)
         self.tree_selected_planes.pack(fill="both", expand=True, padx=5, pady=5)
 
         self.tree_selected_planes.heading("plane", text="Title", anchor="w")
@@ -128,6 +133,14 @@ class ISSFileEditorWindow:
 
         #the description of the collection content
         self.subscribedCollection = []
+
+        frame_planes_bottom = ttk.Frame(frame_subcription_content)
+        frame_planes_bottom.pack(fill="x", pady=10)
+
+        self.skins_in_subscription_count_label = tk.Label(frame_planes_bottom)
+        self.skins_in_subscription_count_label.pack(side=tk.LEFT)
+        self.skins_in_subscription_size_label = tk.Label(frame_planes_bottom)
+        self.skins_in_subscription_size_label.pack(side=tk.LEFT)
         
         # Load existing file if editing
         self.edited_iss_fileName = iss_file_name
@@ -183,7 +196,10 @@ class ISSFileEditorWindow:
         self.tree_skin_explorer.delete(*self.tree_skin_explorer.get_children())
 
         for skin in skins:
-            self.tree_skin_explorer.insert("", "end", values=(skin.getValue("name"),skin.infos["IL2Group"],skin.infos["SkinPack"]))
+            self.tree_skin_explorer.insert("", "end", values=(skin.infos["Title"],skin.infos["IL2Group"],skin.infos["SkinPack"]))
+        
+        self.skins_explorer_count_label.configure(text=f"Skins count : {len(skins)}")
+        self.skins_explorer_size_label.configure(text=f"({bytesToString(getSpaceUsageOfRemoteSkinCatalog(source="HSD", remoteSkinList=skins))})")
         self.runningTask=None
 
     def update_temp_collection_from_filters(self, *args):
@@ -232,12 +248,14 @@ class ISSFileEditorWindow:
             trashButton = CliquableIcon(
                 root=criteria_frame, 
                 icon_path=getIconPath("trash-can.png"),
+                tooltip_text="Remove bundle",
                 onClick=lambda i=index: self.remove_SubcribeCollection(i) #use the index of the collection
             )
             trashButton.pack(side=tk.BOTTOM)
             trashButton = CliquableIcon(
                 root=criteria_frame, 
                 icon_path=getIconPath("edit.png"),
+                tooltip_text="Edit Bundle. Desactivated as not yet developped",
                 disabled=True
             )
             trashButton.pack(side=tk.BOTTOM)
@@ -274,8 +292,10 @@ class ISSFileEditorWindow:
         self.tree_selected_planes.delete(*self.tree_selected_planes.get_children())
         
         for skin in skins:
-            self.tree_selected_planes.insert("", "end", values=(skin.getValue("name"), skin.infos["IL2Group"], skin.infos["SkinPack"]))
-
+            self.tree_selected_planes.insert("", "end", values=(skin.infos["Title"], skin.infos["IL2Group"], skin.infos["SkinPack"]))
+        
+        self.skins_in_subscription_count_label.configure(text=f"Skins count : {len(skins)}")
+        self.skins_in_subscription_size_label.configure(text=f"({bytesToString(getSpaceUsageOfRemoteSkinCatalog(source="HSD", remoteSkinList=skins))})")
 
     def save_to_iss(self):
         
