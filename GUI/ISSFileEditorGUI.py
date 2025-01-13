@@ -1,11 +1,9 @@
-import json
 import threading
 import tkinter as tk
 from tkinter import ttk, messagebox
 from pythonServices.filesService import getIconPath, getRessourcePath
 
-from pythonServices.subscriptionService import SubscribedCollection, getSubcriptionNameFromFileName, getSubscribeCollectionFromRawJson, getSubcriptionFilePathFromFileName, getSubscribedCollectionFromFilePath, saveSubscriptionFile
-from pythonServices.remoteService import getSkinsCatalogFromSource
+from pythonServices.subscriptionService import SubscribedCollection, getSubcriptionNameFromFileName, getSubcriptionFilePathFromFileName, getSubscribedCollectionFromFilePath, saveSubscriptionFile
 from ISSScanner import getSkinsFromSourceMatchingWithSubscribedCollections
 from GUI.Components.clickableIcon import CliquableIcon
 
@@ -16,7 +14,6 @@ class ISSFileEditorWindow:
     def __init__(self, root: tk.Tk, on_close, iss_file_name=None):
         self.root = root
         self.runningTask = None
-        self.editting_collection_index = None
         self.on_close = on_close
 
         # Create a Toplevel window
@@ -53,34 +50,21 @@ class ISSFileEditorWindow:
         main_container.grid_columnconfigure(2, weight=1)
 
         # 1. Catalog Explorer Panel (left)
+        self.explorer_temp_collection = SubscribedCollection(
+            source="HSD",
+            subcriptionName="explorer_temp_collection"
+        )
+
         frame_explorer = ttk.LabelFrame(main_container, text="HSD skins explorer", padding=10)
         frame_explorer.grid(row=0, column=0, sticky="nsew", padx=5)
-
-        # Queries frame
-        frame_queries = ttk.Frame(frame_explorer)
-        frame_queries.pack(fill="x", pady=5)
-
-        # Title
-        ttk.Label(frame_queries, text="Title").pack(anchor="w")
-        self.title_var = tk.StringVar()
-        self.entry_title = ttk.Entry(frame_queries, textvariable=self.title_var)
-        self.entry_title.pack(fill="x", pady=2)
-
-        # IL2Group
-        ttk.Label(frame_queries, text="il2Group:").pack(anchor="w", pady=(10,0))
-        self.il2group_var = tk.StringVar()
-        self.entry_il2group = ttk.Entry(frame_queries, textvariable=self.il2group_var)
-        self.entry_il2group.pack(fill="x", pady=2)
-
-        # SkinPack
-        ttk.Label(frame_queries, text="SkinPack").pack(anchor="w", pady=(10,0))
-        self.skinPack_var = tk.StringVar()
-        self.entry_skinPack = ttk.Entry(frame_queries, textvariable=self.skinPack_var)
-        self.entry_skinPack.pack(fill="x", pady=2)
-
-        self.title_var.trace_add("write", self.update_dynamic_list)
-        self.skinPack_var.trace_add("write", self.update_dynamic_list)
-        self.il2group_var.trace_add("write", self.update_dynamic_list)
+        # add filters
+        self.frame_explorer_filters = ttk.Frame(frame_explorer)
+        self.frame_explorer_filters.pack(fill="x", pady=5)
+        
+        self.explorer_filters_values = dict[str, tk.StringVar]()
+        self.add_research_filter("Title")
+        self.add_research_filter("IL2Group")
+        self.add_research_filter("SkinPack")
 
         # Dynamic criteria tree
         self.tree_skin_explorer = ttk.Treeview(frame_explorer, columns=("plane","IL2Group","SkinPack"), show="headings", height=15)
@@ -95,9 +79,6 @@ class ISSFileEditorWindow:
         self.tree_skin_explorer.column("SkinPack", width=200, minwidth=150)  # Colonne SkinPack moyenne
 
         self.tree_skin_explorer.bind('<Double-1>', self.on_double_click_tree_skins_explorer)
-
-        for plane in getSkinsCatalogFromSource("HSD"):
-            self.tree_skin_explorer.insert("", "end", values=(plane.infos["Title"],plane.infos["IL2Group"],plane.infos["SkinPack"]))
 
         # Send to criteria panel
         frame_explorer_lower_panel = ttk.Frame(frame_explorer)
@@ -154,20 +135,49 @@ class ISSFileEditorWindow:
             self.filename_var.set(getSubcriptionNameFromFileName(self.edited_iss_fileName))
             self.subscribedCollection = getSubscribedCollectionFromFilePath(getSubcriptionFilePathFromFileName(self.edited_iss_fileName))
             self.update_bundle_list()
+
+        #initialise the research list will all skins
+        self.root.after(0, self.actualise_explorer_result)
     
-    def actualise_dynamic_planes(self):
-        il2Group = self.entry_il2group.get()
-        if len(il2Group)>0 : il2Group="*"+il2Group.strip('*')+"*"
+    def add_research_filter(self, criterion):
         
-        skinPack = self.entry_skinPack.get()
-        if len(skinPack)>0 : skinPack="*"+skinPack.strip('*')+"*"
+        ttk.Label(self.frame_explorer_filters, text=criterion).pack(anchor="w")
+        self.explorer_filters_values[criterion] = tk.StringVar()
+        ttk.Entry(self.frame_explorer_filters, textvariable=self.explorer_filters_values[criterion]).pack(fill="x", pady=2)
 
-        title = self.entry_title.get()
-        if len(title)>0 : title="*"+title.strip('*')+"*"
+        #What for the entry modification to update explorer candidates
+        self.explorer_filters_values[criterion].trace_add("write", self.update_temp_collection_from_filters)
 
-        rawjson=element_to_json(il2Group, skinPack, title)
-        collections= getSubscribeCollectionFromRawJson(rawjson,"test")
-        skins=getSkinsFromSourceMatchingWithSubscribedCollections("HSD", collections)
+    def update_collection_criteria_from_filter_values(self, collection: SubscribedCollection):
+        for filter_criterion in self.explorer_filters_values.keys():
+            #calculate the new criteria value
+            new_criteria_value = None
+            if self.explorer_filters_values[filter_criterion].get():
+                # We have a value. Implicitely add wildcards
+                new_criteria_value = '*' + self.explorer_filters_values[filter_criterion].get() + '*'
+
+            #remove the value from the criteria is present and filter is empty
+            if new_criteria_value is None and collection.criteria.get(filter_criterion):
+                del collection.criteria[filter_criterion]
+            #otherwise set the value
+            if new_criteria_value is not None:
+                collection.criteria[filter_criterion] = new_criteria_value
+
+    def set_filters_from_collection_criteria(self, collection: SubscribedCollection):
+        for filter_criterion in self.explorer_filters_values.keys():
+            criteria_value = collection.criteria.get(filter_criterion)
+            if criteria_value is None:
+                self.explorer_filters_values[filter_criterion].set("")
+            else:
+                #remove potential wildcards
+                if criteria_value.startswith('*'):
+                    criteria_value = criteria_value[1:]
+                if criteria_value.endswith('*'):
+                    criteria_value = criteria_value[:-1]
+                self.explorer_filters_values[filter_criterion].set(criteria_value)
+
+    def actualise_explorer_result(self):
+        skins=getSkinsFromSourceMatchingWithSubscribedCollections("HSD", [self.explorer_temp_collection])
         
         # Add these slins to the view below so the user can see the implied skins
         self.tree_skin_explorer.delete(*self.tree_skin_explorer.get_children())
@@ -176,11 +186,13 @@ class ISSFileEditorWindow:
             self.tree_skin_explorer.insert("", "end", values=(skin.getValue("name"),skin.infos["IL2Group"],skin.infos["SkinPack"]))
         self.runningTask=None
 
-    def update_dynamic_list(self, *args):
+    def update_temp_collection_from_filters(self, *args):
+        self.update_collection_criteria_from_filter_values(self.explorer_temp_collection)
+
         if self.runningTask:
             self.runningTask.stop()
-            
-        self.runningTask=threading.Thread(target=self.actualise_dynamic_planes()).start()
+
+        self.runningTask=threading.Thread(target=self.actualise_explorer_result()).start()
 
     def on_double_click_tree_skins_explorer(self, event):
         # Get the selected item
@@ -190,11 +202,10 @@ class ISSFileEditorWindow:
         
         # Get values from the selected row
         values = self.tree_skin_explorer.item(selected_item[0])["values"]
-        
         # Update the entry fields
-        self.title_var.set(values[0])  # Title
-        self.il2group_var.set(values[1])  # IL2Group
-        self.skinPack_var.set(values[2])  # SkinPack
+        self.explorer_filters_values["Title"].set(values[0])
+        self.explorer_filters_values["IL2Group"].set(values[1]) 
+        self.explorer_filters_values["SkinPack"].set(values[2])
 
     def update_bundle_list(self):
         #clear the list
@@ -206,7 +217,7 @@ class ISSFileEditorWindow:
             criteria_frame = ttk.Frame(self.frame_collection_bundle, style="Bundle.TFrame")
             criteria_frame.pack(fill="x", padx=5, pady=5)
 
-            il2Group=collection.criteria.get("IL2Group", ""),
+            il2Group=collection.criteria.get("IL2Group", "")
             skinPack=collection.criteria.get("SkinPack", "")
             title=collection.criteria.get("Title", "")
             
@@ -227,11 +238,14 @@ class ISSFileEditorWindow:
             trashButton = CliquableIcon(
                 root=criteria_frame, 
                 icon_path=getIconPath("edit.png"),
-                onClick=lambda i=index: self.edit_SubcribeCollection(i) #use the index of the collection
+                disabled=True
             )
             trashButton.pack(side=tk.BOTTOM)
 
-        self.root.after(0, self.actualise_subscription_skins)
+            #Click on the bundle send criteria to the filters
+            label.bind('<Button-1>', lambda event: self.load_SubcribeCollection_in_filters(collection))
+        
+        self.root.after(0, self.actualise_subscription_skins_list)
     
     def add_SubcribeCollectionFromFilters(self):
         
@@ -240,21 +254,8 @@ class ISSFileEditorWindow:
             subcriptionName="",
             criteria= dict[str,str]()
         )
-        il2Group = self.entry_il2group.get()
-        if len(il2Group) > 0:
-            newCollection.criteria["IL2Group"] = "*" + il2Group.strip('*') + "*"
-        skinPack = self.entry_skinPack.get()
-        if len(skinPack) > 0:
-            newCollection.criteria["SkinPack"] = "*" + skinPack.strip('*') + "*"
-        title = self.entry_title.get()
-        if len(il2Group) > 0:
-            newCollection.criteria["Title"] = "*" + title.strip('*') + "*"
 
-        #do not add anything if no criteria
-        if not title and not il2Group and not skinPack:
-            messagebox.showerror("Cannot add bundle", "You cannot add an empty bundle")
-            return
-
+        self.update_collection_criteria_from_filter_values(newCollection)
         self.subscribedCollection.append(newCollection)
 
         self.root.after(0, self.update_bundle_list)
@@ -263,13 +264,11 @@ class ISSFileEditorWindow:
         self.subscribedCollection.pop(collection_index)
         self.root.after(0, self.update_bundle_list)
     
-    def edit_SubcribeCollection(self, collection_index):
-        self.il2group_var.set(self.subscribedCollection[collection_index].criteria["IL2Group"])
-        self.skinPack_var.set(self.subscribedCollection[collection_index].criteria["SkinPack"])
-        self.title_var.set(self.subscribedCollection[collection_index].criteria["Title"])
-        self.editting_collection_index = collection_index
+    def load_SubcribeCollection_in_filters(self, collection: SubscribedCollection):
+        self.set_filters_from_collection_criteria(collection)
+        self.root.after(0, self.actualise_explorer_result)
     
-    def actualise_subscription_skins(self):
+    def actualise_subscription_skins_list(self):
         skins = getSkinsFromSourceMatchingWithSubscribedCollections("HSD", self.subscribedCollection)
         
         self.tree_selected_planes.delete(*self.tree_selected_planes.get_children())
@@ -299,16 +298,3 @@ class ISSFileEditorWindow:
     def close_window(self):
         self.window.destroy()
         self.on_close()
-
-
-def element_to_json(il2Group, skinPack, title):   
-    result = []
-    entry = {"source": "HSD", "criteria": {}}
-    if il2Group:
-        entry["criteria"]["IL2Group"] = il2Group
-    if skinPack:
-        entry["criteria"]["SkinPack"] = skinPack
-    if title:
-        entry["criteria"]["Title"] = title
-    result.append(entry)
-    return json.dumps(result)

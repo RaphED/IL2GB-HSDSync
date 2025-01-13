@@ -10,7 +10,7 @@ from pythonServices.filesService import downloadFile
 subscriptionPath = os.path.join(os.getcwd(),"Subscriptions")
 
 class SubscribedCollection:
-    def __init__(self, subcriptionName: str, source: str, criteria: dict[str,str]):
+    def __init__(self, subcriptionName: str, source: str, criteria: dict[str,str] = None):
         
         self.subcriptionName = subcriptionName
         #default source is HSD
@@ -73,19 +73,6 @@ def getSubscribedCollectionFromFilePath(subscriptionFilePath):
     except Exception as e:
         logging.error(f"Error at loading subscription file {subscriptionFilePath}. Error detail : {e}")
         return []
-    
-def getSubscribeCollectionFromRawJson(rawJson,name):
-    cooked=json.loads(rawJson)
-    subscribedCollectionlist = []
-    for rawSubscription in cooked:
-            subscribedCollectionlist.append(
-                SubscribedCollection(
-                    subcriptionName=os.path.basename(name),
-                    source=rawSubscription.get("source"),
-                    criteria=rawSubscription["criteria"]
-                )
-            )
-    return subscribedCollectionlist
         
 def getAllSubscribedCollection() -> list[SubscribedCollection]:
 
