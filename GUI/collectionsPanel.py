@@ -9,7 +9,7 @@ from GUI.ISSFileEditorGUI import ISSFileEditorWindow
 from ISSScanner import bytesToString, getSkinsFromSourceMatchingWithSubscribedCollections
 from pythonServices.filesService import getIconPath
 from pythonServices.remoteService import getSpaceUsageOfRemoteSkinCatalog
-from pythonServices.subscriptionService import SubscribedCollection, activateSubscription, deleteSubscriptionFile, desactivateSubscription, getAllSubscribedCollectionByFileName, getSubcriptionNameFromFileName, getSubscribedCollectionFromFile, importSubcriptionFile
+from pythonServices.subscriptionService import SubscribedCollection, activateSubscription, deleteSubscriptionFile, desactivateSubscription, getAllSubscribedCollectionByFileName, getSubcriptionNameFromFileName, getSubscribedCollectionFromFilePath, importSubcriptionFile
 from GUI.Components.clickableIcon import CliquableIcon
 
 class SubscriptionLine():
@@ -205,7 +205,7 @@ class CollectionsPanel():
                 messagebox.showerror("Cannot import iss file", f"Error while importing the iss file.\n{e}")
                 return
             #load only the new file (not clean, as it would be better to do it from the subscription service)
-            collections = getSubscribedCollectionFromFile(importedFilePath)
+            collections = getSubscribedCollectionFromFilePath(importedFilePath)
             #To be improved : add it in the proper position
             self.subscriptionLines.append(SubscriptionLine(os.path.basename(importedFilePath), collections))
             self.root.after(0, self._update_list)

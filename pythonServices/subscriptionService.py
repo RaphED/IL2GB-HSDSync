@@ -10,7 +10,7 @@ from pythonServices.filesService import downloadFile
 subscriptionPath = os.path.join(os.getcwd(),"Subscriptions")
 
 class SubscribedCollection:
-    def __init__(self, subcriptionName, source, criteria):
+    def __init__(self, subcriptionName: str, source: str, criteria: dict[str,str]):
         
         self.subcriptionName = subcriptionName
         #default source is HSD
@@ -19,7 +19,10 @@ class SubscribedCollection:
             sourceName = source
         self.source = getSourceInfo(sourceName)["source"]
         
-        self.criteria: dict[str,str]= criteria
+        if criteria == None:
+            self.criteria = dict[str,str]()
+        else:    
+            self.criteria = criteria
         
 
     def match(self, remoteSkinInfo: RemoteSkin, applyCensorship = False) -> bool:
@@ -42,9 +45,9 @@ class SubscribedCollection:
     def toString(self):
         return f"{self.subcriptionName} - source is {self.source} - {self.criteria}" 
 
-def getSubscribedCollectionFromFile(subscriptionFilePath):
+def getSubscribedCollectionFromFilePath(subscriptionFilePath):
     
-    subscribedCollectionlist = []
+    subscribedCollectionlist: list[SubscribedCollection] = []
     try:
         file = open(subscriptionFilePath, "r")
         rawJsonData = json.load(file)
@@ -62,7 +65,7 @@ def getSubscribedCollectionFromFile(subscriptionFilePath):
                 )
             else:   #OPTION 2 : this is a link to remote iss file
                 downloadedFile = downloadFile(proxyFile, prefix_with_uuid=True)
-                subscribedCollectionlist += getSubscribedCollectionFromFile(downloadedFile)
+                subscribedCollectionlist += getSubscribedCollectionFromFilePath(downloadedFile)
 
         
         return subscribedCollectionlist
@@ -105,9 +108,9 @@ def getAllSubscribedCollectionByFileName(getDisabledFiles = False) -> dict[str, 
     for root, dirs, files in os.walk(subscriptionPath):
         for file in files:
             if file.endswith(".iss"): #We only consider files with iss extension
-                returnedCollections[file] = getSubscribedCollectionFromFile(os.path.join(root,file))
+                returnedCollections[file] = getSubscribedCollectionFromFilePath(os.path.join(root,file))
             if getDisabledFiles and file.endswith(".iss.disabled"):
-                returnedCollections[file] = getSubscribedCollectionFromFile(os.path.join(root,file))
+                returnedCollections[file] = getSubscribedCollectionFromFilePath(os.path.join(root,file))
     
     return returnedCollections
 
@@ -118,9 +121,12 @@ def getSubcriptionNameFromFileName(fileNameWithExtension):
         return fileNameWithExtension[:-13]
     else:
         raise Exception(f"Unexpected subscription file name {fileNameWithExtension}")
+    
+def getSubcriptionFilePathFromFileName(fileNameWithExtension):
+    return os.path.join(subscriptionPath, fileNameWithExtension)
 
 def activateSubscription(fileNameWithExtension):
-    filePath = os.path.join(subscriptionPath, fileNameWithExtension)
+    filePath = getSubcriptionFilePathFromFileName(fileNameWithExtension)
     if not os.path.exists(filePath) or not fileNameWithExtension.endswith(".iss.disabled"):
         raise Exception(f"Unexpected subscription to activate {fileNameWithExtension}")
     else:
@@ -130,7 +136,7 @@ def activateSubscription(fileNameWithExtension):
         return newFileName
 
 def desactivateSubscription(fileNameWithExtension):
-    filePath = os.path.join(subscriptionPath, fileNameWithExtension)
+    filePath = getSubcriptionFilePathFromFileName(fileNameWithExtension)
     if not os.path.exists(filePath) or not fileNameWithExtension.endswith(".iss"):
         raise Exception(f"Unexpected subscription to activate {fileNameWithExtension}")
     else:
@@ -140,7 +146,7 @@ def desactivateSubscription(fileNameWithExtension):
         return newFileName
 
 def deleteSubscriptionFile(fileNameWithExtension):
-    filePath = os.path.join(subscriptionPath, fileNameWithExtension)
+    filePath = getSubcriptionFilePathFromFileName(fileNameWithExtension)
     if not os.path.exists(filePath):
         raise Exception(f"Unexpected subscription to delete {fileNameWithExtension}")
     else:
@@ -155,9 +161,17 @@ def importSubcriptionFile(file_path):
     shutil.copy(file_path, destination_path)
     return destination_path
 
-def saveSubscriptionFile(fileNameWithExtension, json_content):
+def saveSubscriptionFile(fileNameWithExtension, subscribedCollections: list[SubscribedCollection]):
+    
+    json_content = []
+    for collection in subscribedCollections:
+        entry = {"source": "HSD", "criteria": {}}
+        for criterion in collection.criteria.keys():
+            entry["criteria"][criterion] = collection.criteria[criterion]
+        json_content.append(entry)
+    
     createSubcriptionFolderIsNotExist()
 
     filePath = os.path.join(subscriptionPath, fileNameWithExtension)
     with open(filePath, "w") as json_file:
-            json_file.write(json_content)
+            json_file.write(json.dumps(json_content))
