@@ -1,11 +1,12 @@
+import textwrap
 import threading
+import re
 import tkinter as tk
 from tkinter import ttk, messagebox
 from pythonServices.filesService import getIconPath, getRessourcePath
 
-from pythonServices.remoteService import getSpaceUsageOfRemoteSkinCatalog
 from pythonServices.subscriptionService import SubscribedCollection, getSubcriptionNameFromFileName, getSubcriptionFilePathFromFileName, getSubscribedCollectionFromFilePath, saveSubscriptionFile
-from ISSScanner import bytesToString, getSkinsFromSourceMatchingWithSubscribedCollections
+from ISSScanner import getSkinsFromSourceMatchingWithSubscribedCollections
 from GUI.Components.clickableIcon import CliquableIcon
 from GUI.Components.skinsListView import SkinsListView
 
@@ -188,11 +189,11 @@ class ISSFileEditorWindow:
 
         self.runningTask=threading.Thread(target=self.actualise_explorer_result()).start()
 
-    def on_double_click_tree_skins_explorer(self, object):
-        # Update the entry fields
-        self.explorer_filters_values["Title"].set(object["Title"])
-        self.explorer_filters_values["IL2Group"].set(object["IL2Group"]) 
-        self.explorer_filters_values["SkinPack"].set(object["SkinPack"])
+    def on_double_click_tree_skins_explorer(self, object: dict[str, str]):
+        # Update the entry fields (and escape any special caracter regarding reg expressions)
+        self.explorer_filters_values["Title"].set(re.escape(object["Title"]).replace("\ ", " "))
+        self.explorer_filters_values["IL2Group"].set(re.escape(object["IL2Group"]).replace("\ ", " ")) 
+        self.explorer_filters_values["SkinPack"].set(re.escape(object["SkinPack"]).replace("\ ", " "))
 
     def update_bundle_list(self):
         #clear the list
@@ -203,18 +204,12 @@ class ISSFileEditorWindow:
 
             criteria_frame = ttk.Frame(self.frame_collection_bundle, style="Bundle.TFrame")
             criteria_frame.pack(fill="x", padx=5, pady=5)
-
-            il2Group=collection.criteria.get("IL2Group", "")
-            skinPack=collection.criteria.get("SkinPack", "")
-            title=collection.criteria.get("Title", "")
             
-            label_text = ""
-            if il2Group: label_text += f"IL2Group: {il2Group}\n"
-            if skinPack: label_text += f"SkinPack: {skinPack}\n"
-            if title: label_text += f"Title: {title}"
+            label_text = get_bundle_label_content(collection)
+            label_text = wrapped_label_text(label_text, width=40)
             
             label = ttk.Label(criteria_frame, text=label_text, style="Bundle.TLabel")
-            label.pack(side="left", fill="x", expand=True, padx=5, pady=5)
+            label.pack(side="left", fill="x",expand=True, padx=5, pady=5)
 
             trashButton = CliquableIcon(
                 root=criteria_frame, 
@@ -264,18 +259,18 @@ class ISSFileEditorWindow:
 
     def save_to_iss(self):
         
+        if self.filename_var.get() == "":
+            messagebox.showerror("Collection name is required", "Please set a collection name before saving your file", parent=self.window)
+            return
+        
         #generate the file name if we are in creation mode
         if self.edited_iss_fileName is None:
             self.edited_iss_fileName = self.filename_var.get() + ".iss"
         
-        if self.filename_var.get() == "":
-            messagebox.showerror("Collection name is required", "Please set a collection name before saving your file")
-            return
-
         try:
             saveSubscriptionFile(self.edited_iss_fileName, subscribedCollections=self.subscribedCollection)
         except Exception as e:
-            messagebox.showerror("Error", f"An error occurred while saving the file: {str(e)}")
+            messagebox.showerror("Error", f"An error occurred while saving the file: {str(e)}", parent=self.window)
             return
 
         self.root.after(500, self.close_window)
@@ -283,3 +278,18 @@ class ISSFileEditorWindow:
     def close_window(self):
         self.window.destroy()
         self.on_close()
+
+def get_bundle_label_content(collection: SubscribedCollection):
+    label_text = ""
+    for criterion in collection.criteria.keys():
+        if label_text:
+            label_text +="\n"
+        label_text += f"{criterion}: {collection.criteria[criterion]}"
+
+    return label_text
+
+def wrapped_label_text(text: str, width: int):
+    """Retourne un texte avec des sauts de ligne pour une largeur donnée."""
+    lines = text.splitlines()  # Divise le texte en lignes en fonction des \n existants
+    wrapped_lines = [textwrap.fill(line, width) for line in lines]  # Wrap chaque ligne
+    return "\n".join(wrapped_lines)  # Combine les lignes avec \n

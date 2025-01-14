@@ -100,4 +100,5 @@ def updateAll(scanResult: ScanResult):
     updateRegisteredSkins(scanResult)
 
     MessageBrocker.emitProgress(1) #TEMP PROGRESS
-    MessageBrocker.emitConsoleMessage("\n<green><bold>SYNCHRONIZATION FINISHED</bold></green>")
+    MessageBrocker.emitConsoleMessage("\n<green><bold>SYNCHRONIZATION FINISHED</bold></green>\n")
+    MessageBrocker.emitConsoleMessage("<green>Yours skins are now up to date</green>")
