@@ -9,6 +9,7 @@ from pythonServices.subscriptionService import SubscribedCollection, getSubcript
 from ISSScanner import getSkinsFromSourceMatchingWithSubscribedCollections
 from GUI.Components.clickableIcon import CliquableIcon
 from GUI.Components.skinsListView import SkinsListView
+from GUI.Components.tooltip import Tooltip
 
 import tkinter as tk
 from tkinter import ttk
@@ -79,6 +80,7 @@ class ISSFileEditorWindow:
         # Dynamic criteria tree
         self.explorer_skins_list = SkinsListView(frame_explorer, on_skin_double_click=self.on_double_click_tree_skins_explorer)
         self.explorer_skins_list.pack(fill="both", expand=True, pady=10)
+        Tooltip(self.explorer_skins_list, "Double click on an line to copy it in the filters")
 
         # Send to criteria panel
         frame_explorer_lower_panel = ttk.Frame(frame_explorer)
@@ -202,24 +204,26 @@ class ISSFileEditorWindow:
 
         for index, collection in enumerate(self.subscribedCollection):
 
-            criteria_frame = ttk.Frame(self.frame_collection_bundle, style="Bundle.TFrame")
-            criteria_frame.pack(fill="x", padx=5, pady=5)
-            
+            bundle_frame = ttk.Frame(self.frame_collection_bundle, style="Bundle.TFrame")
+            bundle_frame.pack(fill="x", padx=5, pady=5)
+
             label_text = get_bundle_label_content(collection)
             label_text = wrapped_label_text(label_text, width=40)
             
-            label = ttk.Label(criteria_frame, text=label_text, style="Bundle.TLabel")
+            label = ttk.Label(bundle_frame, text=label_text, style="Bundle.TLabel")
             label.pack(side="left", fill="x",expand=True, padx=5, pady=5)
 
+            Tooltip(label, "Click on this bundle to copy it in the filters", delay=500)
+
             trashButton = CliquableIcon(
-                root=criteria_frame, 
+                root=bundle_frame, 
                 icon_path=getIconPath("trash-can.png"),
                 tooltip_text="Remove bundle",
                 onClick=lambda i=index: self.remove_SubcribeCollection(i) #use the index of the collection
             )
             trashButton.pack(side=tk.RIGHT, padx=2)
             # trashButton = CliquableIcon(
-            #     root=criteria_frame, 
+            #     root=bundle_frame, 
             #     icon_path=getIconPath("edit.png"),
             #     tooltip_text="Edit Bundle. Not yet developped...",
             #     disabled=True
