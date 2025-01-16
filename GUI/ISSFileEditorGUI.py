@@ -1,15 +1,14 @@
-import textwrap
 import threading
 import re
 import tkinter as tk
 from tkinter import ttk, messagebox
-from pythonServices.filesService import getIconPath, getRessourcePath
+from pythonServices.filesService import getRessourcePath
 
 from pythonServices.subscriptionService import SubscribedCollection, getSubcriptionNameFromFileName, getSubcriptionFilePathFromFileName, getSubscribedCollectionFromFilePath, saveSubscriptionFile
 from ISSScanner import getSkinsFromSourceMatchingWithSubscribedCollections
-from GUI.Components.clickableIcon import CliquableIcon
 from GUI.Components.skinsListView import SkinsListView
 from GUI.Components.tooltip import Tooltip
+from GUI.Components.collectionBundleCard import CollectionBundleCard
 
 import tkinter as tk
 from tkinter import ttk
@@ -193,9 +192,9 @@ class ISSFileEditorWindow:
 
     def on_double_click_tree_skins_explorer(self, object: dict[str, str]):
         # Update the entry fields (and escape any special caracter regarding reg expressions)
-        self.explorer_filters_values["Title"].set(re.escape(object["Title"]).replace("\ ", " "))
-        self.explorer_filters_values["IL2Group"].set(re.escape(object["IL2Group"]).replace("\ ", " ")) 
-        self.explorer_filters_values["SkinPack"].set(re.escape(object["SkinPack"]).replace("\ ", " "))
+        self.explorer_filters_values["Title"].set(re.escape(object["Title"]).replace("\\ ", " "))
+        self.explorer_filters_values["IL2Group"].set(re.escape(object["IL2Group"]).replace("\\ ", " ")) 
+        self.explorer_filters_values["SkinPack"].set(re.escape(object["SkinPack"]).replace("\\ ", " "))
 
     def update_bundle_list(self):
         #clear the list
@@ -204,34 +203,12 @@ class ISSFileEditorWindow:
 
         for index, collection in enumerate(self.subscribedCollection):
 
-            bundle_frame = ttk.Frame(self.frame_collection_bundle, style="Bundle.TFrame")
-            bundle_frame.pack(fill="x", padx=5, pady=5)
-
-            label_text = get_bundle_label_content(collection)
-            label_text = wrapped_label_text(label_text, width=40)
-            
-            label = ttk.Label(bundle_frame, text=label_text, style="Bundle.TLabel")
-            label.pack(side="left", fill="x",expand=True, padx=5, pady=5)
-
-            Tooltip(label, "Click on this bundle to copy it in the filters", delay=500)
-
-            trashButton = CliquableIcon(
-                root=bundle_frame, 
-                icon_path=getIconPath("trash-can.png"),
-                tooltip_text="Remove bundle",
-                onClick=lambda i=index: self.remove_SubcribeCollection(i) #use the index of the collection
-            )
-            trashButton.pack(side=tk.RIGHT, padx=2)
-            # trashButton = CliquableIcon(
-            #     root=bundle_frame, 
-            #     icon_path=getIconPath("edit.png"),
-            #     tooltip_text="Edit Bundle. Not yet developped...",
-            #     disabled=True
-            # )
-            # trashButton.pack(side=tk.BOTTOM)
-
-            #Click on the bundle send criteria to the filters
-            label.bind('<Button-1>', lambda event: self.load_SubcribeCollection_in_filters(collection))
+            CollectionBundleCard(
+                root=self.frame_collection_bundle,
+                collection=collection,
+                on_remove_bundle=lambda i=index: self.remove_SubcribeCollection(i), #use the index of the collection
+                on_select_bundle=lambda c=collection: self.load_SubcribeCollection_in_filters(c)
+            ).pack(fill="x", padx=5, pady=5)
         
         self.root.after(0, self.actualise_subscription_skins_list)
     
@@ -282,18 +259,3 @@ class ISSFileEditorWindow:
     def close_window(self):
         self.window.destroy()
         self.on_close()
-
-def get_bundle_label_content(collection: SubscribedCollection):
-    label_text = ""
-    for criterion in collection.criteria.keys():
-        if label_text:
-            label_text +="\n"
-        label_text += f"{criterion}: {collection.criteria[criterion]}"
-
-    return label_text
-
-def wrapped_label_text(text: str, width: int):
-    """Retourne un texte avec des sauts de ligne pour une largeur donnée."""
-    lines = text.splitlines()  # Divise le texte en lignes en fonction des \n existants
-    wrapped_lines = [textwrap.fill(line, width) for line in lines]  # Wrap chaque ligne
-    return "\n".join(wrapped_lines)  # Combine les lignes avec \n
