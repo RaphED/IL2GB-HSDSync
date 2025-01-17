@@ -10,7 +10,7 @@ from pythonServices.filesService import downloadFile
 subscriptionPath = os.path.join(os.getcwd(),"Subscriptions")
 
 class SubscribedCollection:
-    def __init__(self, subcriptionName: str, source: str, criteria: dict[str,str] = None):
+    def __init__(self, subcriptionName: str, source: str, criteria: dict[str,str] = None, proxy_chain: list[str] = []):
         
         self.subcriptionName = subcriptionName
         #default source is HSD
@@ -23,6 +23,8 @@ class SubscribedCollection:
             self.criteria = dict[str,str]()
         else:    
             self.criteria = criteria
+
+        self.proxy_chain = proxy_chain
         
 
     def match(self, remoteSkinInfo: RemoteSkin, applyCensorship = False) -> bool:
@@ -45,7 +47,7 @@ class SubscribedCollection:
     def toString(self):
         return f"{self.subcriptionName} - source is {self.source} - {self.criteria}" 
 
-def getSubscribedCollectionFromFilePath(subscriptionFilePath):
+def getSubscribedCollectionFromFilePath(subscriptionFilePath, proxy_chain: list[str] = []):
     
     subscribedCollectionlist: list[SubscribedCollection] = []
     try:
@@ -60,12 +62,15 @@ def getSubscribedCollectionFromFilePath(subscriptionFilePath):
                     SubscribedCollection(
                         subcriptionName=os.path.basename(subscriptionFilePath).replace(".iss", "").replace(".disabled", ""),
                         source=rawSubscription.get("source"),
-                        criteria=rawSubscription["criteria"]
+                        criteria=rawSubscription["criteria"],
+                        proxy_chain=proxy_chain
                     )
                 )
             else:   #OPTION 2 : this is a link to remote iss file
                 downloadedFile = downloadFile(proxyFile, prefix_with_uuid=True)
-                subscribedCollectionlist += getSubscribedCollectionFromFilePath(downloadedFile)
+                new_proxy_chain = proxy_chain[:] #make a copy to avoid reference
+                new_proxy_chain.append(proxyFile)
+                subscribedCollectionlist += getSubscribedCollectionFromFilePath(subscriptionFilePath=downloadedFile, proxy_chain=new_proxy_chain)
 
         
         return subscribedCollectionlist
