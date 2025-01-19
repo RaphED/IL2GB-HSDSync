@@ -3,7 +3,7 @@ import re
 import os
 import logging
 
-from pythonServices.configurationService import getConf
+from pythonServices.configurationService import getConf, cockpitNotesModes
 from pythonServices.filesService import downloadFile
 
 
@@ -175,19 +175,20 @@ customPhotosFilesURL = "https://www.lesirreductibles.com/irreskins/IRRE/CustomPh
 
 
 def getCockpitNotesModeInfo(mode):
-    match mode:
-        case "noSync":
-            return {
-                "catalogURL": None,
-                "filesURL": None
-            }
-        case "originalPhotos" | "officialNumbers" | "technochatNumbers":
-            return {
-                "catalogURL": customPhotosCatalogURL.replace("[mode]", mode),
-                "filesURL": customPhotosFilesURL.replace("[mode]", mode),
-            }
-        case _:
-            raise Exception(f"Unexpected cockpitNotesModes {mode}")
+    if mode not in cockpitNotesModes.keys():
+        raise Exception(f"Unexpected cockpitNotesModes {mode}")
+    
+    if mode == "noSync":
+        return {
+            "catalogURL": None,
+            "filesURL": None
+        }
+    else:
+        return {
+            "catalogURL": customPhotosCatalogURL.replace("[mode]", mode),
+            "filesURL": customPhotosFilesURL.replace("[mode]", mode),
+        }
+            
 
 def getCustomPhotosList():
     #hard coded remote address for the cockpitNotesCatalog

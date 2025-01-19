@@ -17,7 +17,8 @@ cockpitNotesModes = {
     "noSync": "No synchronization, keep current images",
     "originalPhotos": "Original IL2 game photos",
     "officialNumbers": "Cockpit notes from IL2 specifications (C6_lefuneste)",
-    "technochatNumbers": "Cockpit notes from technochat measurements (C6_lefuneste)"
+    "technochatNumbers": "Cockpit notes from technochat measurements (C6_lefuneste)",
+    "MetalheadNumbers": "Cockpit notes from Metalhead measurements"
 }
 
 

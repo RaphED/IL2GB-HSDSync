@@ -8,7 +8,7 @@ from pythonServices.localService import getAndGenerateCustomPhotosCatalogFromPat
 print("Start preparing custom photo folders")
 
 mainPath = "D:\\Perso\\IRRE\\tech data cards"
-folders = ["originalPhotos", "officialNumbers", "technochatNumbers"]
+folders = ["originalPhotos", "officialNumbers", "technochatNumbers", "MetalheadNumbers"]
 
 
 #get subfolders and fix the caps naming issues
