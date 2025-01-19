@@ -5,6 +5,7 @@ import threading
 from tkinter import messagebox
 from tkinter import filedialog
 
+from GUI.Components.resizeGrip import ResizeGrip
 from GUI.ISSFileEditorGUI import ISSFileEditorWindow
 from ISSScanner import bytesToString, getSkinsFromSourceMatchingWithSubscribedCollections
 from pythonServices.filesService import getIconPath
@@ -39,10 +40,15 @@ class CollectionsPanel():
         collection_list_frame.pack(padx=0, pady=0)
         
         self.canvas = tk.Canvas(collection_list_frame)
+        self.resize_grip = ResizeGrip(collection_list_frame, self.canvas, min_height=100, max_height=500, on_after_resize=self.on_resize)
+        self.resize_grip.pack(fill='x', side='bottom')
+        
         self.scrollbar = ttk.Scrollbar(collection_list_frame, orient=tk.VERTICAL, command=self.canvas.yview)
         
         self.canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         self.canvas.configure(height=152)
+        
+
         self.canvas.configure(yscrollcommand=self.scrollbar.set)
 
         # Activate or desactivate mousewheel event
@@ -251,3 +257,6 @@ class CollectionsPanel():
     
     def _on_mousewheel(self, event):
         self.canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+
+    def on_resize(self):
+        self._update_scrollbar_visibility()
