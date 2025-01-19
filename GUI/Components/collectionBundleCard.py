@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 import webbrowser
+import textwrap
 
 from GUI.Components.clickableIcon import CliquableIcon
 from GUI.Components.tooltip import Tooltip
@@ -34,7 +35,7 @@ class ProxyLink(ttk.Label):
         Tooltip(self,text=url)
 
 class CollectionBundleCard(ttk.Frame):
-    def __init__(self, root, collection: SubscribedCollection, width=40, on_remove_bundle=None, on_select_bundle=None):
+    def __init__(self, root, collection: SubscribedCollection, width=45, on_remove_bundle=None, on_copy_bundle=None):
         super().__init__(root)
         
         # Configuration du style de la carte
@@ -55,7 +56,7 @@ class CollectionBundleCard(ttk.Frame):
         self.configure(style="Bundle.TFrame", padding=5)
         self.collection = collection
         self.on_remove_bundle = on_remove_bundle
-        self.on_select_bundle = on_select_bundle
+        self.on_copy_bundle = on_copy_bundle
         
         # Proxy section
         if self.collection.proxy_chain:
@@ -83,9 +84,11 @@ class CollectionBundleCard(ttk.Frame):
             self.criteria_frame.pack(fill="x", padx=2)
             
             for criterion, value in self.collection.criteria.items():
+                label_text = f"{criterion}: {value}"
+                wrapped_label_text = textwrap.fill(label_text, width=width)
                 criterion_label = ttk.Label(
                     self.criteria_frame,
-                    text=f"{criterion}: {value}"
+                    text=wrapped_label_text
                 )
                 criterion_label.pack(fill="x", pady=1)
         
@@ -98,17 +101,16 @@ class CollectionBundleCard(ttk.Frame):
                 onClick=self.on_remove_bundle
             )
             self.trash_button.pack(side="right", padx=5, pady=5)
+        self.copy_button = CliquableIcon(
+            root=self,
+            icon_path=getIconPath("copy.png"),
+            tooltip_text="Copy content to filters",
+            onClick=self.on_copy_bundle
+        )
+        self.copy_button.pack(side="right", padx=5, pady=5)
         
-        # Main click on the component
-        if self.on_select_bundle:
-            self.bind('<Button-1>', self.on_bundle_click)
-            Tooltip(self, "Click on this bundle to copy it in the filters", delay=500)
     
     def on_proxy_click(self, proxy_path):
         webbrowser.open(proxy_path)
         #stop click propagation
         return "break"
-    
-    def on_bundle_click(self, event=None):
-        if self.on_select_bundle:
-            self.on_select_bundle()

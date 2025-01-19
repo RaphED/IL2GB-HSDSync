@@ -207,7 +207,7 @@ class ISSFileEditorWindow:
                 root=self.frame_collection_bundle,
                 collection=collection,
                 on_remove_bundle=lambda i=index: self.remove_SubcribeCollection(i), #use the index of the collection
-                on_select_bundle=lambda c=collection: self.load_SubcribeCollection_in_filters(c)
+                on_copy_bundle=lambda c=collection: self.load_SubcribeCollection_in_filters(c)
             ).pack(fill="x", padx=5, pady=5)
         
         self.root.after(0, self.actualise_subscription_skins_list)
