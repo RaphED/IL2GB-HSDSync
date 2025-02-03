@@ -54,9 +54,14 @@ def getSkinsList():
             fileFullPath = os.path.join(root,ddsFileName)
             filestats = os.stat(fileFullPath)
 
+            skin_name = ddsFileName[:-4] #remove extention to get the name
+            #case of dual skins files, remove the &1
+            if skin_name.endswith("&1"):
+                skin_name = skin_name[:-2]
+            
             skinList.append({
                 "aircraft": aircraft,
-                "name": ddsFileName[:-4], #remove extention to get the name
+                "name": skin_name,
                 "mainFileName": ddsFileName,
                 "mainFileSize": filestats.st_size,
                 "mainFileMd5": manage_file_md5(fileFullPath)

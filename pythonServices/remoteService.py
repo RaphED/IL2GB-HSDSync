@@ -152,20 +152,26 @@ def downloadSkinToTempDir(source, skinInfo: RemoteSkin):
     url = url.replace("[aircraft]", skinInfo.getValue("aircraft"))
     urlMainSkin = url.replace("[skinFileName]", skinInfo.getValue("mainSkinFileName"))
 
-    # Download the file(s) to the temporary folder
     downloadedFiles = []
-    downloadedFiles.append(downloadFile(url=urlMainSkin, expectedMD5=skinInfo.getValue("mainFileMd5")))
-    
-    #if there is a second skin file
+    # Download the file(s) to the temporary folder
+
+    #check what is this is a single or dual file skin
     secondarySkinFileName = skinInfo.getValue("secondarySkinFileName")
     if secondarySkinFileName is not None and secondarySkinFileName != "":
+        #it is a dual file
+        first_dds_file_name = skinInfo.getValue(("name")) + "&1.dds"
+        second_dds_file_name = skinInfo.getValue(("name")) + "&1#1.dds"
+
         #hack : works only for HSD, the #1 is replaced by %123 on the URL
         remoteFileName = skinInfo.getValue("secondarySkinFileName").replace("#1", "%231")
         urlSecondarySkin = url.replace("[skinFileName]", remoteFileName)
-        downloadFileName = downloadFile(url=urlSecondarySkin, expectedMD5=skinInfo.getValue("secondaryFileMd5"))
-        properFileName = downloadFileName.replace("%231","#1")
-        os.rename(downloadFileName, properFileName)
-        downloadedFiles.append(properFileName)
+
+        downloadedFiles.append(downloadFile(url=urlMainSkin, destination_file_name=first_dds_file_name, expectedMD5=skinInfo.getValue("mainFileMd5")))    
+        downloadedFiles.append(downloadFile(url=urlSecondarySkin, destination_file_name=second_dds_file_name, expectedMD5=skinInfo.getValue("secondaryFileMd5")))
+        
+    else:
+        dds_file_name = skinInfo.getValue(("name")) + ".dds"
+        downloadedFiles.append(downloadFile(url=urlMainSkin, destination_file_name=dds_file_name, expectedMD5=skinInfo.getValue("mainFileMd5")))    
     
     return downloadedFiles
 

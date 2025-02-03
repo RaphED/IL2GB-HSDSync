@@ -193,8 +193,8 @@ def scanSkins():
                 if remoteSkin.getValue("aircraft") != localSkin["aircraft"]:
                     continue
                 
-                #not the same skin main file, no match
-                if remoteSkin.getValue("mainSkinFileName") != localSkin["mainFileName"]:
+                #not the same skin name, no match
+                if remoteSkin.getValue("name") != localSkin["name"]:
                     continue
                 
                 #there is a match !
@@ -215,9 +215,6 @@ def scanSkins():
                         
                         #check if we can find the secondary on the local
                         if localSkin.get("secondaryFileName") is None:
-                            skinAsToBeUpdated = True
-                        #we have a secondary file, check the name is the same one (should always be)
-                        elif remoteSkin.getValue("secondarySkinFileName") != localSkin["secondaryFileName"]:
                             skinAsToBeUpdated = True
                         #check the md5 is the proper one
                         elif remoteSkin.getValue("secondaryFileMd5") != localSkin["secondaryFileMd5"]:
@@ -241,7 +238,7 @@ def scanSkins():
             for remoteSkin in scanResult.subscribedSkins[source]:
                 if remoteSkin.getValue("aircraft") == localSkin["aircraft"]: #prefiltering to optimize search
                     #TODO: Manage orphans skins
-                    if remoteSkin.getValue("mainSkinFileName") == localSkin["mainFileName"]:
+                    if remoteSkin.getValue("name") == localSkin["name"]:
                         foundRemoteSkin = remoteSkin
                         break
             if foundRemoteSkin is not None:

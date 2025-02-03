@@ -32,7 +32,7 @@ def cleanTemporaryFolder():
                 
 
 # Function to download a file from a URL and save it to a temporary directory
-def downloadFile(url, expectedMD5 = None, prefix_with_uuid=False):
+def downloadFile(url, expectedMD5 = None, prefix_with_uuid=False, destination_file_name=None):
     
     tempDir = getTempFolderFullPath()
     #create the temp directory if not exist
@@ -41,7 +41,12 @@ def downloadFile(url, expectedMD5 = None, prefix_with_uuid=False):
     
     response = requests.get(url, stream=True)
     response.raise_for_status()  # Raise an exception for HTTP errors
+    
     file_name = os.path.basename(url)
+    #forced destination file name
+    if destination_file_name is not None:
+        file_name = destination_file_name
+
     if prefix_with_uuid:
         file_name = str(uuid.uuid4()) + "_" + file_name
     temp_file_path = os.path.join(tempDir, file_name)
