@@ -9,23 +9,27 @@ from ISSScanner import ScanResult
 
 import logging
 
-
-
-def updateRegisteredSkins(scanResult: ScanResult):
+def updateRegisteredSkins(scanResult: ScanResult) -> tuple[int, int]:
 
     _progress = 0.2
     _estimated_total_progress = 1
+    successUpdates = 0
     MessageBrocker.emitProgress(_progress) #TEMP PROGRESS
     totalUpdates = sum([len(lst) for lst in scanResult.missingSkins.values()]) + sum([len(lst) for lst in scanResult.toBeUpdatedSkins.values()])
-    if totalUpdates == 0:
-        totalUpdates = 1
-    _progress_step = (_estimated_total_progress - _progress) / totalUpdates
+    _progress_step = (_estimated_total_progress - _progress)
+    if totalUpdates != 0:
+        _progress_step = _progress_step / totalUpdates
     
     for source in scanResult.getUsedSources():
         
         #import all missings skins
         for skin in scanResult.missingSkins[source]:
-            updateSingleSkinFromRemote(source, skin)
+            try:
+                updateSingleSkinFromRemote(source, skin)
+                successUpdates = successUpdates+1
+            except Exception as e:
+                MessageBrocker.emitConsoleMessage(f"<red>Technical error : cannot sync {skin.getValue("name")}</red>")
+                logging.error(e)
 
             _progress += _progress_step #TEMP PROGRESS
             MessageBrocker.emitProgress(_progress) #TEMP PROGRESS
@@ -33,10 +37,17 @@ def updateRegisteredSkins(scanResult: ScanResult):
 
         #import all to be updated skins
         for skin in scanResult.toBeUpdatedSkins[source]:
-            updateSingleSkinFromRemote(source, skin)
+            try:
+                updateSingleSkinFromRemote(source, skin)
+                successUpdates = successUpdates+1
+            except Exception as e:
+                MessageBrocker.emitConsoleMessage(f"<red>Technical error : cannot sync {skin.getValue("name")}</red>")
+                logging.error(e)
 
             _progress += _progress_step #TEMP PROGRESS
             MessageBrocker.emitProgress(_progress) #TEMP PROGRESS
+
+    return totalUpdates, successUpdates
 
 
 def deleteUnregisteredSkins(scanResult: ScanResult):
@@ -90,6 +101,7 @@ def updateCustomPhotos(toBeUpdatedPhotos):
 def updateAll(scanResult: ScanResult):
     MessageBrocker.emitConsoleMessage("\nSYNCHRONIZATION BEGINS...\n")
     MessageBrocker.emitProgress(0) #TEMP PROGRESS
+    logging.info("START SYNC")
 
     if customPhotoSyncIsActive():
         updateCustomPhotos(scanResult.toBeUpdatedCockpitNotes)
@@ -97,8 +109,13 @@ def updateAll(scanResult: ScanResult):
     if getConf("autoRemoveUnregisteredSkins"):
         deleteUnregisteredSkins(scanResult)
     
-    updateRegisteredSkins(scanResult)
+    totalUpdates, successUpdates = updateRegisteredSkins(scanResult)
 
+    logging.info("END SYNC")
     MessageBrocker.emitProgress(1) #TEMP PROGRESS
     MessageBrocker.emitConsoleMessage("\n<green><bold>SYNCHRONIZATION FINISHED</bold></green>\n")
-    MessageBrocker.emitConsoleMessage("<green>Yours skins are now up to date</green>")
+    
+    if totalUpdates == successUpdates:
+        MessageBrocker.emitConsoleMessage("<green>Yours skins are now up to date</green>")
+    else:
+        MessageBrocker.emitConsoleMessage(f"<red>Could not sync all skins ({successUpdates} on {totalUpdates}) </red>")
