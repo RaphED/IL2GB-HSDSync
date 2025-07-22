@@ -13,7 +13,7 @@
             "type": "debugpy",
             "request": "launch",
             "program": "main.py",
-			"args": ["-debug", "-prerelease"],
+			"args": ["-debug", "-no-update"],
             "console": "integratedTerminal"
 		},{
 			"name": "Updater",

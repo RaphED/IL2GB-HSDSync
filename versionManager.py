@@ -2,11 +2,11 @@ import requests
 from packaging.version import Version
 
 
-#This is THE reference for the current ISS version
+#This is THE reference for the current version
 #Change version here when preparing a new release
-currentVersion = 8
+currentVersion = 1
 
-GITHUB_REPO_URL = "https://api.github.com/repos/RaphED/IL2GB-inter-squadrons-skins-synchronizer"
+GITHUB_REPO_URL = "https://api.github.com/repos/RaphED/IL2GB-HSDSync"
 
 def getCurrentVersion():
     return currentVersion
@@ -39,8 +39,3 @@ def isCurrentVersionUpToDate(draft = False, prerelease = False):
     current_version = Version(f"{getCurrentVersion()}")
     remote_version = Version(latest_version)
     return remote_version <= current_version
-
-
-#Direct access to provide the current version when calling directly that file (used for the build script)
-if __name__ == "__main__":
-    print(getCurrentVersion())

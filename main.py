@@ -19,6 +19,8 @@ if __name__ == "__main__":
     for arg in sys.argv[1:]:
         if arg == '-updater':
             updater_mode = True
+        elif arg == '-no-update':
+            no_update = True
         elif arg == '-force-update':
             force_update = True
         elif arg == '-prerelease':
@@ -40,7 +42,7 @@ if __name__ == "__main__":
     
     try:
         #Check if an update has to be launched
-        if not isCurrentVersionUpToDate(prerelease = update_withPrerelease) or force_update:
+        if not no_update and not isCurrentVersionUpToDate(prerelease = update_withPrerelease) or force_update:
             ISSupdater.downloadAndRunUpdater(prerelease = update_withPrerelease)
         #UPDATER MODE
         elif updater_mode:
