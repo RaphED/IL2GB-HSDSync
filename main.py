@@ -34,7 +34,7 @@ if __name__ == "__main__":
         logLevel = logging.DEBUG
  
     logging.basicConfig(
-        filename='iss.log',       # Le fichier de log où les messages seront enregistrés
+        filename='HSDSync.log',       # Le fichier de log où les messages seront enregistrés
         level= logLevel,          # Le niveau de log (DEBUG, INFO, WARNING, ERROR, CRITICAL)
         format='%(asctime)s - %(levelname)s - %(message)s',  # Format du message
         datefmt='%Y-%m-%d %H:%M:%S'    # Format de la date

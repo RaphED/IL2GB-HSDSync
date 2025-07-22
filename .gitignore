@@ -4,6 +4,6 @@ release
 temp
 Subscriptions
 *.pyc
-ISS-config.json
+HSDSync-config.json
 file_hashes.json
-iss.log
+HSDSync.log

@@ -3,7 +3,7 @@ import os
 import string
 
 # Path to the configuration file
-config_file = 'ISS-config.json'
+config_file = 'HSDSync-config.json'
 
 # Default values for the configuration file
 default_config = {
