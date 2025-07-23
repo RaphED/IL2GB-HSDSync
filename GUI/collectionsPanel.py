@@ -12,6 +12,7 @@ from pythonServices.filesService import getIconPath
 from pythonServices.remoteService import getSpaceUsageOfRemoteSkinCatalog
 from pythonServices.subscriptionService import SubscribedCollection, activateSubscription, deleteSubscriptionFile, desactivateSubscription, getAllSubscribedCollectionByFileName, getSubcriptionNameFromFileName, getSubscribedCollectionFromFilePath, importSubcriptionFile
 from GUI.Components.clickableIcon import CliquableIcon
+from GUI.Components.collectionURLModal import ask_collection_url
 
 class SubscriptionLine():
     def __init__(self, fileName: str, collections: list[SubscribedCollection]):
@@ -60,7 +61,7 @@ class CollectionsPanel():
         
         bottom_frame = tk.Frame(collection_frame)
         bottom_frame.pack(pady=0)
-        self.import_button = ttk.Button(bottom_frame, text="Import new file", command=self.import_item)
+        self.import_button = ttk.Button(bottom_frame, text="Import new collection", command=self.import_new_collection)
         self.import_button.pack(side=tk.LEFT, pady=5, padx=10)
         self.create_button = ttk.Button(bottom_frame, text="Create new collection", command=self.create_new_ISS)
         self.create_button.pack(side=tk.RIGHT, pady=5, padx=10)
@@ -199,23 +200,8 @@ class CollectionsPanel():
         # Check if scrolling is needed
         self._update_scrollbar_visibility()
 
-    def import_item(self):
-        file_path = filedialog.askopenfilename(
-            title="Select a File",
-            filetypes=[("Subscriptions","*.iss")]
-        )
-        if file_path:  # Ensure the user selected a file
-            try:
-                importedFilePath = importSubcriptionFile(file_path)
-            except Exception as e:
-                messagebox.showerror("Cannot import iss file", f"Error while importing the iss file.\n{e}")
-                return
-            #load only the new file (not clean, as it would be better to do it from the subscription service)
-            collections = getSubscribedCollectionFromFilePath(importedFilePath)
-            #To be improved : add it in the proper position
-            self.subscriptionLines.append(SubscriptionLine(os.path.basename(importedFilePath), collections))
-            self.root.after(0, self._update_list)
-            self.on_collections_change()
+    def import_new_collection(self):
+        url = ask_collection_url(self.root)
 
     def _toggle_item(self, item: SubscriptionLine):
         if item.state:

@@ -5,7 +5,7 @@ from pythonServices.filesService import fileExists
 from pythonServices.remoteService import RemoteSkin
 
 # Path to the subscription file
-subscription_file = 'HSDSync-subscription.json'
+subscription_file = 'HSDSync-subscriptions.json'
 
 # Function to load or create the subsscription file
 def load_subscription_file():
@@ -25,7 +25,7 @@ def load_subscription_file():
             
 def save_subscription_file():
     with open(subscription_file, 'w') as f:
-        json.dump(subscription_list, f, indent=4)            
+        json.dump([sub.toJson() for sub in subscription_list], f, indent=4)            
 
 class SubscribedCollection:
     def __init__(self, collectionURL: str, active: bool = True):
@@ -47,6 +47,12 @@ class SubscribedCollection:
             return response.json()
         else:
             raise Exception (f"Cannot get collection data from URL {self.collectionURL}")
+        
+    def toJson(self):
+        return{
+            "collectionURL": self.collectionURL,
+            "active": self.active
+        }
 
 
 subscription_list:list [SubscribedCollection] = []
