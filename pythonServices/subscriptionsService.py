@@ -37,6 +37,8 @@ class SubscribedCollection:
         self.description = None
         self.artist = None
         self.skins: list[RemoteSkin] = []
+        self.size_in_b_unrestricted = 0
+        self.size_in_b_restricted_only = 0
 
         #Automatically load data from URL on object creation
         self.loadDataFromURL()
@@ -51,6 +53,8 @@ class SubscribedCollection:
             self.name = raw_json_data["name"]
             self.descrption = raw_json_data["description"]
             self.artist = raw_json_data["artist"]
+            self.size_in_b_unrestricted = raw_json_data["size_in_b_unrestricted"]
+            self.size_in_b_restricted_only = raw_json_data["size_in_b_restricted_only"]
 
         else:
             raise Exception (f"Cannot get collection data from URL {self.collectionURL}")
