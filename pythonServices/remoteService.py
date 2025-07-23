@@ -1,148 +1,50 @@
 import requests
-import re
 import logging
+import json
 
 from pythonServices.configurationService import getConf, cockpitNotesModes
 from pythonServices.filesService import downloadFile
 
-
-sourcesInfo = [
-    {
-        "source":"HSD",
-        "catalogURL": "https://skins.combatbox.net/Info.txt",
-        "skinsURL": "https://skins.combatbox.net/[aircraft]/[skinFileName]",
-        "params":{
-            "censored":{
-                "aircraft": "Plane",
-                "name": "Title",
-                "mainSkinFileName": "Skin0",
-                "mainFileMd5": "HashDDS0",
-                "mainFileSize":"Filesize0",
-                "secondarySkinFileName": "Skin01",
-                "secondaryFileMd5": "HashDDS01",
-                "secondaryFileSize":"Filesize01"
-            },
-            "uncensored":{
-                "aircraft": "Plane",
-                "name": "Title",
-                "mainSkinFileName": "Skin1",
-                "mainFileMd5": "HashDDS1",
-                "mainFileSize":"Filesize1",
-                "secondarySkinFileName": "Skin11",
-                "secondaryFileMd5": "HashDDS11",
-                "secondaryFileSize":"Filesize11"
-            }
-        }
-    }
-]
-
-def getSourceInfo(source):
-    for sourceIter in sourcesInfo:
-        if sourceIter["source"] == source:
-            return sourceIter
-    raise Exception(f"Caanot find source {source}!")
-
-def getSourceParam(source, param, censored):
-    if censored:
-        return getSourceInfo(source)["params"]["censored"][param]
-    else:
-        return getSourceInfo(source)["params"]["uncensored"][param]
-    
-
 class RemoteSkin:
-    def __init__(self, source) -> None:
-        self.source = source
-        self.infos = dict[str,str]()
+    def __init__(self, json_raw_data: json) -> None:
+        self._json_raw_data = json_raw_data
 
-    def addRawData(self, key, value) -> None:
-        self.infos[key] = value
-
-    def getValue(self, param: str):
-        applyCensorship = getConf("applyCensorship")
-
-        if applyCensorship:
-            return self.infos.get(getSourceParam(self.source, param, censored=True))
+    #Translation of parameters from json
+    def id(self):
+        return self._json_raw_data["id"]
+    def name(self):
+        return self._json_raw_data["title"]
+    def object_type(self):
+        return self._json_raw_data["plane"]
+    
+    #get variant sub json data
+    def unrestricted_variant_content(self) -> json:
+        restricted_variant = self._json_raw_data.get("Restricted_Symbols")
+        if restricted_variant is not None:
+            return restricted_variant
+        return self.restricted_variant_content()
+    def restricted_variant_content(self) -> json:
+        return self._json_raw_data.get("No_Restricted_Symbols")
+    def get_variant_regarding_censorship_configuration(self) -> json:
+        if getConf("applyCensorship"):
+            return self.restricted_variant_content()
         else:
-            #take the uncensored value, and if value is None or "", then take censored
-            uncensored_value = self.infos.get(getSourceParam(self.source, param, censored=False))
-            if uncensored_value is not None and uncensored_value != "":
-                return uncensored_value
-            else:
-                return self.infos.get(getSourceParam(self.source, param, censored=True))
+            return self.unrestricted_variant_content()
 
-    def hasAnCensoredVersion(self) -> bool:
-        #we consider the first dds file
-        firstUncensoredValue =  self.infos.get(getSourceParam(source=self.source, param="mainSkinFileName", censored=True))
-        return firstUncensoredValue is not None and firstUncensoredValue != ""
-
-_cached_skins_from_source = dict[str, list[RemoteSkin]]()
-
-def getSkinsCatalogFromSource(source) -> list[RemoteSkin]:
-    global _cached_skins_from_source # TODO Add timer and reset if user keeps the app open for long time ?
-    if source in _cached_skins_from_source:
-        return _cached_skins_from_source[source]    
+    def mainFileName(self):
+        return self.get_variant_regarding_censorship_configuration()["main_file_name"]    
+    def mainFileMd5(self):
+        return self.get_variant_regarding_censorship_configuration()["main_file_MD5"]
+    def secondaryFileName(self):
+        return self.get_variant_regarding_censorship_configuration().get("secondary_file_name", None)
+    def secondaryFileMd5(self):
+        return self.get_variant_regarding_censorship_configuration().get("secondary_file_MD5", None)
     
-    # Download the content of the file
-    sourceInfo = getSourceInfo(source)
-    if sourcesInfo is None: 
-        raise Exception("Unexpected source")
-    response = requests.get(sourceInfo["catalogURL"])
-
-    # Check if the request was successful (status code 200)
-    if response.status_code == 200:
-        file_content = response.text
-        
-        # Dictionary to store the skins
-        skins = {}
-
-        # Use regular expression to split the content into skin sections
-        sections = re.split(r'\[Skin-\d+\]', file_content)[1:]  # Ignore the part before the first skin
-
-        # For each section after the header
-        for i, section in enumerate(sections):
-            # Clean up the section
-            section = section.strip()
-            if not section:
-                continue
-
-            skin_id = i
-
-            # Dictionary to store the skin information
-            remoteSkin = RemoteSkin(source)
-
-            # Loop through each line of the section
-            for line in section.splitlines():
-                # Ignore empty lines or comment lines (lines starting with #)
-                if line.strip() and not line.startswith("#"):
-                    try:
-                        key, value = line.split('=', 1)  # Split at the first '='
-                        remoteSkin.addRawData(key=key.strip(), value=value.strip())# Store the key-value pair
-                    except ValueError:
-                        logging.error(f"Formatting error on line: {line}")
-
-            # Add the skin information to the main dictionary
-            skins[skin_id] = remoteSkin
-
-        # return only the values (we do not need skins ids)
-        _cached_skins_from_source[source]=skins.values()
-        return skins.values()
-
-    else:
-        raise Exception(f"Error downloading the file. Status code: {response.status_code}")
-
-#TODO: remove the source
-def getSpaceUsageOfRemoteSkinCatalog(source, remoteSkinList: list[RemoteSkin]):
-    totalDiskSpace = 0
-    for skin in remoteSkinList:
-        primaryFileSpace = skin.getValue("mainFileSize")
-        if primaryFileSpace is not None and primaryFileSpace != "":
-            totalDiskSpace += int(primaryFileSpace)
-        
-        secondaryFileSpace = skin.getValue("secondaryFileSize")
-        if secondaryFileSpace is not None and secondaryFileSpace != "":
-            totalDiskSpace += int(secondaryFileSpace)
-    
-    return totalDiskSpace
+    def size_in_b(self) -> int:
+        if getConf("applyCensorship"):
+            return self._json_raw_data["size_in_b_restricted_only"]
+        else:
+            return self._json_raw_data["size_in_b_unrestricted"]
 
 def downloadSkinToTempDir(source, skinInfo: RemoteSkin):
 

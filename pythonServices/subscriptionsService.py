@@ -58,6 +58,9 @@ class SubscribedCollection:
             self.size_in_b_unrestricted = raw_json_data["size_in_b_unrestricted"]
             self.size_in_b_restricted_only = raw_json_data["size_in_b_restricted_only"]
 
+            for skin_json in raw_json_data.get("skins", []):
+                self.skins.append(RemoteSkin(skin_json))
+
         else:
             raise Exception (f"Cannot get collection data from URL {self.collectionURL}")
         
