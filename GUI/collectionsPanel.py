@@ -5,7 +5,7 @@ from tkinter import messagebox
 import webbrowser
 
 from GUI.Components.resizeGrip import ResizeGrip
-from ISSScanner import bytesToString
+from pythonServices.scannerService import bytesToString
 from pythonServices.configurationService import getConf
 from pythonServices.filesService import getIconPath
 from pythonServices.subscriptionsService import SubscribedCollection, getAllSubcriptions, removeCollection, changeSubscriptionActivation

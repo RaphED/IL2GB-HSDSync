@@ -5,7 +5,7 @@ import pythonServices.remoteService as remoteService
 from pythonServices.messageBrocker import MessageBrocker
 from pythonServices.configurationService import getConf, customPhotoSyncIsActive
 
-from ISSScanner import ScanResult
+from pythonServices.scannerService import ScanResult
 
 import logging
 

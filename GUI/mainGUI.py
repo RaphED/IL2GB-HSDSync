@@ -15,8 +15,8 @@ from GUI.progressBar import ProgressBar
 from GUI.Components.clickableIcon import CliquableIcon
 from GUI.firstLaunchGUI import runFirstLaunchGUI
 
-import ISSsynchronizer
-import ISSScanner
+import pythonServices.synchronizerService as SynchronizerService
+import pythonServices.scannerService as ScannerService
 from pythonServices.messageBrocker import MessageBrocker
 
 class MainGUI:
@@ -93,7 +93,7 @@ class MainGUI:
         self.actionPanel = ActionPanel(bottom_main_frame, scanCommand = self.start_scan_async, syncCommand=self.start_synchronization_async)
 
         #OTHER STORED INFORMATION
-        self.currentScanResult: ISSsynchronizer.ScanResult = None
+        self.currentScanResult: SynchronizerService.ScanResult = None
         self.pendingProcessing= False
 
         #Once all components are declared, we can load the data
@@ -155,7 +155,7 @@ class MainGUI:
         self.cleanScanResult()
         self.lock_components_actions()
 
-        self.currentScanResult = ISSScanner.scanAll()
+        self.currentScanResult = ScannerService.scanAll()
 
         self.displayScanResult()
         self.unlock_components_actions()
@@ -169,7 +169,7 @@ class MainGUI:
             return
         
         self.lock_components_actions()
-        ISSsynchronizer.updateAll(self.currentScanResult)
+        SynchronizerService.updateAll(self.currentScanResult)
         self.currentScanResult = None #the current scan is no more relevant
         self.unlock_components_actions()
 

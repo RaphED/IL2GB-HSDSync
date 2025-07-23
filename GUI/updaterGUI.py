@@ -3,7 +3,7 @@ import threading
 import sys
 
 from GUI.Components.splashScreen import SplashScreen
-import ISSupdater
+import pythonServices.updateService as updateService
 
 
 
@@ -26,7 +26,7 @@ class UpdaterGUI:
     def do_processing(self):
         
         #This is the main process
-        ISSupdater.replaceAndLaunchMainExe(prerelease=self.update_withPrerelease)
+        updateService.replaceAndLaunchMainExe(prerelease=self.update_withPrerelease)
 
         self.root.after(0, self.processing_complete)
 

@@ -4,7 +4,7 @@ import os
 import logging
 
 from pythonServices.filesService import downloadFile, getTempFolderFullPath, copyFile
-from versionManager import getLastRelease
+from pythonServices.versionManager import getLastRelease
 
 
 def downloadLastReleaseFile(fileName, prerelease = False):

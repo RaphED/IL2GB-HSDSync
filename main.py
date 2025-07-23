@@ -1,8 +1,8 @@
 import sys
 
 import logging
-from versionManager import isCurrentVersionUpToDate
-import ISSupdater
+from pythonServices.versionManager import isCurrentVersionUpToDate
+import pythonServices.updateService as updateService
 
 from GUI.mainGUI import runMainGUI
 from GUI.updaterGUI import runUpdaterGUI
@@ -43,7 +43,7 @@ if __name__ == "__main__":
     try:
         #Check if an update has to be launched
         if not no_update and not isCurrentVersionUpToDate(prerelease = update_withPrerelease) or force_update:
-            ISSupdater.downloadAndRunUpdater(prerelease = update_withPrerelease)
+            updateService.downloadAndRunUpdater(prerelease = update_withPrerelease)
         #UPDATER MODE
         elif updater_mode:
             runUpdaterGUI(update_withPrerelease)
