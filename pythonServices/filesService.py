@@ -62,6 +62,9 @@ def downloadFile(url, expectedMD5 = None, prefix_with_uuid=False, destination_fi
     logging.info(f"File Downloaded : {temp_file_path}")
     return temp_file_path
 
+# Function that return true if the given full file path exists
+def fileExists(file_path):
+    return os.path.exists(file_path)
 
 # Function to move the file and replace if necessary
 def moveFile(src_path, dest_dir):
