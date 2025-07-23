@@ -21,9 +21,6 @@ class SubscriptionLine():
         self.size_in_b_unrestricted = collection.size_in_b_unrestricted
         self.size_in_b_restricted_only = collection.size_in_b_restricted_only
 
-    def open_collection_on_browser(self):
-        webbrowser.open(self.browserURL)
-
 class CollectionsPanel():
     def __init__(self, root, on_loading_complete=None, on_loading_start=None, on_collections_change=None):
         self.root = root
@@ -112,8 +109,8 @@ class CollectionsPanel():
         #This is the most time consuming part, as it has to download the remote catalog and the remote iss files
         for collection in getAllSubcriptions():
             self.subscriptionLines.append(SubscriptionLine(collection))
-            self.root.after(0, self._update_list)
-
+        
+        self.root.after(0, self._update_list)
         self.emit_loading_completed()
 
     def loadCollections_async(self):
@@ -167,8 +164,8 @@ class CollectionsPanel():
             edit_button = CliquableIcon(
                 root=frame, 
                 icon_path=getIconPath("magnifying-glass.png"),
-                tooltip_text="See/edit collection details",
-                onClick=line.open_collection_on_browser,
+                tooltip_text="See to collection on HSD website",
+                onClick=lambda o=line: self._open_collection_on_browser(o)
             )
             edit_button.pack(side=tk.RIGHT, padx=2)
             self.collections_buttons_registry.append(edit_button)
@@ -225,6 +222,9 @@ class CollectionsPanel():
             #only perform change if the collection is activated
             if item.active:
                 self.emit_collections_change()
+
+    def _open_collection_on_browser(self, item: SubscriptionLine):
+        webbrowser.open(item.browserURL)
 
     #MOUSE EVENTS (for the scroll)
     def _bind_mousewheel(self, event):
