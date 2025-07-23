@@ -18,7 +18,9 @@ def load_subscription_file():
         with open(subscription_file, 'r') as f:
             try:
                 global subscription_list
-                subscription_list = json.load(f)
+                raw_subscription_list = json.load(f)
+                for raw_sub in raw_subscription_list:
+                    subscription_list.append(SubscribedCollection(raw_sub["collectionURL"], raw_sub["active"]))
                 return subscription_list
             except Exception as e:
                 raise e
@@ -66,13 +68,26 @@ class SubscribedCollection:
         }
 
 
-subscription_list:list [SubscribedCollection] = []
+subscription_list:list[SubscribedCollection] = []
+
+def getAllSubcriptions() -> list[SubscribedCollection]:
+    #Hack, reload untill it is not empty
+    if len(subscription_list) == 0:
+        load_subscription_file()
+    
+    return subscription_list
 
 def getCollection(collection_id: int):
-    for collection in subscription_list:
+    for collection in getAllSubcriptions():
         if collection.id == collection_id:
             return collection
     return None
+
+def getCollectionIndex(collection_id: int) -> int:
+    for index, collection in enumerate(getAllSubcriptions()):
+        if collection.id == collection_id:
+            return index
+    return -1
 
 def importNewCollection(collectionURL: str):
     #Load the new collection
@@ -94,3 +109,11 @@ def removeCollection(collection_id):
     global subscription_list
     subscription_list = [sub for sub in subscription_list if sub.id != collection_id]
     save_subscription_file()
+
+def changeSubscriptionActivation(collection_id, newActiveStatus: bool):
+    subscription_index = getCollectionIndex(collection_id)
+    if subscription_index == -1:
+        Exception(f"Cannot find collection with id {collection_id}")
+    subscription_list[subscription_index].active = newActiveStatus
+    save_subscription_file()
+    

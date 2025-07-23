@@ -1,28 +1,24 @@
-import os
 import tkinter as tk
 from tkinter import ttk
 import threading
 from tkinter import messagebox
-from tkinter import filedialog
 
 from GUI.Components.resizeGrip import ResizeGrip
 from GUI.ISSFileEditorGUI import ISSFileEditorWindow
-from ISSScanner import bytesToString, getSkinsFromSourceMatchingWithSubscribedCollections
+from ISSScanner import bytesToString
+from pythonServices.configurationService import getConf
 from pythonServices.filesService import getIconPath
-from pythonServices.remoteService import getSpaceUsageOfRemoteSkinCatalog
-from pythonServices.subscriptionService import SubscribedCollection, activateSubscription, deleteSubscriptionFile, desactivateSubscription, getAllSubscribedCollectionByFileName, getSubcriptionNameFromFileName, getSubscribedCollectionFromFilePath, importSubcriptionFile
+from pythonServices.subscriptionsService import SubscribedCollection, getAllSubcriptions, removeCollection, changeSubscriptionActivation
 from GUI.Components.clickableIcon import CliquableIcon
 from GUI.Components.collectionURLModal import ask_collection_url
 
 class SubscriptionLine():
-    def __init__(self, fileName: str, collections: list[SubscribedCollection]):
-        self.name = getSubcriptionNameFromFileName(fileName)
-        self.fileName = fileName
-        self.state = not fileName.endswith(".disabled")
-        self.collections = collections
-        #calculate sizes
-        concernedRemoteSkins = getSkinsFromSourceMatchingWithSubscribedCollections("HSD", self.collections)
-        self.size = getSpaceUsageOfRemoteSkinCatalog(None, concernedRemoteSkins)    
+    def __init__(self, collection: SubscribedCollection):
+        self.id = collection.id
+        self.name = collection.name
+        self.active = collection.active
+        self.size_in_b_unrestricted = collection.size_in_b_unrestricted
+        self.size_in_b_restricted_only = collection.size_in_b_restricted_only
 
 class CollectionsPanel():
     def __init__(self, root, on_loading_complete=None, on_loading_start=None, on_collections_change=None):
@@ -114,11 +110,8 @@ class CollectionsPanel():
         #clear the collections
         self.subscriptionLines = []
         #This is the most time consuming part, as it has to download the remote catalog and the remote iss files
-        issFilesCollections = getAllSubscribedCollectionByFileName(getDisabledFiles=True)
-        
-        for iss_file in issFilesCollections.keys():
-            self.subscriptionLines.append(SubscriptionLine(iss_file, issFilesCollections[iss_file]))
-            #quick update after each line (is it usefull ?)
+        for collection in getAllSubcriptions():
+            self.subscriptionLines.append(SubscriptionLine(collection))
             self.root.after(0, self._update_list)
 
         self.emit_loading_completed()
@@ -137,7 +130,7 @@ class CollectionsPanel():
             frame.pack(fill=tk.X, padx=5, pady=1)
 
             toggle_button = None
-            if line.state:
+            if line.active:
                 toggle_button = CliquableIcon(
                     root=frame,
                     icon_path=getIconPath("plain-circle.png"),
@@ -154,7 +147,12 @@ class CollectionsPanel():
             toggle_button.pack(side=tk.LEFT, padx=2)
             self.collections_buttons_registry.append(toggle_button)
             
-            text_line = f"{line.name} ({bytesToString(line.size)})"
+            #display the size corresponding to the current censorship parameter
+            displayed_size = line.size_in_b_unrestricted
+            if getConf("applyCensorship"):
+                displayed_size = line.size_in_b_restricted_only
+
+            text_line = f"{line.name} ({bytesToString(displayed_size)})"
             ttk.Label(frame, text=text_line, width=38).pack(side=tk.LEFT, padx=5)
             
             trash_button = CliquableIcon(
@@ -201,15 +199,17 @@ class CollectionsPanel():
         self._update_scrollbar_visibility()
 
     def import_new_collection(self):
-        url = ask_collection_url(self.root)
+        result = ask_collection_url(self.root)
+        if result is not None:
+            self.loadCollections_async()
 
     def _toggle_item(self, item: SubscriptionLine):
-        if item.state:
-            item.fileName = desactivateSubscription(item.fileName)
-            item.state = False
+        if item.active:
+            changeSubscriptionActivation(item.id, False)
+            item.active = False
         else:
-            item.fileName = activateSubscription(item.fileName)
-            item.state = True
+            changeSubscriptionActivation(item.id, True)
+            item.active = True
         
         self._update_list()
         self.emit_collections_change()
@@ -221,11 +221,11 @@ class CollectionsPanel():
         answer = messagebox.askyesno(title='confirmation',
                     message=f'Are you sure you want to delete "{item.name}" collection ?')
         if answer:
-            deleteSubscriptionFile(item.fileName)
+            removeCollection(item.id)
             self.subscriptionLines = [l for l in self.subscriptionLines if l.name != item.name]
             self._update_list()
             #only perform change if the collection is activated
-            if item.state:
+            if item.active:
                 self.emit_collections_change()
 
     def create_new_ISS(self):
