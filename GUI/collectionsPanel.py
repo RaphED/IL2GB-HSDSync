@@ -2,9 +2,9 @@ import tkinter as tk
 from tkinter import ttk
 import threading
 from tkinter import messagebox
+import webbrowser
 
 from GUI.Components.resizeGrip import ResizeGrip
-from GUI.ISSFileEditorGUI import ISSFileEditorWindow
 from ISSScanner import bytesToString
 from pythonServices.configurationService import getConf
 from pythonServices.filesService import getIconPath
@@ -16,9 +16,13 @@ class SubscriptionLine():
     def __init__(self, collection: SubscribedCollection):
         self.id = collection.id
         self.name = collection.name
+        self.browserURL = collection.collectionURL #TODO : branch on the web UI instead of API
         self.active = collection.active
         self.size_in_b_unrestricted = collection.size_in_b_unrestricted
         self.size_in_b_restricted_only = collection.size_in_b_restricted_only
+
+    def open_collection_on_browser(self):
+        webbrowser.open(self.browserURL)
 
 class CollectionsPanel():
     def __init__(self, root, on_loading_complete=None, on_loading_start=None, on_collections_change=None):
@@ -59,8 +63,6 @@ class CollectionsPanel():
         bottom_frame.pack(pady=0)
         self.import_button = ttk.Button(bottom_frame, text="Import new collection", command=self.import_new_collection)
         self.import_button.pack(side=tk.LEFT, pady=5, padx=10)
-        self.create_button = ttk.Button(bottom_frame, text="Create new collection", command=self.create_new_ISS)
-        self.create_button.pack(side=tk.RIGHT, pady=5, padx=10)
         
         self.list_frame.bind('<Configure>',
             lambda e: self.canvas.configure(scrollregion=self.canvas.bbox('all')))
@@ -93,13 +95,11 @@ class CollectionsPanel():
 
     def lock_actions(self):
         self.import_button["state"] = "disabled"
-        self.create_button["state"] = "disabled"
         for button in self.collections_buttons_registry:
             button.disable()
 
     def unlock_actions(self):
         self.import_button["state"] = "enabled"
-        self.create_button["state"] = "enabled"
         for button in self.collections_buttons_registry:
             button.enable()
 
@@ -168,7 +168,7 @@ class CollectionsPanel():
                 root=frame, 
                 icon_path=getIconPath("magnifying-glass.png"),
                 tooltip_text="See/edit collection details",
-                onClick=lambda o=line: self._edit_item(o),
+                onClick=line.open_collection_on_browser,
             )
             edit_button.pack(side=tk.RIGHT, padx=2)
             self.collections_buttons_registry.append(edit_button)
@@ -198,6 +198,7 @@ class CollectionsPanel():
         # Check if scrolling is needed
         self._update_scrollbar_visibility()
 
+
     def import_new_collection(self):
         result = ask_collection_url(self.root)
         if result is not None:
@@ -214,9 +215,6 @@ class CollectionsPanel():
         self._update_list()
         self.emit_collections_change()
 
-    def _edit_item(self, item: SubscriptionLine):
-            ISSFileEditorWindow(self.root, on_close=self.loadCollections_async, iss_file_name=item.fileName)
-
     def _delete_item(self, item: SubscriptionLine):
         answer = messagebox.askyesno(title='confirmation',
                     message=f'Are you sure you want to delete "{item.name}" collection ?')
@@ -227,10 +225,6 @@ class CollectionsPanel():
             #only perform change if the collection is activated
             if item.active:
                 self.emit_collections_change()
-
-    def create_new_ISS(self):
-        #TODO : to be really implemented and tested when creation panel done
-        ISSFileEditorWindow(self.root, on_close=self.loadCollections_async)
 
     #MOUSE EVENTS (for the scroll)
     def _bind_mousewheel(self, event):
