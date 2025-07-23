@@ -15,37 +15,35 @@ def updateRegisteredSkins(scanResult: ScanResult) -> tuple[int, int]:
     _estimated_total_progress = 1
     successUpdates = 0
     MessageBrocker.emitProgress(_progress) #TEMP PROGRESS
-    totalUpdates = sum([len(lst) for lst in scanResult.missingSkins.values()]) + sum([len(lst) for lst in scanResult.toBeUpdatedSkins.values()])
+    totalUpdates = len(scanResult.missingSkins) + len(scanResult.toBeUpdatedSkins)
     _progress_step = (_estimated_total_progress - _progress)
     if totalUpdates != 0:
         _progress_step = _progress_step / totalUpdates
-    
-    for source in scanResult.getUsedSources():
+           
+    #import all missings skins
+    for skin in scanResult.missingSkins:
+        try:
+            updateSingleSkinFromRemote(skin)
+            successUpdates = successUpdates+1
+        except Exception as e:
+            MessageBrocker.emitConsoleMessage(f"<red>Technical error : cannot sync {skin.getValue("name")}</red>")
+            logging.error(e)
+
+        _progress += _progress_step #TEMP PROGRESS
+        MessageBrocker.emitProgress(_progress) #TEMP PROGRESS
         
-        #import all missings skins
-        for skin in scanResult.missingSkins[source]:
-            try:
-                updateSingleSkinFromRemote(source, skin)
-                successUpdates = successUpdates+1
-            except Exception as e:
-                MessageBrocker.emitConsoleMessage(f"<red>Technical error : cannot sync {skin.getValue("name")}</red>")
-                logging.error(e)
 
-            _progress += _progress_step #TEMP PROGRESS
-            MessageBrocker.emitProgress(_progress) #TEMP PROGRESS
-            
+    #import all to be updated skins
+    for skin in scanResult.toBeUpdatedSkins:
+        try:
+            updateSingleSkinFromRemote(skin)
+            successUpdates = successUpdates+1
+        except Exception as e:
+            MessageBrocker.emitConsoleMessage(f"<red>Technical error : cannot sync {skin.getValue("name")}</red>")
+            logging.error(e)
 
-        #import all to be updated skins
-        for skin in scanResult.toBeUpdatedSkins[source]:
-            try:
-                updateSingleSkinFromRemote(source, skin)
-                successUpdates = successUpdates+1
-            except Exception as e:
-                MessageBrocker.emitConsoleMessage(f"<red>Technical error : cannot sync {skin.getValue("name")}</red>")
-                logging.error(e)
-
-            _progress += _progress_step #TEMP PROGRESS
-            MessageBrocker.emitProgress(_progress) #TEMP PROGRESS
+        _progress += _progress_step #TEMP PROGRESS
+        MessageBrocker.emitProgress(_progress) #TEMP PROGRESS
 
     return totalUpdates, successUpdates
 
@@ -54,17 +52,17 @@ def deleteUnregisteredSkins(scanResult: ScanResult):
     for skin in scanResult.toBeRemovedSkins:
         deleteSkinFromLocal(skin)
 
-def updateSingleSkinFromRemote(source, remoteSkin: remoteService.RemoteSkin):
+def updateSingleSkinFromRemote(remoteSkin: remoteService.RemoteSkin):
 
-    MessageBrocker.emitConsoleMessage(f"<blue>Downloading {remoteSkin.getValue("name")}...</blue>")
+    MessageBrocker.emitConsoleMessage(f"<blue>Downloading {remoteSkin.name()}...</blue>")
 
     #download to temp the skin
-    downloadedFiles = remoteService.downloadSkinToTempDir(source, remoteSkin)
+    downloadedFiles = remoteService.downloadSkinToTempDir(remoteSkin)
 
     for file in downloadedFiles:
     
         #Move the file to the target directory and replace existing file if any
-        final_path = localService.moveSkinFromPathToDestination(file, remoteSkin.getValue("aircraft"))
+        final_path = localService.moveSkinFromPathToDestination(file, remoteSkin.object_type())
 
         MessageBrocker.emitConsoleMessage(f"Downloaded to {final_path}")
 

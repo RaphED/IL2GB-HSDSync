@@ -5,6 +5,8 @@ import json
 from pythonServices.configurationService import getConf, cockpitNotesModes
 from pythonServices.filesService import downloadFile
 
+skins_download_URL ="https://skins.combatbox.net/[aircraft]/[skinFileName]"
+
 class RemoteSkin:
     def __init__(self, json_raw_data: json) -> None:
         self._json_raw_data = json_raw_data
@@ -46,33 +48,32 @@ class RemoteSkin:
         else:
             return self._json_raw_data["size_in_b_unrestricted"]
 
-def downloadSkinToTempDir(source, skinInfo: RemoteSkin):
+def downloadSkinToTempDir(skinInfo: RemoteSkin):
 
     #build skin URL
-    url = getSourceInfo(source)["skinsURL"]
-    url = url.replace("[aircraft]", skinInfo.getValue("aircraft"))
-    urlMainSkin = url.replace("[skinFileName]", skinInfo.getValue("mainSkinFileName"))
+    url = skins_download_URL.replace("[aircraft]", skinInfo.object_type())
+    urlMainSkin = url.replace("[skinFileName]", skinInfo.mainFileName())
 
     downloadedFiles = []
-    # Download the file(s) to the temporary folder
-
+    
     #check what is this is a single or dual file skin
-    secondarySkinFileName = skinInfo.getValue("secondarySkinFileName")
+    secondarySkinFileName = skinInfo.secondaryFileName()
+
     if secondarySkinFileName is not None and secondarySkinFileName != "":
         #it is a dual file
-        first_dds_file_name = skinInfo.getValue(("name")) + "&1.dds"
-        second_dds_file_name = skinInfo.getValue(("name")) + "&1#1.dds"
+        first_dds_file_name = skinInfo.name() + "&1.dds"
+        second_dds_file_name = skinInfo.name() + "&1#1.dds"
 
         #hack : works only for HSD, the #1 is replaced by %123 on the URL
-        remoteFileName = skinInfo.getValue("secondarySkinFileName").replace("#1", "%231")
+        remoteFileName = secondarySkinFileName.replace("#1", "%231")
         urlSecondarySkin = url.replace("[skinFileName]", remoteFileName)
 
-        downloadedFiles.append(downloadFile(url=urlMainSkin, destination_file_name=first_dds_file_name, expectedMD5=skinInfo.getValue("mainFileMd5")))    
-        downloadedFiles.append(downloadFile(url=urlSecondarySkin, destination_file_name=second_dds_file_name, expectedMD5=skinInfo.getValue("secondaryFileMd5")))
+        downloadedFiles.append(downloadFile(url=urlMainSkin, destination_file_name=first_dds_file_name, expectedMD5=skinInfo.mainFileMd5()))    
+        downloadedFiles.append(downloadFile(url=urlSecondarySkin, destination_file_name=second_dds_file_name, expectedMD5=skinInfo.secondaryFileMd5()))
         
     else:
-        dds_file_name = skinInfo.getValue(("name")) + ".dds"
-        downloadedFiles.append(downloadFile(url=urlMainSkin, destination_file_name=dds_file_name, expectedMD5=skinInfo.getValue("mainFileMd5")))    
+        dds_file_name = skinInfo.name() + ".dds"
+        downloadedFiles.append(downloadFile(url=urlMainSkin, destination_file_name=dds_file_name, expectedMD5=skinInfo.mainFileMd5()))    
     
     return downloadedFiles
 
