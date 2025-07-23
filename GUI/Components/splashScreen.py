@@ -2,7 +2,7 @@ import tkinter as tk
 
 from PIL import Image, ImageTk
 
-from pythonServices.filesService import getRessourcePath
+from Services.filesService import getRessourcePath
 
 class SplashScreen:
     def __init__(self, root, imageFileName):

@@ -1,8 +1,8 @@
 import sys
 
 import logging
-from pythonServices.versionManager import isCurrentVersionUpToDate
-import pythonServices.updateService as updateService
+from Services.versionManager import isCurrentVersionUpToDate
+import Services.updateService as updateService
 
 from GUI.mainGUI import runMainGUI
 from GUI.updaterGUI import runUpdaterGUI

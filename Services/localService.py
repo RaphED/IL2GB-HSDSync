@@ -4,9 +4,9 @@ import json
 import logging
 
 
-from pythonServices.configurationService import getConf
-from pythonServices.filesService import moveFile, deleteFile
-from pythonServices.messageBrocker import MessageBrocker
+from Services.configurationService import getConf
+from Services.filesService import moveFile, deleteFile
+from Services.messageBrocker import MessageBrocker
 
 def getSkinDirectory():
     return os.path.join(getConf("IL2GBGameDirectory"), "data\\graphics\\skins")

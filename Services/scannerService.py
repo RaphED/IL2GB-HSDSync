@@ -1,8 +1,8 @@
-from pythonServices.configurationService import getConf, customPhotoSyncIsActive, checkIL2InstallPath, cockpitNotesModes
-import pythonServices.localService as localService
-import pythonServices.remoteService as remoteService
-from pythonServices.subscriptionsService import getAllSubcriptions
-from pythonServices.messageBrocker import MessageBrocker
+from Services.configurationService import getConf, customPhotoSyncIsActive, checkIL2InstallPath, cockpitNotesModes
+import Services.localService as localService
+import Services.remoteService as remoteService
+from Services.subscriptionsService import getAllSubcriptions
+from Services.messageBrocker import MessageBrocker
 
 import logging
 

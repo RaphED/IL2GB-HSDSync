@@ -3,8 +3,8 @@ import time
 import os
 import logging
 
-from pythonServices.filesService import downloadFile, getTempFolderFullPath, copyFile
-from pythonServices.versionManager import getLastRelease
+from Services.filesService import downloadFile, getTempFolderFullPath, copyFile
+from Services.versionManager import getLastRelease
 
 
 def downloadLastReleaseFile(fileName, prerelease = False):

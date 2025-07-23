@@ -4,7 +4,7 @@ import requests
 from urllib.parse import urlparse
 import threading
 
-from pythonServices.subscriptionsService import importNewCollection
+from Services.subscriptionsService import importNewCollection
 
 
 class CollectionURLDialog:

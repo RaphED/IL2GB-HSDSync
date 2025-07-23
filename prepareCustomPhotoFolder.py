@@ -1,5 +1,5 @@
 import os
-from pythonServices.localService import getAndGenerateCustomPhotosCatalogFromPath
+from Services.localService import getAndGenerateCustomPhotosCatalogFromPath
 
 #(temporary?) tool used for preparing the custom photos folders :
 #   - prepare the manifest files

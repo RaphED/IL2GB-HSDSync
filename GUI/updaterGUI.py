@@ -3,7 +3,7 @@ import threading
 import sys
 
 from GUI.Components.splashScreen import SplashScreen
-import pythonServices.updateService as updateService
+import Services.updateService as updateService
 
 
 

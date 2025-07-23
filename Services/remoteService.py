@@ -2,8 +2,8 @@ import requests
 import logging
 import json
 
-from pythonServices.configurationService import getConf, cockpitNotesModes
-from pythonServices.filesService import downloadFile
+from Services.configurationService import getConf, cockpitNotesModes
+from Services.filesService import downloadFile
 
 skins_download_URL ="https://skins.combatbox.net/[aircraft]/[skinFileName]"
 

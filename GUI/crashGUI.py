@@ -1,11 +1,8 @@
 import tkinter as tk
-import threading
 from PIL import Image, ImageTk
 import requests
 
-from pythonServices.filesService import getRessourcePath
-
-
+from Services.filesService import getRessourcePath
 
 class CrashGUI:
     def __init__(self, root, exception: Exception):

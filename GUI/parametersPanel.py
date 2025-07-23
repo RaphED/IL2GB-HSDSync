@@ -3,8 +3,8 @@ from tkinter import ttk, filedialog
 from PIL import Image, ImageTk
 
 from GUI.Components.tooltip import Tooltip
-from pythonServices.configurationService import getConf, update_config_param, cockpitNotesModes, checkIL2InstallPath
-from pythonServices.filesService import getIconPath
+from Services.configurationService import getConf, update_config_param, cockpitNotesModes, checkIL2InstallPath
+from Services.filesService import getIconPath
 
 class ParametersPanel:
     def __init__(self, root: tk, on_parameters_change=None):

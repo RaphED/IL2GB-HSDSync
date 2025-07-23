@@ -4,8 +4,7 @@ import tkinter as tk
 import logging
 import webbrowser
 
-from pythonServices.configurationService import configurationFileExists
-from pythonServices.filesService import getRessourcePath, getIconPath, cleanTemporaryFolder
+
 
 from GUI.collectionsPanel import CollectionsPanel
 from GUI.parametersPanel import ParametersPanel
@@ -15,9 +14,11 @@ from GUI.progressBar import ProgressBar
 from GUI.Components.clickableIcon import CliquableIcon
 from GUI.firstLaunchGUI import runFirstLaunchGUI
 
-import pythonServices.synchronizerService as SynchronizerService
-import pythonServices.scannerService as ScannerService
-from pythonServices.messageBrocker import MessageBrocker
+import Services.synchronizerService as SynchronizerService
+import Services.scannerService as ScannerService
+from Services.messageBrocker import MessageBrocker
+from Services.configurationService import configurationFileExists
+from Services.filesService import getRessourcePath, getIconPath, cleanTemporaryFolder
 
 class MainGUI:
     

@@ -1,8 +1,8 @@
 import json
 import requests
 
-from pythonServices.filesService import fileExists
-from pythonServices.remoteService import RemoteSkin
+from Services.filesService import fileExists
+from Services.remoteService import RemoteSkin
 
 # Path to the subscription file
 subscription_file = 'HSDSync-subscriptions.json'

@@ -1,11 +1,10 @@
 from requests.exceptions import HTTPError
 
-import pythonServices.localService as localService
-import pythonServices.remoteService as remoteService
-from pythonServices.messageBrocker import MessageBrocker
-from pythonServices.configurationService import getConf, customPhotoSyncIsActive
-
-from pythonServices.scannerService import ScanResult
+import Services.localService as localService
+import Services.remoteService as remoteService
+from Services.messageBrocker import MessageBrocker
+from Services.configurationService import getConf, customPhotoSyncIsActive
+from Services.scannerService import ScanResult
 
 import logging
 

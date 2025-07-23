@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 
-from pythonServices.messageBrocker import MessageBrocker
+from Services.messageBrocker import MessageBrocker
 
 class ProgressBar(ttk.Progressbar):
 

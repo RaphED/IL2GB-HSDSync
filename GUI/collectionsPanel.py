@@ -5,10 +5,10 @@ from tkinter import messagebox
 import webbrowser
 
 from GUI.Components.resizeGrip import ResizeGrip
-from pythonServices.scannerService import bytesToString
-from pythonServices.configurationService import getConf
-from pythonServices.filesService import getIconPath
-from pythonServices.subscriptionsService import SubscribedCollection, getAllSubcriptions, removeCollection, changeSubscriptionActivation
+from Services.scannerService import bytesToString
+from Services.configurationService import getConf
+from Services.filesService import getIconPath
+from Services.subscriptionsService import SubscribedCollection, getAllSubcriptions, removeCollection, changeSubscriptionActivation
 from GUI.Components.clickableIcon import CliquableIcon
 from GUI.Components.collectionURLModal import ask_collection_url
 

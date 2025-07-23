@@ -3,7 +3,7 @@ import threading
 import logging
 
 from GUI.Components.splashScreen import SplashScreen
-import pythonServices.configurationService as configurationService
+import Services.configurationService as configurationService
 
 
 

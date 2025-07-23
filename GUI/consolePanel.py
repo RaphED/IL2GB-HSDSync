@@ -1,6 +1,6 @@
 import tkinter as tk
 
-from pythonServices.messageBrocker import MessageBrocker
+from Services.messageBrocker import MessageBrocker
 
 class ConsolePanel:
     def __init__(self, root: tk):
