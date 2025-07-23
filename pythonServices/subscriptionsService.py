@@ -34,7 +34,7 @@ class SubscribedCollection:
 
         self.id = None
         self.name = None
-        self.descrption = None
+        self.description = None
         self.artist = None
         self.skins: list[RemoteSkin] = []
 
@@ -44,7 +44,14 @@ class SubscribedCollection:
     def loadDataFromURL(self):
         response = requests.get(self.collectionURL)
         if response.status_code == 200:
-            return response.json()
+            raw_json_data = response.json()
+            
+            #Mandatory data. Should raise exception is data is missing
+            self.id = raw_json_data["id"]
+            self.name = raw_json_data["name"]
+            self.descrption = raw_json_data["description"]
+            self.artist = raw_json_data["artist"]
+
         else:
             raise Exception (f"Cannot get collection data from URL {self.collectionURL}")
         

@@ -8,7 +8,7 @@ from pythonServices.subscriptionsService import importNewCollection
 
 
 class CollectionURLDialog:
-    def __init__(self, parent=None, title="Add new collection from URL"):
+    def __init__(self, parent=None, title="Import new collection"):
         self.result = None
         self.dialog = tk.Toplevel(parent) if parent else tk.Tk()
         self.dialog.title(title)
@@ -100,7 +100,10 @@ class CollectionURLDialog:
     
     def load_collection_from_URL_thread(self, url):
         """Thread to check URL without blocking interface"""
-        loaded_collection = self.load_collection_from_URL(url)
+        try:
+            loaded_collection = self.load_collection_from_URL(url)
+        except:
+            loaded_collection = None
         
         # Schedule interface update in main thread
         self.dialog.after(0, self.on_collection_loaded, url, loaded_collection)
@@ -116,7 +119,7 @@ class CollectionURLDialog:
             self.result = loaded_collection
             self.dialog.destroy()
         else:
-            messagebox.showerror("Error", f"URL '{url}' is not accessible.")
+            messagebox.showerror("Error", f"URL '{url}' is not a valid collection.")
     
     def on_cancel(self):
         """Dialog cancellation"""
