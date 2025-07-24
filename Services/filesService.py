@@ -4,7 +4,8 @@ import shutil
 import uuid
 import requests
 import hashlib
-import logging
+
+import Services.loggingService as loggingService
 
 temporaryFolder = "temp"
 
@@ -22,13 +23,13 @@ def cleanTemporaryFolder():
                 try:
                     os.unlink(filePath)
                 except:
-                    logging.warning(f"Cannot clean temporary file {filePath}")
+                    loggingService.warning(f"Cannot clean temporary file {filePath}")
             for d in dirs:
                 dirPath = os.path.join(root, d)
                 try:
                     shutil.rmtree(dirPath)
                 except:
-                    logging.warning(f"Cannot clean temporary directory {dirPath}")
+                    loggingService.warning(f"Cannot clean temporary directory {dirPath}")
                 
 
 # Function to download a file from a URL and save it to a temporary directory
@@ -59,7 +60,7 @@ def downloadFile(url, expectedMD5 = None, prefix_with_uuid=False, destination_fi
         #TODO, retry
         raise Exception(f"Bad file download {temp_file_path}")
     
-    logging.info(f"File Downloaded : {temp_file_path}")
+    loggingService.info(f"File Downloaded : {temp_file_path}")
     return temp_file_path
 
 # Function that return true if the given full file path exists
@@ -90,7 +91,7 @@ def deleteFile(filePath):
     if os.path.exists(filePath):
         os.remove(filePath)
     else:
-        logging.error(f"Cannot delete unfindable file {filePath}" )
+        loggingService.error(f"Cannot delete unfindable file {filePath}" )
 
 #access to ressources 
 def getRessourcePath(relativePath):

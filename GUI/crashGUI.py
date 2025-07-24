@@ -1,6 +1,7 @@
 import tkinter as tk
 from PIL import Image, ImageTk
 import requests
+from Services.loggingService import log_file_name
 
 from Services.filesService import getRessourcePath
 
@@ -22,7 +23,7 @@ class CrashGUI:
         self.image_label = tk.Label(root, image=self.loading_image)
         self.image_label.pack()
 
-        self.genericMessage = tk.Label(root, text="ISS has crashed",  font=("Arial", 18,"bold"), fg="red")
+        self.genericMessage = tk.Label(root, text="HSD Sync has crashed",  font=("Arial", 18,"bold"), fg="red")
         self.genericMessage.pack()
 
         self.errorCause = tk.Label(root, text="",  font=("Arial", 12))
@@ -30,14 +31,14 @@ class CrashGUI:
         self.errorDetail = tk.Label(root, text="",  font=("Arial", 12))
         self.errorDetail.pack()
         
-        errorDetail = "Cause : Unkwown\nPlease consult log file iss.log if you iss folder"
+        errorDetail = f"Cause : Unkwown\nPlease consult log file {log_file_name} in you HSD folder"
         try:
             raise self.exception
         except requests.exceptions.ConnectionError:
             self.errorCause.config(text="Cause : No internet connection !")
         except Exception:
             self.errorCause.config(text="Cause : Unkown")
-            self.errorDetail.config(text="Please consult log file (iss.log) in you iss folder")
+            self.errorDetail.config(text=f"Please consult log file ({log_file_name}) in you HSD folder")
 
 
 def runCrashGUI(exception: Exception):

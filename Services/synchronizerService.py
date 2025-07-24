@@ -5,8 +5,7 @@ import Services.remoteService as remoteService
 from Services.messageBrocker import MessageBrocker
 from Services.configurationService import getConf, customPhotoSyncIsActive
 from Services.scannerService import ScanResult
-
-import logging
+import Services.loggingService as loggingService
 
 def updateRegisteredSkins(scanResult: ScanResult) -> tuple[int, int]:
 
@@ -26,7 +25,7 @@ def updateRegisteredSkins(scanResult: ScanResult) -> tuple[int, int]:
             successUpdates = successUpdates+1
         except Exception as e:
             MessageBrocker.emitConsoleMessage(f"<red>Technical error : cannot sync {skin.getValue("name")}</red>")
-            logging.error(e)
+            loggingService.error(e)
 
         _progress += _progress_step #TEMP PROGRESS
         MessageBrocker.emitProgress(_progress) #TEMP PROGRESS
@@ -39,7 +38,7 @@ def updateRegisteredSkins(scanResult: ScanResult) -> tuple[int, int]:
             successUpdates = successUpdates+1
         except Exception as e:
             MessageBrocker.emitConsoleMessage(f"<red>Technical error : cannot sync {skin.getValue("name")}</red>")
-            logging.error(e)
+            loggingService.error(e)
 
         _progress += _progress_step #TEMP PROGRESS
         MessageBrocker.emitProgress(_progress) #TEMP PROGRESS
@@ -98,7 +97,7 @@ def updateCustomPhotos(toBeUpdatedPhotos):
 def updateAll(scanResult: ScanResult):
     MessageBrocker.emitConsoleMessage("\nSYNCHRONIZATION BEGINS...\n")
     MessageBrocker.emitProgress(0) #TEMP PROGRESS
-    logging.info("START SYNC")
+    loggingService.info("START SYNC")
 
     if customPhotoSyncIsActive():
         updateCustomPhotos(scanResult.toBeUpdatedCockpitNotes)
@@ -108,7 +107,7 @@ def updateAll(scanResult: ScanResult):
     
     totalUpdates, successUpdates = updateRegisteredSkins(scanResult)
 
-    logging.info("END SYNC")
+    loggingService.info("END SYNC")
     MessageBrocker.emitProgress(1) #TEMP PROGRESS
     MessageBrocker.emitConsoleMessage("\n<green><bold>SYNCHRONIZATION FINISHED</bold></green>\n")
     

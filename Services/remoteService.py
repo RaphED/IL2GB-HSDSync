@@ -1,5 +1,4 @@
 import requests
-import logging
 import json
 
 from Services.configurationService import getConf, cockpitNotesModes

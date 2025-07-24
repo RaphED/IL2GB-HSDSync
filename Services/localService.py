@@ -1,12 +1,12 @@
 import os
 import hashlib
 import json
-import logging
 
-
+import Services.loggingService as loggingService
 from Services.configurationService import getConf
 from Services.filesService import moveFile, deleteFile
 from Services.messageBrocker import MessageBrocker
+
 
 def getSkinDirectory():
     return os.path.join(getConf("IL2GBGameDirectory"), "data\\graphics\\skins")
@@ -44,7 +44,7 @@ def getSkinsList():
         #only manage 1 level skins (otherwise i suspect badly placed sinks)
         if parentDir != skinsDirectory:
             
-            logging.warning(f"Unexpected skin(s) {ddsfiles} placement at {root}. Not managed")
+            loggingService.warning(f"Unexpected skin(s) {ddsfiles} placement at {root}. Not managed")
             continue
         
         aircraft =  os.path.basename(os.path.normpath(root))
@@ -129,7 +129,7 @@ def getCustomPhotosListFromPath(path):
 
         #parent dir should be "textures"
         if os.path.basename(os.path.normpath(root)) != "Textures":
-            logging.warning(f"Found unexpected custom photo at {root}")
+            loggingService.warning(f"Found unexpected custom photo at {root}")
             continue
 
         aircraft =  os.path.basename(os.path.normpath(os.path.dirname(root)))

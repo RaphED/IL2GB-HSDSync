@@ -3,8 +3,7 @@ import Services.localService as localService
 import Services.remoteService as remoteService
 from Services.subscriptionsService import getAllSubcriptions
 from Services.messageBrocker import MessageBrocker
-
-import logging
+import Services.loggingService as loggingService
 
 class ScanResult:
     def __init__(self):
@@ -133,7 +132,7 @@ def bytesToString(bytesSize: int, forceSign: bool = False):
     return f"{sign}{file_size_gb:.2f} GB"
 
 def scanSkins():
-    logging.info("START SCAN")
+    loggingService.info("START SCAN")
     scanResult = ScanResult()
 
     #get the local skins list in memory
@@ -144,10 +143,10 @@ def scanSkins():
     skins_ids = []
     for collection in subscribedCollectionList:
         if not collection.active:
-            logging.info(f"Unactive subscribed collection : {collection.name}")
+            loggingService.info(f"Unactive subscribed collection : {collection.name}")
             continue    
         
-        logging.info(f"Subscribed collection : {collection.name}")
+        loggingService.info(f"Subscribed collection : {collection.name}")
         for skin in collection.skins:
             #do not load the same skin twice
             if skin.id() not in skins_ids:
@@ -219,7 +218,7 @@ def scanSkins():
         if foundRemoteSkin is None:
             scanResult.toBeRemovedSkins.append(localSkin)
 
-    logging.info("END SCAN")
+    loggingService.info("END SCAN")
     return scanResult
 
 

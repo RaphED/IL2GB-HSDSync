@@ -1,6 +1,6 @@
 import sys
 
-import logging
+import Services.loggingService as loggingService
 from Services.versionManager import isCurrentVersionUpToDate
 import Services.updateService as updateService
 
@@ -30,17 +30,8 @@ if __name__ == "__main__":
             debug_mode = True
     
     #INITIALISE LOGS
-    logLevel = logging.INFO
-    if debug_mode:
-        logLevel = logging.DEBUG
- 
-    logging.basicConfig(
-        filename='HSDSync.log',       # Le fichier de log où les messages seront enregistrés
-        level= logLevel,          # Le niveau de log (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-        format='%(asctime)s - %(levelname)s - %(message)s',  # Format du message
-        datefmt='%Y-%m-%d %H:%M:%S'    # Format de la date
-    )
-    
+    loggingService.initialise_logger(debug_mode=debug_mode)
+
     try:
         #Check if an update has to be launched
         if not no_update and not isCurrentVersionUpToDate(prerelease = update_withPrerelease) or force_update:
@@ -52,5 +43,5 @@ if __name__ == "__main__":
         else:
             runMainGUI()
     except Exception as e:
-        logging.error(e)
+        loggingService.error(e)
         runCrashGUI(exception=e)
