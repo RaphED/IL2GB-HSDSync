@@ -39,3 +39,7 @@ def isCurrentVersionUpToDate(draft = False, prerelease = False):
     current_version = Version(f"{getCurrentVersion()}")
     remote_version = Version(latest_version)
     return remote_version <= current_version
+
+#Direct access to provide the current version when calling directly that file (used for the build script)
+if __name__ == "__main__":
+    print(getCurrentVersion())

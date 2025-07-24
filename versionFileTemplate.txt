@@ -16,13 +16,13 @@ VSVersionInfo(
                 StringTable(
                     '040904B0',
                     [
-                        StringStruct('CompanyName', 'IRRECORPS'),
-                        StringStruct('FileDescription', 'Inter-squadron Skin Synchronizer'),
+                        StringStruct('CompanyName', 'RaphED'),
+                        StringStruct('FileDescription', 'Haluter Skin Downloader'),
                         StringStruct('FileVersion', '$VERSION.0.0.0'),
-                        StringStruct('InternalName', 'ISS'),
-                        StringStruct('LegalCopyright', '© 2024 IRRECORPS'),
+                        StringStruct('InternalName', 'HSDSync'),
+                        StringStruct('LegalCopyright', '© 2025 RaphED'),
                         StringStruct('OriginalFilename', '$FILENAME'),
-                        StringStruct('ProductName', 'ISS Program'),
+                        StringStruct('ProductName', 'HSDSync'),
                         StringStruct('ProductVersion', '$VERSION.0.0.0')
                     ]
                 )

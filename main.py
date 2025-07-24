@@ -13,6 +13,7 @@ if __name__ == "__main__":
 
     force_update = False
     updater_mode = False
+    no_update = False
     update_withPrerelease = False
     debug_mode = False
 

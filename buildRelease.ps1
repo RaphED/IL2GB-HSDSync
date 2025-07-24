@@ -3,7 +3,7 @@
 #Build global parameters
 $BuildDir = "build"
 $DistDir = "release"
-$zipFile = "ISS.zip"
+$zipFile = "HSDSync.zip"
 
 #clear all pycaches
 Get-ChildItem -Path "." -Directory -Recurse -Filter "__pycache__" | ForEach-Object {
@@ -11,18 +11,22 @@ Get-ChildItem -Path "." -Directory -Recurse -Filter "__pycache__" | ForEach-Obje
 }
 
 #clear build folder
-Remove-Item -Path $BuildDir -Recurse -Force
+if (Test-Path $DistDir) {
+    Remove-Item -Path $BuildDir -Recurse -Force
+}
 New-Item -Path $BuildDir -ItemType Directory
 
 #clear release folder
-Remove-Item -Path $DistDir -Recurse -Force
+if (Test-Path $DistDir) {
+    Remove-Item -Path $DistDir -Recurse -Force
+}
 New-Item -Path $DistDir -ItemType Directory
 
 #Activate the venv
 .\venv\Scripts\Activate.ps1
 
 #VERSIONNING
-$VERSION = python versionManager.py
+$VERSION = python Services\versionManager.py
 
 #Script to generate version files from the template
 function New-VersionFile {
@@ -68,11 +72,7 @@ function New-exeFileFromSpecFile {
 }
 
 #Creation of the main EXE
-New-exeFileFromSpecFile -appName "ISS"
-
-#add a Subscription folder with an example in it
-New-Item -Path "$DistDir\Subscriptions" -ItemType Directory
-Copy-Item -Path "SubscriptionExamples\IRRE Full.iss" -Destination "$DistDir\Subscriptions\IRRE Full.iss.disabled" -Recurse
+New-exeFileFromSpecFile -appName "HSDSync"
 
 #create the zip with all files in the dist
 Compress-Archive -Path "$DistDir\*" -DestinationPath $DistDir"\"$zipFile

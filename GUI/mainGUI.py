@@ -26,14 +26,14 @@ class MainGUI:
 
         self.root = root
 
-        self.root.iconbitmap(getRessourcePath("iss.ico"))
+        self.root.iconbitmap(getRessourcePath("hsd.ico"))
 
         style = ttk.Style(self.root)
         
         self.root.tk.call("source",getRessourcePath("forest-light.tcl"))
         style.theme_use("forest-light")
         
-        self.root.title("InterSquadron Skin Synchronizer")
+        self.root.title("Haluter Skin Downloader")
         self.root.geometry("850x600")
         
         # 1 - UPPER FRAME
@@ -78,8 +78,8 @@ class MainGUI:
         self.helpIcon = CliquableIcon(
             info_bar, 
             icon_path=getIconPath("help-32.png"), 
-            tooltip_text="Online ISS documentation", 
-            onClick=open_link_ISSDocumentation
+            tooltip_text="Online HSD documentation", 
+            onClick=open_link_HSDDocumentation
         )
         
         self.irreIcon.grid(column=0, row=0, padx=5, pady=2)
@@ -181,7 +181,7 @@ class MainGUI:
 def open_link(link: str):
     webbrowser.open(link)
 
-def open_link_ISSDocumentation():
+def open_link_HSDDocumentation():
     open_link("https://melodious-andesaurus-f9a.notion.site/IL2GB-Inter-squadron-Skin-Synchronizer-ISS-1477b1e5c2b8803db322d0daba993f94")
 
 def open_link_IRREWelcome():

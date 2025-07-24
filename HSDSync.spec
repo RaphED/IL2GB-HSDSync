@@ -26,7 +26,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name='ISS',
+    name='HSDSync',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -39,6 +39,6 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    version='build\\ISS_versionFile',
-    icon=['Ressources\\iss.ico'],
+    version='build\\HSDSync_versionFile',
+    icon=['Ressources\\hsd.ico'],
 )
