@@ -176,7 +176,9 @@ def calculate_full_md5(file_path):
             hash_md5.update(chunk)
     return hash_md5.hexdigest()
 
-def manage_file_md5(file_path, json_file="file_hashes.json"):
+file_hashes_name = "HSDSync-hashes.json"
+
+def manage_file_md5(file_path, json_file=file_hashes_name):
     """
     Manage file hashes using metadata as a quick check before full MD5 calculation.
     Returns the full MD5 hash of the file.

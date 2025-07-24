@@ -6,5 +6,5 @@ Subscriptions
 *.pyc
 HSDSync-config.json
 HSDSync-subscriptions.json
-file_hashes.json
+HSDSync-hashes.json
 HSDSync.log
