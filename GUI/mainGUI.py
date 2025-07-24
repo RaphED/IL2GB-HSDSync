@@ -1,10 +1,14 @@
 import threading
 from tkinter import ttk
 import tkinter as tk
-import logging
 import webbrowser
 
-
+import Services.loggingService as loggingService
+import Services.synchronizerService as SynchronizerService
+import Services.scannerService as ScannerService
+from Services.messageBrocker import MessageBrocker
+from Services.configurationService import configurationFileExists
+from Services.filesService import getRessourcePath, getIconPath, cleanTemporaryFolder
 
 from GUI.collectionsPanel import CollectionsPanel
 from GUI.parametersPanel import ParametersPanel
@@ -14,11 +18,6 @@ from GUI.progressBar import ProgressBar
 from GUI.Components.clickableIcon import CliquableIcon
 from GUI.firstLaunchGUI import runFirstLaunchGUI
 
-import Services.synchronizerService as SynchronizerService
-import Services.scannerService as ScannerService
-from Services.messageBrocker import MessageBrocker
-from Services.configurationService import configurationFileExists
-from Services.filesService import getRessourcePath, getIconPath, cleanTemporaryFolder
 
 class MainGUI:
     
@@ -156,9 +155,15 @@ class MainGUI:
         self.cleanScanResult()
         self.lock_components_actions()
 
-        self.currentScanResult = ScannerService.scanAll()
+        try:
+            self.currentScanResult = ScannerService.scanAll()
+            self.displayScanResult()
+        except Exception as e:
+            loggingService.error(e)
+            MessageBrocker.emitConsoleMessage("SCAN ERROR (see log file for further details)")
+            MessageBrocker.emitProgress(0)
 
-        self.displayScanResult()
+        
         self.unlock_components_actions()
 
     def start_scan_async(self):
@@ -166,7 +171,7 @@ class MainGUI:
     
     def start_synchronization(self):
         if self.currentScanResult is None:
-            logging.error("Sync launched with no scan result")
+            loggingService.error("Sync launched with no scan result")
             return
         
         self.lock_components_actions()

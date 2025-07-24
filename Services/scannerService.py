@@ -1,9 +1,9 @@
+import Services.loggingService as loggingService
 from Services.configurationService import getConf, customPhotoSyncIsActive, checkIL2InstallPath, cockpitNotesModes
 import Services.localService as localService
 import Services.remoteService as remoteService
 from Services.subscriptionsService import getAllSubcriptions
 from Services.messageBrocker import MessageBrocker
-import Services.loggingService as loggingService
 
 class ScanResult:
     def __init__(self):
@@ -255,6 +255,7 @@ def scanAll():
 
     MessageBrocker.emitConsoleMessage("SCAN BEGINS...")
     MessageBrocker.emitProgress(0) #TEMP PROGRESS
+    
     scanResult = scanSkins()
     if customPhotoSyncIsActive():
         scanResult.toBeUpdatedCockpitNotes = scanCustomPhotos()

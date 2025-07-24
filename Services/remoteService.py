@@ -3,6 +3,7 @@ import json
 
 from Services.configurationService import getConf, cockpitNotesModes
 from Services.filesService import downloadFile
+from Services.messageBrocker import MessageBrocker
 
 skins_download_URL ="https://skins.combatbox.net/[aircraft]/[skinFileName]"
 
@@ -103,13 +104,20 @@ def getCustomPhotosList():
     if catalogURL is None:
         return []
 
-    response = requests.get(catalogURL)
+    try:
+        response = requests.get(catalogURL)
 
-    # Check if the request was successful (status code 200)
-    if response.status_code == 200:
-        file_content = response.json()
-        return file_content
-    return []
+         # Check if the request was successful (status code 200)
+        if response.status_code == 200:
+            file_content = response.json()
+            return file_content
+        else:
+            raise Exception(f"Cannot retrieve cockpit notes catalog due to server response :{response.status_code}")
+    except requests.ConnectionError as e:
+        MessageBrocker.emitConsoleMessage("Cannot join server to retrieve cockpit notes. Consider deactivating its synchronization.")
+        raise e
+    except Exception as e:
+        raise e
 
 def getSpaceUsageOfCustomPhotoCatalog(customPhotosList):
     totalDiskSpace = 0
