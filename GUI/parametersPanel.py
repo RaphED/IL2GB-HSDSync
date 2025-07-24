@@ -61,7 +61,7 @@ class ParametersPanel:
         self.toggle_removeSkins_button.pack(side=tk.LEFT, padx=5)
         toggle_removeSkins_label = tk.Label(toggle_removeSkins_frame, text="Auto remove unregistered skins", anchor="w")
         toggle_removeSkins_label.pack(side=tk.LEFT, padx=0)
-        Tooltip(toggle_removeSkins_label, text="Check to use ISS as the only custom skins manager - all other skins will be deleted")
+        Tooltip(toggle_removeSkins_label, text="Check to use HSD as the only custom skins manager - all other skins will be deleted")
         
         toggle_applyCensorship_frame = tk.Frame(params_label_frame)
         toggle_applyCensorship_frame.pack(fill="x", pady=10)

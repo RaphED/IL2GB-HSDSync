@@ -109,7 +109,7 @@ class CollectionsPanel():
         
         #clear the collections
         self.subscriptionLines = []
-        #This is the most time consuming part, as it has to download the remote catalog and the remote iss files
+        #This is the most time consuming part, as it has to get all collection content
         try:
             for collection in getAllSubcriptions():
                 self.subscriptionLines.append(SubscriptionLine(collection))

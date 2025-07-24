@@ -35,6 +35,9 @@ def getLastRelease(draft = False, prerelease = False):
     
 def isCurrentVersionUpToDate(draft = False, prerelease = False):
     release_info = getLastRelease(draft, prerelease)
+    #special case where there is no current released version
+    if release_info is None:
+        return True
     latest_version = release_info["tag_name"]
     current_version = Version(f"{getCurrentVersion()}")
     remote_version = Version(latest_version)

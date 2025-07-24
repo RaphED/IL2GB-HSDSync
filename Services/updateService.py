@@ -6,6 +6,7 @@ import Services.loggingService as loggingService
 from Services.filesService import downloadFile, getTempFolderFullPath, copyFile
 from Services.versionManager import getLastRelease
 
+exe_file_name = "HSDSync.exe"
 
 def downloadLastReleaseFile(fileName, prerelease = False):
     release_info = getLastRelease(prerelease = prerelease)
@@ -29,14 +30,14 @@ def downloadAndRunUpdater(prerelease = False):
     
     loggingService.info("Updater : Start download And Run updater")
     #download the last EXE
-    newExePath = downloadLastReleaseFile("ISS.exe", prerelease = prerelease)
+    newExePath = downloadLastReleaseFile(exe_file_name, prerelease = prerelease)
     #run the last updater in an independant process
     runNewIndependantProcess([newExePath, "-updater"])
 
 def replaceAndLaunchMainExe(prerelease = False):
     loggingService.info("Updater : Replace and Launch Main Exe")
 
-    newExeFilePath = os.path.join(getTempFolderFullPath(), "ISS.exe")
+    newExeFilePath = os.path.join(getTempFolderFullPath(), exe_file_name)
     #HACK : if the new exe is not there, rerun the download
     if not os.path.exists(newExeFilePath):
         loggingService.warning(f"Autoupdater Cannot find the last exe file at {newExeFilePath}")
@@ -46,7 +47,7 @@ def replaceAndLaunchMainExe(prerelease = False):
     #TODO : perform a while checker
     time.sleep(5)
     #copy the file next to the exe to replace with another name
-    mainExeFilePath = os.path.join(os.path.curdir, "ISS.exe")
+    mainExeFilePath = os.path.join(os.path.curdir, exe_file_name)
     
     copyFile(newExeFilePath, mainExeFilePath)
 
