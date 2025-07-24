@@ -14,6 +14,9 @@ def initialise_logger(debug_mode = False):
         datefmt='%Y-%m-%d %H:%M:%S'    # Format de la date
     )
 
+    #Specific conditions to avoid useless logs
+    logging.getLogger("PIL").setLevel(logging.INFO)
+
 def info(e):
     logging.info(e)
 
