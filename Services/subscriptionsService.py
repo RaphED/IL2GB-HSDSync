@@ -1,8 +1,10 @@
 import json
 import requests
 
+import Services.loggingService as loggingService
 from Services.filesService import fileExists
 from Services.remoteService import RemoteSkin
+from Services.messageBrocker import MessageBrocker
 
 # Path to the subscription file
 subscription_file = 'HSDSync-subscriptions.json'
@@ -43,7 +45,13 @@ class SubscribedCollection:
         self.size_in_b_restricted_only = 0
 
         #Automatically load data from URL on object creation
-        self.loadDataFromURL()
+        try:
+            self.loadDataFromURL()
+        except requests.ConnectionError as e:
+            MessageBrocker.emitConsoleMessage("Cannot load subscription, server is not responding")
+            raise e
+        except Exception as e:
+            raise e
 
     def loadDataFromURL(self):
         response = requests.get(self.collectionURL)
@@ -60,7 +68,9 @@ class SubscribedCollection:
 
             for skin_json in raw_json_data.get("skins", []):
                 self.skins.append(RemoteSkin(skin_json))
-
+        elif response.status_code == 404:
+            loggingService.error(f"Cannot find (404) subscription for URL {self.collectionURL}")
+            self.name = "Dead link"
         else:
             raise Exception (f"Cannot get collection data from URL {self.collectionURL}")
         

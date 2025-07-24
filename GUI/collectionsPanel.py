@@ -4,11 +4,14 @@ import threading
 from tkinter import messagebox
 import webbrowser
 
-from GUI.Components.resizeGrip import ResizeGrip
+import Services.loggingService as loggingService
 from Services.scannerService import bytesToString
 from Services.configurationService import getConf
 from Services.filesService import getIconPath
 from Services.subscriptionsService import SubscribedCollection, getAllSubcriptions, removeCollection, changeSubscriptionActivation
+from Services.messageBrocker import MessageBrocker
+
+from GUI.Components.resizeGrip import ResizeGrip
 from GUI.Components.clickableIcon import CliquableIcon
 from GUI.Components.collectionURLModal import ask_collection_url
 
@@ -107,11 +110,17 @@ class CollectionsPanel():
         #clear the collections
         self.subscriptionLines = []
         #This is the most time consuming part, as it has to download the remote catalog and the remote iss files
-        for collection in getAllSubcriptions():
-            self.subscriptionLines.append(SubscriptionLine(collection))
-        
-        self.root.after(0, self._update_list)
-        self.emit_loading_completed()
+        try:
+            for collection in getAllSubcriptions():
+                self.subscriptionLines.append(SubscriptionLine(collection))
+                    
+            self.root.after(0, self._update_list)
+            self.emit_loading_completed()
+            
+        except Exception as e:
+            loggingService.error(e)
+            MessageBrocker.emitConsoleMessage("CRITICAL error, cannot load collections from server. See log file for further details.")
+
 
     def loadCollections_async(self):
         threading.Thread(target=self.loadCollections).start()
