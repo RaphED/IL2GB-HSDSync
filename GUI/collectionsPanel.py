@@ -19,7 +19,7 @@ class SubscriptionLine():
     def __init__(self, collection: SubscribedCollection):
         self.id = collection.id
         self.name = collection.name
-        self.browserURL = collection.collectionURL #TODO : branch on the web UI instead of API
+        self.browserURL = collection.browser_URL
         self.active = collection.active
         self.size_in_b_unrestricted = collection.size_in_b_unrestricted
         self.size_in_b_restricted_only = collection.size_in_b_restricted_only

@@ -9,6 +9,8 @@ from Services.messageBrocker import MessageBrocker
 # Path to the subscription file
 subscription_file = 'HSDSync-subscriptions.json'
 
+browser_collection_URL = "https://h2950237.stratoserver.net:8443/collections/[collection_id]"
+
 # Function to load or create the subsscription file
 def load_subscription_file():
     # Check if the file exists
@@ -34,6 +36,7 @@ def save_subscription_file():
 class SubscribedCollection:
     def __init__(self, collectionURL: str, active: bool = True):
         self.collectionURL = collectionURL
+        self.browser_URL = collectionURL
         self.active = active
 
         self.id = None
@@ -65,6 +68,7 @@ class SubscribedCollection:
             self.artist = raw_json_data["artist"]
             self.size_in_b_unrestricted = raw_json_data["size_in_b_unrestricted"]
             self.size_in_b_restricted_only = raw_json_data["size_in_b_restricted_only"]
+            self.browser_URL = browser_collection_URL.replace("[collection_id]", str(self.id))
 
             for skin_json in raw_json_data.get("skins", []):
                 self.skins.append(RemoteSkin(skin_json))
