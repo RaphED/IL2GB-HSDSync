@@ -54,7 +54,7 @@ class SubscribedCollection:
             raise e
 
     def loadDataFromURL(self):
-        response = requests.get(self.collectionURL)
+        response = requests.get(self.collectionURL, verify=False)
         if response.status_code == 200:
             raw_json_data = response.json()
             
