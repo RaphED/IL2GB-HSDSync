@@ -163,7 +163,7 @@ def scanSkins():
         foundLocalSkin = None
         for localSkin in scanResult.previouslyInstalledSkins:
             #not the same A/C, no match
-            if remoteSkin.object_type() != localSkin["aircraft"]:
+            if remoteSkin.game_asset_code() != localSkin["game_asset_code"]:
                 continue
             
             #not the same skin name, no match
@@ -208,7 +208,7 @@ def scanSkins():
         foundRemoteSkin = None
 
         for remoteSkin in scanResult.subscribedSkins:
-            if remoteSkin.object_type() == localSkin["aircraft"]: #prefiltering to optimize search
+            if remoteSkin.game_asset_code() == localSkin["game_asset_code"]: #prefiltering to optimize search
                 #TODO: Manage orphans skins
                 if remoteSkin.name() == localSkin["name"]:
                     foundRemoteSkin = remoteSkin

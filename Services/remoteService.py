@@ -16,8 +16,8 @@ class RemoteSkin:
         return self._json_raw_data["id"]
     def name(self):
         return self._json_raw_data["title"]
-    def object_type(self):
-        return self._json_raw_data["plane"]
+    def game_asset_code(self):
+        return self._json_raw_data["game_asset"]["code_name"]
     
     #get variant sub json data
     def unrestricted_variant_content(self) -> json:
@@ -51,7 +51,7 @@ class RemoteSkin:
 def downloadSkinToTempDir(skinInfo: RemoteSkin):
 
     #build skin URL
-    url = skins_download_URL.replace("[aircraft]", skinInfo.object_type())
+    url = skins_download_URL.replace("[aircraft]", skinInfo.game_asset_code())
     urlMainSkin = url.replace("[skinFileName]", skinInfo.mainFileName())
 
     downloadedFiles = []

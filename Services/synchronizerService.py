@@ -60,7 +60,7 @@ def updateSingleSkinFromRemote(remoteSkin: remoteService.RemoteSkin):
     for file in downloadedFiles:
     
         #Move the file to the target directory and replace existing file if any
-        final_path = localService.moveSkinFromPathToDestination(file, remoteSkin.object_type())
+        final_path = localService.moveSkinFromPathToDestination(file, remoteSkin.game_asset_code())
 
         MessageBrocker.emitConsoleMessage(f"Downloaded to {final_path}")
 

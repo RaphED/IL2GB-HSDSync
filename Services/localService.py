@@ -47,7 +47,7 @@ def getSkinsList():
             loggingService.warning(f"Unexpected skin(s) {ddsfiles} placement at {root}. Not managed")
             continue
         
-        aircraft =  os.path.basename(os.path.normpath(root))
+        game_asset_code =  os.path.basename(os.path.normpath(root))
 
         #parse only main skin files
         for ddsFileName in [file for file in ddsfiles if not file.endswith("#1.dds")]:
@@ -60,7 +60,7 @@ def getSkinsList():
                 skin_name = skin_name[:-2]
             
             skinList.append({
-                "aircraft": aircraft,
+                "game_asset_code": game_asset_code,
                 "name": skin_name,
                 "mainFileName": ddsFileName,
                 "mainFileSize": filestats.st_size,
@@ -87,12 +87,12 @@ def moveSkinFromPathToDestination(src_path, aircraft):
     return moveFile(src_path, os.path.join(getSkinDirectory(), aircraft))
 
 def removeSkin(localSkinInfo):
-    filePath = os.path.join(getSkinDirectory(), localSkinInfo["aircraft"], localSkinInfo["mainFileName"])
+    filePath = os.path.join(getSkinDirectory(), localSkinInfo["game_asset_code"], localSkinInfo["mainFileName"])
     deleteFile(filePath)
 
     if localSkinInfo.get("secondaryFileName") is not None and  localSkinInfo["secondaryFileName"] != "":
         #there is a secondary file
-        secondaryFilePath = os.path.join(getSkinDirectory(), localSkinInfo["aircraft"], localSkinInfo["secondaryFileName"])
+        secondaryFilePath = os.path.join(getSkinDirectory(), localSkinInfo["game_asset_code"], localSkinInfo["secondaryFileName"])
         deleteFile(secondaryFilePath)
 
 def getSpaceUsageOfLocalSkinCatalog(skinList):
