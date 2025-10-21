@@ -5,7 +5,7 @@ from Services.configurationService import getConf, cockpitNotesModes
 from Services.filesService import downloadFile
 from Services.messageBrocker import MessageBrocker
 
-skins_download_URL ="https://skins.combatbox.net/[aircraft]/[skinFileName]"
+skins_download_URL ="https://skins.combatbox.net/[skinFileName]"
 
 class RemoteSkin:
     def __init__(self, json_raw_data: json) -> None:
@@ -34,7 +34,7 @@ class RemoteSkin:
             return self.unrestricted_variant_content()
 
     def mainFileName(self):
-        return self.get_variant_regarding_censorship_configuration()["main_file_name"]    
+        return self.get_variant_regarding_censorship_configuration()["main_file_name"]
     def mainFileMd5(self):
         return self.get_variant_regarding_censorship_configuration()["main_file_MD5"]
     def secondaryFileName(self):
@@ -51,8 +51,7 @@ class RemoteSkin:
 def downloadSkinToTempDir(skinInfo: RemoteSkin):
 
     #build skin URL
-    url = skins_download_URL.replace("[aircraft]", skinInfo.game_asset_code())
-    urlMainSkin = url.replace("[skinFileName]", skinInfo.mainFileName())
+    urlMainSkin = skins_download_URL.replace("[skinFileName]", skinInfo.mainFileName())
 
     downloadedFiles = []
     
@@ -66,7 +65,7 @@ def downloadSkinToTempDir(skinInfo: RemoteSkin):
 
         #hack : works only for HSD, the #1 is replaced by %123 on the URL
         remoteFileName = secondarySkinFileName.replace("#1", "%231")
-        urlSecondarySkin = url.replace("[skinFileName]", remoteFileName)
+        urlSecondarySkin = skins_download_URL.replace("[skinFileName]", remoteFileName)
 
         downloadedFiles.append(downloadFile(url=urlMainSkin, destination_file_name=first_dds_file_name, expectedMD5=skinInfo.mainFileMd5()))    
         downloadedFiles.append(downloadFile(url=urlSecondarySkin, destination_file_name=second_dds_file_name, expectedMD5=skinInfo.secondaryFileMd5()))
