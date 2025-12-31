@@ -9,7 +9,7 @@ from Services.messageBrocker import MessageBrocker
 # Path to the subscription file
 subscription_file = 'HSDSync-subscriptions.json'
 
-browser_collection_URL = "https://h2950237.stratoserver.net:8443/collections/[collection_id]"
+browser_collection_URL = "https://hsd-online.net/collections/[collection_id]"
 
 # Function to load or create the subsscription file
 def load_subscription_file():
