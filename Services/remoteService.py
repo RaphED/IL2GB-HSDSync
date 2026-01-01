@@ -5,7 +5,7 @@ from Services.configurationService import getConf, cockpitNotesModes
 from Services.filesService import downloadFile
 from Services.messageBrocker import MessageBrocker
 
-skins_download_URL ="https://skins.combatbox.net/[skinFileName]"
+skins_download_URL = "https://hsd-online.net/api/skins/files/[path]"
 
 class RemoteSkin:
     def __init__(self, json_raw_data: json) -> None:
@@ -33,14 +33,24 @@ class RemoteSkin:
         else:
             return self.unrestricted_variant_content()
 
-    def mainFileName(self):
-        return self.get_variant_regarding_censorship_configuration()["main_file_name"]
-    def mainFileMd5(self):
-        return self.get_variant_regarding_censorship_configuration()["main_file_MD5"]
-    def secondaryFileName(self):
-        return self.get_variant_regarding_censorship_configuration().get("secondary_file_name", None)
-    def secondaryFileMd5(self):
-        return self.get_variant_regarding_censorship_configuration().get("secondary_file_MD5", None)
+    class remoteDDSFileInfo:
+        def __init__(self, destination_name: str, path: str, md5: str):
+            self.destination_name = destination_name
+            self.md5 = md5
+            self.path = path
+    
+    def dds_files(self) -> list[remoteDDSFileInfo]:
+        variant = self.get_variant_regarding_censorship_configuration()
+        dds_files_info = []
+        for file in variant.get("dds_files", []):
+            dds_file = self.remoteDDSFileInfo(
+                destination_name=file["destination_name"],
+                path=file["path"],
+                md5=file["MD5"]
+            )
+            dds_files_info.append(dds_file)
+        
+        return dds_files_info
     
     def size_in_b(self) -> int:
         if getConf("applyCensorship"):
@@ -50,29 +60,18 @@ class RemoteSkin:
 
 def downloadSkinToTempDir(skinInfo: RemoteSkin):
 
-    #build skin URL
-    urlMainSkin = skins_download_URL.replace("[skinFileName]", skinInfo.mainFileName())
-
     downloadedFiles = []
-    
-    #check what is this is a single or dual file skin
-    secondarySkinFileName = skinInfo.secondaryFileName()
 
-    if secondarySkinFileName is not None and secondarySkinFileName != "":
-        #it is a dual file
-        first_dds_file_name = skinInfo.name() + "&1.dds"
-        second_dds_file_name = skinInfo.name() + "&1#1.dds"
+    #download all dds files
+    for file in skinInfo.dds_files():
 
-        #hack : works only for HSD, the #1 is replaced by %123 on the URL
-        remoteFileName = secondarySkinFileName.replace("#1", "%231")
-        urlSecondarySkin = skins_download_URL.replace("[skinFileName]", remoteFileName)
-
-        downloadedFiles.append(downloadFile(url=urlMainSkin, destination_file_name=first_dds_file_name, expectedMD5=skinInfo.mainFileMd5()))    
-        downloadedFiles.append(downloadFile(url=urlSecondarySkin, destination_file_name=second_dds_file_name, expectedMD5=skinInfo.secondaryFileMd5()))
-        
-    else:
-        dds_file_name = skinInfo.name() + ".dds"
-        downloadedFiles.append(downloadFile(url=urlMainSkin, destination_file_name=dds_file_name, expectedMD5=skinInfo.mainFileMd5()))    
+        downloadedFiles.append(
+            downloadFile(
+                url=skins_download_URL.replace("[path]", file.path), 
+                destination_file_name=file.destination_name, 
+                expectedMD5=file.md5
+            )
+        )
     
     return downloadedFiles
 

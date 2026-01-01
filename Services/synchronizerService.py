@@ -24,7 +24,7 @@ def updateRegisteredSkins(scanResult: ScanResult) -> tuple[int, int]:
             updateSingleSkinFromRemote(skin)
             successUpdates = successUpdates+1
         except Exception as e:
-            MessageBrocker.emitConsoleMessage(f"<red>Technical error : cannot sync {skin.getValue("name")}</red>")
+            MessageBrocker.emitConsoleMessage(f"<red>Technical error : cannot sync {skin.name()}</red>")
             loggingService.error(e)
 
         _progress += _progress_step #TEMP PROGRESS
@@ -64,9 +64,9 @@ def updateSingleSkinFromRemote(remoteSkin: remoteService.RemoteSkin):
 
         MessageBrocker.emitConsoleMessage(f"Downloaded to {final_path}")
 
-def deleteSkinFromLocal(localSkinInfo):
+def deleteSkinFromLocal(localSkinInfo: localService.LocalSkin):
     localService.removeSkin(localSkinInfo)
-    MessageBrocker.emitConsoleMessage(f"<chocolate>Deleted skin : {localSkinInfo["name"]}</chocolate>")
+    MessageBrocker.emitConsoleMessage(f"<chocolate>Deleted skin : {localSkinInfo.name}</chocolate>")
 
 
 def updateCustomPhotos(toBeUpdatedPhotos):

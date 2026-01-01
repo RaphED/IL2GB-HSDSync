@@ -10,8 +10,8 @@ class ScanResult:
         self.subscribedSkins = list[remoteService.RemoteSkin]()
         self.missingSkins = list[remoteService.RemoteSkin]()
         self.toBeUpdatedSkins = list[remoteService.RemoteSkin]()
-        self.toBeRemovedSkins= list()
-        self.previouslyInstalledSkins = list()
+        self.toBeRemovedSkins= list[localService.LocalSkin]()
+        self.previouslyInstalledSkins = list[localService.LocalSkin]()
         self.toBeUpdatedCockpitNotes = list()
         
     def getDiskUsageStats(self):
@@ -57,7 +57,7 @@ class ScanResult:
         returnString += "\n"
         
         for skin in self.toBeRemovedSkins:
-            returnString += f"<chocolate>{skin['name']}</chocolate>\n"
+            returnString += f"<chocolate>{skin.name}</chocolate>\n"
         if len(self.toBeRemovedSkins) == 0:
             returnString +="- None -\n"
 
@@ -156,18 +156,18 @@ def scanSkins():
     #then check if we can find the remote skin matching with the local skin
     
     #initialise result collections
-    scanResult.missingSkins = list()
-    scanResult.toBeUpdatedSkins = list()
+    scanResult.missingSkins = list[remoteService.RemoteSkin]()
+    scanResult.toBeUpdatedSkins = list[remoteService.RemoteSkin]()
 
     for remoteSkin in scanResult.subscribedSkins:
         foundLocalSkin = None
         for localSkin in scanResult.previouslyInstalledSkins:
             #not the same A/C, no match
-            if remoteSkin.game_asset_code() != localSkin["game_asset_code"]:
+            if remoteSkin.game_asset_code() != localSkin.game_asset_code:
                 continue
             
             #not the same skin name, no match
-            if remoteSkin.name() != localSkin["name"]:
+            if remoteSkin.name() != localSkin.name:
                 continue
             
             #there is a match !
@@ -176,22 +176,21 @@ def scanSkins():
             #the skins is already there. Up to date ? 
             skinAsToBeUpdated = False
 
-            #check main file md5
-            if remoteSkin.mainFileMd5() != localSkin["mainFileMd5"]:
-                skinAsToBeUpdated = True
-            else:
-                #the main file is the same, but we have to look at the secondary file if any
-                secondarySkinFileName = remoteSkin.secondaryFileName()
+            for dds_file in remoteSkin.dds_files():
+                #search the corresponding local file and if any difference is identified, then mark the skin as to be updated
+                matching_local_file = None
+                for local_dds_file in localSkin.dds_files:
+                    if local_dds_file.fileName == dds_file.destination_name:
+                        matching_local_file = local_dds_file
+                        break
                 
-                #if there is a secondary file declared on the remote
-                if secondarySkinFileName is not None and secondarySkinFileName != "":
-                    
-                    #check if we can find the secondary on the local
-                    if localSkin.get("secondaryFileName") is None:
-                        skinAsToBeUpdated = True
-                    #check the md5 is the proper one
-                    elif remoteSkin.secondaryFileMd5() != localSkin["secondaryFileMd5"]:
-                        skinAsToBeUpdated = True
+                if matching_local_file is None:
+                    skinAsToBeUpdated = True
+                    break
+                
+                if matching_local_file.fileMd5 != dds_file.md5:
+                    skinAsToBeUpdated = True
+                    break
             
             #if any modification has to be made, put the skin in the list to be updated
             if skinAsToBeUpdated:
@@ -208,9 +207,9 @@ def scanSkins():
         foundRemoteSkin = None
 
         for remoteSkin in scanResult.subscribedSkins:
-            if remoteSkin.game_asset_code() == localSkin["game_asset_code"]: #prefiltering to optimize search
+            if remoteSkin.game_asset_code() == localSkin.game_asset_code: #prefiltering to optimize search
                 #TODO: Manage orphans skins
-                if remoteSkin.name() == localSkin["name"]:
+                if remoteSkin.name() == localSkin.name:
                     foundRemoteSkin = remoteSkin
                     break
 

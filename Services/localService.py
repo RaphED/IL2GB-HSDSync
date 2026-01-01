@@ -11,12 +11,24 @@ from Services.messageBrocker import MessageBrocker
 def getSkinDirectory():
     return os.path.join(getConf("IL2GBGameDirectory"), "data\\graphics\\skins")
 
-
 def getCustomPhotosDirectory():
     return os.path.join(getConf("IL2GBGameDirectory"), "data\\graphics\\planes")
 
-def getSkinsList():
-    skinList = []
+class ddsFile:
+    def __init__(self, fileName: str, fileSize: int, fileMd5: str):
+        self.fileName = fileName
+        self.fileSize = fileSize
+        self.fileMd5 = fileMd5
+
+class LocalSkin:
+    def __init__(self, game_asset_code: str, name: str, dds_files: list[ddsFile]):
+        self.game_asset_code = game_asset_code
+        self.name = name
+        self.dds_files = dds_files
+
+
+def getSkinsList() -> list[LocalSkin]:
+    skinList: list[LocalSkin] = []
     skinsDirectory = getSkinDirectory()
     
     _progress = 0.1
@@ -41,9 +53,8 @@ def getSkinsList():
 
         parentDir = os.path.dirname(root)
         
-        #only manage 1 level skins (otherwise i suspect badly placed sinks)
+        #only manage 1 level skins (otherwise these are lost skins)
         if parentDir != skinsDirectory:
-            
             loggingService.warning(f"Unexpected skin(s) {ddsfiles} placement at {root}. Not managed")
             continue
         
@@ -59,50 +70,51 @@ def getSkinsList():
             if skin_name.endswith("&1"):
                 skin_name = skin_name[:-2]
             
-            skinList.append({
-                "game_asset_code": game_asset_code,
-                "name": skin_name,
-                "mainFileName": ddsFileName,
-                "mainFileSize": filestats.st_size,
-                "mainFileMd5": manage_file_md5(fileFullPath)
-            })
+            skinList.append(LocalSkin(
+                game_asset_code=game_asset_code,
+                name=skin_name,
+                dds_files=[
+                    ddsFile(
+                        fileName=ddsFileName,
+                        fileSize=filestats.st_size,
+                        fileMd5=manage_file_md5(fileFullPath)
+                    )
+                ]
+            ))
 
-        #then if there are secondary files, attack them
+        #then if there are secondary files, attach them to the same skin entry
         for ddsSecondaryFileName in [file for file in ddsfiles if file.endswith("#1.dds")]:
             fileFullPath = os.path.join(root,ddsSecondaryFileName)
             filestats = os.stat(fileFullPath)
 
             for index, skin in enumerate(skinList):
-                if skin["mainFileName"][:-4] == ddsSecondaryFileName[:-6]:
-                    skinList[index]["secondaryFileName"] = ddsSecondaryFileName
-                    skinList[index]["secondaryFileSize"] = filestats.st_size
-                    skinList[index]["secondaryFileMd5"] = manage_file_md5(fileFullPath)
+                #check if the secondary file matches the main file
+                if skin.dds_files[0].fileName[:-4] == ddsSecondaryFileName[:-6]:
+                    skinList[index].dds_files.append(
+                        ddsFile(
+                            fileName=ddsSecondaryFileName,
+                            fileSize=filestats.st_size,
+                            fileMd5=manage_file_md5(fileFullPath)
+                        )
+                    )
+                    #stop the loop when found
                     break
-                    #TODO: manage the case of an orphan secondary file
-    
-
     return skinList
 
 def moveSkinFromPathToDestination(src_path, aircraft):
     return moveFile(src_path, os.path.join(getSkinDirectory(), aircraft))
 
-def removeSkin(localSkinInfo):
-    filePath = os.path.join(getSkinDirectory(), localSkinInfo["game_asset_code"], localSkinInfo["mainFileName"])
-    deleteFile(filePath)
+def removeSkin(localSkinInfo: LocalSkin):
+    
+    for file in localSkinInfo.dds_files:
+        filePath = os.path.join(getSkinDirectory(), localSkinInfo.game_asset_code, file.fileName)
+        deleteFile(filePath)
 
-    if localSkinInfo.get("secondaryFileName") is not None and  localSkinInfo["secondaryFileName"] != "":
-        #there is a secondary file
-        secondaryFilePath = os.path.join(getSkinDirectory(), localSkinInfo["game_asset_code"], localSkinInfo["secondaryFileName"])
-        deleteFile(secondaryFilePath)
-
-def getSpaceUsageOfLocalSkinCatalog(skinList):
+def getSpaceUsageOfLocalSkinCatalog(skinList: list[LocalSkin]):
     totalDiskSpace = 0
     for skin in skinList:
-        totalDiskSpace += int(skin["mainFileSize"])
-        
-        secondaryFileSpace = skin.get("secondaryFileSize")
-        if secondaryFileSpace is not None and secondaryFileSpace != "":
-            totalDiskSpace += int(secondaryFileSpace)
+        for file in skin.dds_files:
+            totalDiskSpace += file.fileSize
     
     return totalDiskSpace
 
