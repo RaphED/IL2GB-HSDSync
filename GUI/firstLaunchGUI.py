@@ -1,6 +1,7 @@
 import tkinter as tk
 import threading
 import logging
+import time
 
 from GUI.Components.splashScreen import SplashScreen
 import Services.configurationService as configurationService
@@ -23,8 +24,15 @@ class FirstLaunchGUI:
         processing_thread.start()
 
     def do_processing(self):
+        start_time = time.time()
         
         mainProgress()
+        
+        # Ensure minimum 3 seconds display time
+        elapsed_time = time.time() - start_time
+        min_display_time = 5.0
+        if elapsed_time < min_display_time:
+            time.sleep(min_display_time - elapsed_time)
 
         self.root.after(0, self.processing_complete)
 
