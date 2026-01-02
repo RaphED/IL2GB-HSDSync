@@ -155,7 +155,7 @@ def tryToFindIL2Path(exe_name='Il-2.exe'):
             if os.path.exists(common_path):
                 result = _search_in_directory(common_path, exe_name, max_depth=3)
                 if result:
-                    return result
+                    return os.path.normpath(result)
     
     # Priority 2: Check common installation directories
     drives = [drive + ':\\' for drive in string.ascii_uppercase if os.path.exists(drive + ':')]
@@ -173,14 +173,14 @@ def tryToFindIL2Path(exe_name='Il-2.exe'):
             if os.path.exists(full_path):
                 result = _search_in_directory(full_path, exe_name, max_depth=3)
                 if result:
-                    return result
+                    return os.path.normpath(result)
     
     # Priority 3: Search root of each drive (limited depth as last resort)
     for drive in drives:
         # Only search at limited depth to avoid scanning entire system
         result = _search_in_directory(drive, exe_name, max_depth=2)
         if result:
-            return result
+            return os.path.normpath(result)
     
     return None  # Return None if the file was not found
 
