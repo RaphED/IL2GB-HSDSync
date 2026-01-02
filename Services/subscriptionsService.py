@@ -74,7 +74,7 @@ class SubscribedCollection:
                 self.skins.append(RemoteSkin(skin_json))
         elif response.status_code == 404:
             loggingService.error(f"Cannot find (404) subscription for URL {self.collectionURL}")
-            self.name = "Dead link"
+            self.name = "!! Dead link - to be removed !!"
         else:
             raise Exception (f"Cannot get collection data from URL {self.collectionURL}")
         
