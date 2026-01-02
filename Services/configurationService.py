@@ -1,6 +1,8 @@
 import json
 import os
 import string
+import winreg
+from pathlib import Path
 
 # Path to the configuration file
 config_file = 'HSDSync-config.json'
@@ -84,20 +86,101 @@ def generateConfFile():
 def checkIL2InstallPath():
     return os.path.exists(os.path.join(getConf("IL2GBGameDirectory"), "bin\\game\\Il-2.exe"))
 
-def tryToFindIL2Path(exe_name='Il-2.exe'):
-    # Get the list of available drives (e.g., C:, D:, etc.)
-    drives = [drive + ':\\' for drive in string.ascii_uppercase if os.path.exists(drive + ':')]
+def _check_steam_registry():
+    """Check Windows registry for Steam installation path."""
+    try:
+        key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\WOW6432Node\Valve\Steam")
+        steam_path = winreg.QueryValueEx(key, "InstallPath")[0]
+        winreg.CloseKey(key)
+        return steam_path
+    except:
+        try:
+            key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Valve\Steam")
+            steam_path = winreg.QueryValueEx(key, "InstallPath")[0]
+            winreg.CloseKey(key)
+            return steam_path
+        except:
+            return None
 
-    for drive in drives:
-        # Traverse each drive looking for the IL2.exe file
-        for root, dirs, files in os.walk(drive, followlinks=True):
-            try:
-                if exe_name in files:
-                    # Return the parent directory of the found file
-                    return os.path.dirname(os.path.dirname(os.path.dirname(os.path.join(root, exe_name))))
-            except PermissionError:
-                # Ignore permission errors and continue with the next directories
+def _get_steam_library_folders(steam_path):
+    """Get all Steam library folders from libraryfolders.vdf."""
+    libraries = [steam_path]
+    vdf_path = os.path.join(steam_path, "steamapps", "libraryfolders.vdf")
+    
+    try:
+        if os.path.exists(vdf_path):
+            with open(vdf_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+                # Parse the VDF file to find library paths
+                import re
+                paths = re.findall(r'"path"\s+"([^"]+)"', content)
+                libraries.extend(paths)
+    except:
+        pass
+    
+    return libraries
+
+def _search_in_directory(directory, exe_name='Il-2.exe', max_depth=4):
+    """Search for IL-2 executable in a specific directory with limited depth."""
+    try:
+        for root, dirs, files in os.walk(directory):
+            # Limit search depth
+            depth = root[len(directory):].count(os.sep)
+            if depth > max_depth:
+                dirs[:] = []  # Don't go deeper
                 continue
+            
+            if exe_name in files:
+                # Return the parent directory of bin/game/Il-2.exe
+                return os.path.dirname(os.path.dirname(os.path.dirname(os.path.join(root, exe_name))))
+    except (PermissionError, OSError):
+        pass
+    return None
+
+def tryToFindIL2Path(exe_name='Il-2.exe'):
+    """
+    Try to find IL-2 Sturmovik installation path using optimized search:
+    1. Check Steam registry and known Steam libraries
+    2. Check common installation directories
+    3. As last resort, search all drives (limited depth)
+    """
+    
+    # Priority 1: Check Steam registry and libraries
+    steam_path = _check_steam_registry()
+    if steam_path:
+        steam_libraries = _get_steam_library_folders(steam_path)
+        for library in steam_libraries:
+            # Check in steamapps/common folder
+            common_path = os.path.join(library, "steamapps", "common")
+            if os.path.exists(common_path):
+                result = _search_in_directory(common_path, exe_name, max_depth=3)
+                if result:
+                    return result
+    
+    # Priority 2: Check common installation directories
+    drives = [drive + ':\\' for drive in string.ascii_uppercase if os.path.exists(drive + ':')]
+    common_dirs = [
+        "Program Files (x86)\\Steam\\steamapps\\common",
+        "Program Files\\Steam\\steamapps\\common",
+        "Steam\\steamapps\\common",
+        "Games",
+        "SteamLibrary\\steamapps\\common"
+    ]
+    
+    for drive in drives:
+        for common_dir in common_dirs:
+            full_path = os.path.join(drive, common_dir)
+            if os.path.exists(full_path):
+                result = _search_in_directory(full_path, exe_name, max_depth=3)
+                if result:
+                    return result
+    
+    # Priority 3: Search root of each drive (limited depth as last resort)
+    for drive in drives:
+        # Only search at limited depth to avoid scanning entire system
+        result = _search_in_directory(drive, exe_name, max_depth=2)
+        if result:
+            return result
     
     return None  # Return None if the file was not found
 
