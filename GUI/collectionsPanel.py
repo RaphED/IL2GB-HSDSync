@@ -13,7 +13,8 @@ from Services.messageBrocker import MessageBrocker
 
 from GUI.Components.resizeGrip import ResizeGrip
 from GUI.Components.clickableIcon import CliquableIcon
-from GUI.Components.collectionURLModal import ask_collection_url
+from GUI.Components.collectionURLModal import ask_collection_url as ask_collection_url_from_URLModal
+from GUI.Components.collectionSearchModal import ask_collection_url as ask_collection_url_from_SearchModal
 
 class SubscriptionLine():
     def __init__(self, collection: SubscribedCollection):
@@ -61,8 +62,10 @@ class CollectionsPanel():
         
         bottom_frame = tk.Frame(collection_frame)
         bottom_frame.pack(pady=0)
-        self.import_button = ttk.Button(bottom_frame, text="Import new collection", command=self.import_new_collection)
-        self.import_button.pack(side=tk.LEFT, pady=5, padx=10)
+        self.import_from_URL_button = ttk.Button(bottom_frame, text="Import a new collection from URL", command=self.import_new_collection_from_URLModal)
+        self.import_from_URL_button.pack(side=tk.LEFT, pady=5, padx=10)
+        self.import_from_Search_button = ttk.Button(bottom_frame, text="Search for new collections", command=self.import_new_collection_from_SearchModal)
+        self.import_from_Search_button.pack(side=tk.LEFT, pady=5, padx=10)
         
         self.list_frame.bind('<Configure>',
             lambda e: self.canvas.configure(scrollregion=self.canvas.bbox('all')))
@@ -94,12 +97,14 @@ class CollectionsPanel():
             self.root.after(0, self.on_collections_change)
 
     def lock_actions(self):
-        self.import_button["state"] = "disabled"
+        self.import_from_URL_button["state"] = "disabled"
+        self.import_from_Search_button["state"] = "disabled"
         for button in self.collections_buttons_registry:
             button.disable()
 
     def unlock_actions(self):
-        self.import_button["state"] = "enabled"
+        self.import_from_URL_button["state"] = "enabled"
+        self.import_from_Search_button["state"] = "enabled"
         for button in self.collections_buttons_registry:
             button.enable()
 
@@ -205,8 +210,13 @@ class CollectionsPanel():
         self._update_scrollbar_visibility()
 
 
-    def import_new_collection(self):
-        result = ask_collection_url(self.root)
+    def import_new_collection_from_URLModal(self):
+        result = ask_collection_url_from_URLModal(self.root)
+        if result is not None:
+            self.loadCollections_async()
+
+    def import_new_collection_from_SearchModal(self):
+        result = ask_collection_url_from_SearchModal(self.root)
         if result is not None:
             self.loadCollections_async()
 

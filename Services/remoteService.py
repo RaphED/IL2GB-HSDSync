@@ -5,7 +5,10 @@ from Services.configurationService import getConf, cockpitNotesModes
 from Services.filesService import downloadFile
 from Services.messageBrocker import MessageBrocker
 
-skins_download_URL = "https://hsd-online.net/api/skins/files/[path]"
+main_api_URL = "https://hsd-online.net/api"
+collections_catalog_URL = f"{main_api_URL}/skinsCollections"
+collection_brownser_URL = "https://hsd-online.net/collections/[collection_id]"
+skins_download_URL = f"{main_api_URL}/skins/files/[path]"
 
 class RemoteSkin:
     def __init__(self, json_raw_data: json) -> None:
@@ -57,6 +60,51 @@ class RemoteSkin:
             return self._json_raw_data["size_in_b_restricted_only"]
         else:
             return self._json_raw_data["size_in_b_unrestricted"]
+
+class RemoteCollection:
+    def __init__(self, json_raw_data: json) -> None:
+        self._json_raw_data = json_raw_data
+
+    #Translation of parameters from json
+    def id(self):
+        return self._json_raw_data["id"]
+    def name(self):
+        return self._json_raw_data["name"]
+    def description(self):
+        return self._json_raw_data["description"]
+    def creator(self):
+        return self._json_raw_data["creator"]
+    def skin_count(self) -> int:
+        return 0
+        #return self._json_raw_data["skin_count"]
+    def size_in_b_unrestricted(self) -> int:
+        return self._json_raw_data["size_in_b_unrestricted"]
+    def size_in_b_restricted_only(self) -> int:
+        return self._json_raw_data["size_in_b_restricted_only"]
+    def browser_URL(self) -> str:
+        return collection_brownser_URL.replace("[collection_id]", str(self.id()))
+    def api_URL(self) -> str:
+        return f"{main_api_URL}/skinsCollections/{self.id()}"
+    
+def getRemoteCollectionsCatalog() -> list[RemoteCollection]:
+    try:
+        response = requests.get(collections_catalog_URL)
+
+         # Check if the request was successful (status code 200)
+        if response.status_code == 200:
+            file_content = response.json()
+            remote_collections = []
+            for collection_json in file_content:
+                remote_collections.append(RemoteCollection(collection_json))
+            return remote_collections
+        else:
+            raise Exception(f"Cannot retrieve collections catalog due to server response :{response.status_code}")
+    except requests.ConnectionError as e:
+        MessageBrocker.emitConsoleMessage("Cannot join server to retrieve collections catalog.")
+        raise e
+    except Exception as e:
+        raise e
+
 
 def downloadSkinToTempDir(skinInfo: RemoteSkin):
 
