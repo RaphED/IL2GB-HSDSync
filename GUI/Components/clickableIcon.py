@@ -9,7 +9,8 @@ class CliquableIcon(tk.Label):
                 onClick=None,
                 opacityFactor: int = 255, #opacity factor comes from 0 to 255
                 onMouseOverOpacityFactor: int = 255, #warning, cannot have tooltip if activated
-                disabled = False
+                disabled = False,
+                icon_size: int = 24
             ):
         
         super().__init__(root, cursor="hand2")
@@ -17,7 +18,7 @@ class CliquableIcon(tk.Label):
         image = Image.open(icon_path)
         if image.mode != 'RGBA':
             image = image.convert('RGBA')
-        self.referenceImage = image.resize((24, 24), Image.Resampling.LANCZOS)  # Adjust size as needed
+        self.referenceImage = image.resize((icon_size, icon_size), Image.Resampling.LANCZOS)  # Adjust size as needed
 
         # Precalculate original alpha to avoid recalculation
         self.original_alpha = self.referenceImage.split()[3]

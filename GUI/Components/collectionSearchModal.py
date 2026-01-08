@@ -62,19 +62,22 @@ class CollectionURLDialog:
         self.tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         scrollbar.config(command=self.tree.yview)
         
+        # Bind double-click to subscribe to single collection
+        self.tree.bind('<Double-Button-1>', self.on_double_click)
+        
         # Column configuration
-        self.tree.column('#0', width=30, stretch=False)
+        self.tree.column('#0', width=30, stretch=False, anchor=tk.CENTER)
         self.tree.column('name', width=250, anchor=tk.W)
         self.tree.column('creator', width=150, anchor=tk.W)
         self.tree.column('skins', width=80, anchor=tk.CENTER)
         self.tree.column('size', width=100, anchor=tk.E)
         
         # Column headings
-        self.tree.heading('#0', text='')
-        self.tree.heading('name', text='Name')
-        self.tree.heading('creator', text='Creator')
-        self.tree.heading('skins', text='Skins')
-        self.tree.heading('size', text='Size')
+        self.tree.heading('#0', text='', anchor=tk.CENTER)
+        self.tree.heading('name', text='Name', anchor=tk.W)
+        self.tree.heading('creator', text='Creator', anchor=tk.W)
+        self.tree.heading('skins', text='Skins', anchor=tk.CENTER)
+        self.tree.heading('size', text='Size', anchor=tk.E)
         
         # Store icons to prevent garbage collection
         self.collection_icons = {}
@@ -180,17 +183,18 @@ class CollectionURLDialog:
                 bbox = self.tree.bbox(item_id, '#0')
                 if bbox:
                     x, y, width, height = bbox
-                    # Create clickable icon
+                    # Create clickable icon (18x18 size)
                     icon = CliquableIcon(
                         self.tree,
                         icon_path=icon_path,
                         tooltip_text="Open collection in browser",
                         onClick=lambda url=collection.browser_URL(): webbrowser.open(url),
                         opacityFactor=200,
-                        onMouseOverOpacityFactor=255
+                        onMouseOverOpacityFactor=255,
+                        icon_size=18
                     )
-                    # Place the icon in the first column
-                    icon.place(x=x + 3, y=y + (height - 24) // 2)
+                    # Place the icon in the first column, centered
+                    icon.place(x=x + (width - 18) // 2, y=y + (height - 18) // 2)
                     # Store reference to prevent garbage collection
                     self.collection_icons[item_id] = icon
     
@@ -210,6 +214,31 @@ class CollectionURLDialog:
         
         self.populate_tree()
         self.status_label.config(text=f"{len(self.filtered_collections)} of {len(self.collections)} collection(s)")
+    
+    def on_double_click(self, event):
+        """Handle double-click on a collection to subscribe to it"""
+        # Get the item under cursor
+        item = self.tree.identify_row(event.y)
+        if not item:
+            return
+        
+        # Get the collection
+        collection_id = int(item)
+        collection = next((c for c in self.collections if c.id() == collection_id), None)
+        
+        if not collection:
+            return
+        
+        # Subscribe to this single collection
+        self.validate_btn.config(state='disabled')
+        self.progress.grid()
+        self.progress.start()
+        self.status_label.config(text=f"Subscribing to {collection.name()}...")
+        
+        # Subscribe in separate thread
+        thread = threading.Thread(target=self.subscribe_collections_thread, args=([collection],))
+        thread.daemon = True
+        thread.start()
     
     def validate_selection(self):
         """Validate selected collections"""
