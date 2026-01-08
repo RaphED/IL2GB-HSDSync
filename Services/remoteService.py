@@ -75,8 +75,7 @@ class RemoteCollection:
     def creator(self):
         return self._json_raw_data["creator"]
     def skin_count(self) -> int:
-        return 0
-        #return self._json_raw_data["skin_count"]
+        return self._json_raw_data["skins_count"]
     def size_in_b_unrestricted(self) -> int:
         return self._json_raw_data["size_in_b_unrestricted"]
     def size_in_b_restricted_only(self) -> int:
