@@ -93,7 +93,7 @@ def getRemoteCollectionsCatalog() -> list[RemoteCollection]:
         if response.status_code == 200:
             file_content = response.json()
             remote_collections = []
-            for collection_json in file_content:
+            for collection_json in file_content["collections"]:
                 remote_collections.append(RemoteCollection(collection_json))
             return remote_collections
         else:
