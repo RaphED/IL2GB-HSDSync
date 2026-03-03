@@ -72,8 +72,8 @@ class RemoteCollection:
         return self._json_raw_data["name"]
     def description(self):
         return self._json_raw_data["description"]
-    def creator(self):
-        return self._json_raw_data["creator"]
+    def creator_name(self):
+        return self._json_raw_data["creator_name"]
     def skin_count(self) -> int:
         return self._json_raw_data["skins_count"]
     def size_in_b_unrestricted(self) -> int:

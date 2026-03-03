@@ -42,7 +42,7 @@ class SubscribedCollection:
         self.id = None
         self.name = None
         self.description = None
-        self.creator = None
+        self.creator_name = None
         self.skins: list[RemoteSkin] = []
         self.size_in_b_unrestricted = 0
         self.size_in_b_restricted_only = 0
@@ -65,7 +65,7 @@ class SubscribedCollection:
             self.id = raw_json_data["id"]
             self.name = raw_json_data["name"]
             self.descrption = raw_json_data["description"]
-            self.creator = raw_json_data["creator"]
+            self.creator_name = raw_json_data["creator_name"]
             self.size_in_b_unrestricted = raw_json_data["size_in_b_unrestricted"]
             self.size_in_b_restricted_only = raw_json_data["size_in_b_restricted_only"]
             self.browser_URL = browser_collection_URL.replace("[collection_id]", str(self.id))

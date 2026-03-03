@@ -164,7 +164,7 @@ class CollectionURLDialog:
         for collection in self.filtered_collections:
             size_str = self.format_size(collection.size_in_b_unrestricted())
             self.tree.insert('', tk.END, iid=str(collection.id()),
-                           values=(collection.name(), collection.creator(), 
+                           values=(collection.name(), collection.creator_name(), 
                                   collection.skin_count(), size_str))
         
         # Add clickable icons for each collection
@@ -208,7 +208,7 @@ class CollectionURLDialog:
             self.filtered_collections = [
                 c for c in self.collections
                 if (filter_text in c.name().lower() or 
-                    filter_text in c.creator().lower() or
+                    filter_text in c.creator_name().lower() or
                     filter_text in c.description().lower())
             ]
         
