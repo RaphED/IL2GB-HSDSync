@@ -4,9 +4,10 @@ import threading
 import webbrowser
 import os
 
-from Services.remoteService import RemoteCollection, getRemoteCollectionsCatalog
+from Services.remoteService import getRemoteCollectionsCatalog
 from GUI.Components.clickableIcon import CliquableIcon
 import Services.subscriptionsService as SubscriptionsService
+from Services.filesService import getIconPath
 
 
 class CollectionURLDialog:
@@ -172,31 +173,45 @@ class CollectionURLDialog:
         self.add_collection_icons()
     
     def add_collection_icons(self):
-        """Add clickable icons to open collection URLs in browser"""
-        icon_path = os.path.join("Ressources", "icons", "magnifying-glass.png")
-        
+                
         for item_id in self.tree.get_children():
             # Get collection by ID
-            collection = next((c for c in self.filtered_collections if str(c.id()) == item_id), None)
-            if collection:
+            try:
+                collection = next((c for c in self.filtered_collections if str(c.id()) == item_id), None)
+                if not collection:
+                    continue
+                    
                 # Get position of the item in the tree
                 bbox = self.tree.bbox(item_id, '#0')
-                if bbox:
-                    x, y, width, height = bbox
-                    # Create clickable icon (18x18 size)
-                    icon = CliquableIcon(
-                        self.tree,
-                        icon_path=icon_path,
-                        tooltip_text="Open collection in browser",
-                        onClick=lambda url=collection.browser_URL(): webbrowser.open(url),
-                        opacityFactor=200,
-                        onMouseOverOpacityFactor=255,
-                        icon_size=18
-                    )
-                    # Place the icon in the first column, centered
-                    icon.place(x=x + (width - 18) // 2, y=y + (height - 18) // 2)
-                    # Store reference to prevent garbage collection
-                    self.collection_icons[item_id] = icon
+                if not bbox:
+                    # Si bbox est None, la ligne n'est pas visible/rendue
+                    continue
+                    
+                x, y, width, height = bbox
+                
+                # Vérifier que les dimensions sont valides
+                if width <= 0 or height <= 0:
+                    continue
+                
+                # Create clickable icon (18x18 size)
+                icon = CliquableIcon(
+                    self.tree,
+                    icon_path=getIconPath("magnifying-glass.png"),
+                    tooltip_text="Open collection in browser",
+                    onClick=lambda url=collection.browser_URL(): webbrowser.open(url),
+                    opacityFactor=200,
+                    onMouseOverOpacityFactor=255,
+                    icon_size=18
+                )
+                # Place the icon in the first column, centered
+                icon.place(x=x + (width - 18) // 2, y=y + (height - 18) // 2)
+                # Store reference to prevent garbage collection
+                self.collection_icons[item_id] = icon
+                
+            except Exception as e:
+                # En mode release, les erreurs peuvent être silencieuses
+                print(f"Error adding icon for item {item_id}: {e}")
+                continue
     
     def apply_filter(self):
         """Apply filter to collections list"""
