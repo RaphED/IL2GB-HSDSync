@@ -11,6 +11,11 @@ class SplashScreen:
         self.size_y = 600
 
         self.splash = tk.Toplevel()
+        # Set window icon
+        try:
+            self.splash.iconbitmap(getRessourcePath("hsd.ico"))
+        except:
+            pass
         self.splash.overrideredirect(True)
 
         self.splash.attributes('-topmost', True)

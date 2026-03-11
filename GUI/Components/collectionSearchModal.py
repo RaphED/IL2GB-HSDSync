@@ -6,17 +6,23 @@ import webbrowser
 from Services.remoteService import getRemoteCollectionsCatalog
 from GUI.Components.clickableIcon import CliquableIcon
 import Services.subscriptionsService as SubscriptionsService
-from Services.filesService import getIconPath
+from Services.filesService import getIconPath, getRessourcePath
 from GUI.customTheme import apply_titlebar_color
 
 
 class CollectionURLDialog:
-    def __init__(self, parent=None, title="Search for new collections"):
+    def __init__(self, parent=None, title="Search for online collections"):
         self.result = None
         self.dialog = tk.Toplevel(parent) if parent else tk.Tk()
         self.dialog.title(title)
         self.dialog.geometry("800x600")
         self.dialog.resizable(True, True)
+        
+        # Set window icon
+        try:
+            self.dialog.iconbitmap(getRessourcePath("hsd.ico"))
+        except:
+            pass  # Ignore if icon file not found
         
         # Center the window
         self.dialog.transient(parent)

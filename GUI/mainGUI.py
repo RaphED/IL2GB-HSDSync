@@ -193,7 +193,7 @@ def open_link_IRREWelcome():
 
 #MAIN RUN
 def runMainGUI():
-    
+
     #make sure the temporary folder is clean
     cleanTemporaryFolder()
 

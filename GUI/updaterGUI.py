@@ -4,6 +4,7 @@ import sys
 
 from GUI.Components.splashScreen import SplashScreen
 import Services.updateService as updateService
+from Services.filesService import getRessourcePath
 from GUI.customTheme import apply_titlebar_color
 
 
@@ -37,6 +38,10 @@ class UpdaterGUI:
 
 def runUpdaterGUI(update_withPrerelease):
     root = tk.Tk()
+    try:
+        root.iconbitmap(getRessourcePath("hsd.ico"))
+    except:
+        pass
     apply_titlebar_color(root)
     app = UpdaterGUI(root, update_withPrerelease)
     root.mainloop()

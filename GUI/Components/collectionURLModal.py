@@ -5,16 +5,23 @@ from urllib.parse import urlparse
 import threading
 
 from Services.subscriptionsService import importNewCollection
+from Services.filesService import getRessourcePath
 from GUI.customTheme import apply_titlebar_color
 
 
 class CollectionURLDialog:
-    def __init__(self, parent=None, title="Import new collection"):
+    def __init__(self, parent=None, title="Import online collection"):
         self.result = None
         self.dialog = tk.Toplevel(parent) if parent else tk.Tk()
         self.dialog.title(title)
         self.dialog.geometry("400x150")
         self.dialog.resizable(False, False)
+        
+        # Set window icon
+        try:
+            self.dialog.iconbitmap(getRessourcePath("hsd.ico"))
+        except:
+            pass
         
         # Center the window
         self.dialog.transient(parent)

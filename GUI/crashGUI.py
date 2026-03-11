@@ -44,6 +44,10 @@ class CrashGUI:
 
 def runCrashGUI(exception: Exception):
     root = tk.Tk()
+    try:
+        root.iconbitmap(getRessourcePath("hsd.ico"))
+    except:
+        pass
     apply_titlebar_color(root)
     app = CrashGUI(root, exception)
     root.mainloop()
