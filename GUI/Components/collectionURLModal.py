@@ -5,6 +5,7 @@ from urllib.parse import urlparse
 import threading
 
 from Services.subscriptionsService import importNewCollection
+from GUI.customTheme import apply_titlebar_color
 
 
 class CollectionURLDialog:
@@ -21,6 +22,9 @@ class CollectionURLDialog:
         
         self.setup_ui()
         self.dialog.protocol("WM_DELETE_WINDOW", self.on_cancel)
+        
+        # Apply dark titlebar
+        apply_titlebar_color(self.dialog)
         
         # Focus on the entry field
         self.url_entry.focus_set()

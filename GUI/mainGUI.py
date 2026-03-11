@@ -17,6 +17,7 @@ from GUI.actionsPanel import ActionPanel
 from GUI.progressBar import ProgressBar
 from GUI.Components.clickableIcon import CliquableIcon
 from GUI.firstLaunchGUI import runFirstLaunchGUI
+from GUI.customTheme import apply_theme
 
 
 class MainGUI:
@@ -27,10 +28,8 @@ class MainGUI:
 
         self.root.iconbitmap(getRessourcePath("hsd.ico"))
 
-        style = ttk.Style(self.root)
-        
-        self.root.tk.call("source",getRessourcePath("forest-light.tcl"))
-        style.theme_use("forest-light")
+        # Apply custom dark theme
+        apply_theme(self.root)
         
         self.root.title("Haluter Skin Downloader")
         self.root.geometry("850x600")
@@ -187,7 +186,7 @@ def open_link(link: str):
     webbrowser.open(link)
 
 def open_link_HSDDocumentation():
-    open_link("https://melodious-andesaurus-f9a.notion.site/IL2GB-Inter-squadron-Skin-Synchronizer-ISS-1477b1e5c2b8803db322d0daba993f94")
+    open_link("https://https://hsd-online.net")
 
 def open_link_IRREWelcome():
     open_link("https://www.lesirreductibles.com")

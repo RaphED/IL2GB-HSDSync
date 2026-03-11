@@ -8,6 +8,7 @@ from Services.remoteService import getRemoteCollectionsCatalog
 from GUI.Components.clickableIcon import CliquableIcon
 import Services.subscriptionsService as SubscriptionsService
 from Services.filesService import getIconPath
+from GUI.customTheme import apply_titlebar_color
 
 
 class CollectionURLDialog:
@@ -27,6 +28,9 @@ class CollectionURLDialog:
         
         self.setup_ui()
         self.dialog.protocol("WM_DELETE_WINDOW", self.on_cancel)
+        
+        # Apply dark titlebar
+        apply_titlebar_color(self.dialog)
         
         # Start loading collections
         self.load_collections()

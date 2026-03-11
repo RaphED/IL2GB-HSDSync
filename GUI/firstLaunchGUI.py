@@ -5,6 +5,7 @@ import time
 
 from GUI.Components.splashScreen import SplashScreen
 import Services.configurationService as configurationService
+from GUI.customTheme import apply_titlebar_color
 
 
 
@@ -42,6 +43,7 @@ class FirstLaunchGUI:
 
 def runFirstLaunchGUI():
     root = tk.Tk()
+    apply_titlebar_color(root)
     app = FirstLaunchGUI(root)
     root.mainloop()
 

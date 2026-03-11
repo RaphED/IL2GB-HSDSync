@@ -4,6 +4,7 @@ import requests
 from Services.loggingService import log_file_name
 
 from Services.filesService import getRessourcePath
+from GUI.customTheme import apply_titlebar_color
 
 class CrashGUI:
     def __init__(self, root, exception: Exception):
@@ -43,5 +44,6 @@ class CrashGUI:
 
 def runCrashGUI(exception: Exception):
     root = tk.Tk()
+    apply_titlebar_color(root)
     app = CrashGUI(root, exception)
     root.mainloop()
