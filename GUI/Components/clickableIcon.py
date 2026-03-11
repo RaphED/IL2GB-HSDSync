@@ -24,16 +24,11 @@ class CliquableIcon(tk.Label):
                 except:
                     bg = None  # Use default
         
-        # Initialize label with background color and no borders
-        label_config = {
-            'cursor': "hand2",
-            'borderwidth': 0,
-            'highlightthickness': 0
-        }
+        # Initialize label with background color
         if bg:
-            label_config['bg'] = bg
-        
-        super().__init__(root, **label_config)
+            super().__init__(root, cursor="hand2", bg=bg)
+        else:
+            super().__init__(root, cursor="hand2")
         # Load and resize the icon
         image = Image.open(icon_path)
         if image.mode != 'RGBA':
@@ -53,7 +48,7 @@ class CliquableIcon(tk.Label):
 
         #Fade parameters
         self.fade_after_id = None
-        self.fade_ms = 2000
+        self.fade_ms = 4000
         self.fade_step_ms = 100
         self.onMouseOverOpacityFactor = onMouseOverOpacityFactor
         self.fade_step_opacityFactor = abs(self.onMouseOverOpacityFactor - self.base_opacityFactor) / (self.fade_ms / self.fade_step_ms)

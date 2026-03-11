@@ -2,7 +2,6 @@ import tkinter as tk
 from tkinter import messagebox, ttk
 import threading
 import webbrowser
-import os
 
 from Services.remoteService import getRemoteCollectionsCatalog
 from GUI.Components.clickableIcon import CliquableIcon
