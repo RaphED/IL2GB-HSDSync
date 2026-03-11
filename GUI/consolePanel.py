@@ -1,6 +1,8 @@
 import tkinter as tk
+from tkinter import ttk
 
 from Services.messageBrocker import MessageBrocker
+from GUI.customTheme import HSDDarkTheme
 
 class ConsolePanel:
     def __init__(self, root: tk):
@@ -11,24 +13,25 @@ class ConsolePanel:
         self.frame.pack(expand=True, fill="both")
         
         # Create Scrollbar widget
-        self.scrollbar = tk.Scrollbar(self.frame)
+        self.scrollbar = ttk.Scrollbar(self.frame)
         self.scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         
         # Create Text widget and connect it to Scrollbar
         self.text_widget = tk.Text(self.frame, wrap="char", height=15, 
-                                 yscrollcommand=self.scrollbar.set)
+                                 yscrollcommand=self.scrollbar.set,
+                                 font=("Consolas", 9))
         self.text_widget.pack(side=tk.LEFT, expand=True, fill="both")
         
         # Configure Scrollbar to scroll the Text widget
         self.scrollbar.config(command=self.text_widget.yview)
         
-        # Configure tags for formatting
-        self.text_widget.tag_configure("red", foreground="red")
-        self.text_widget.tag_configure("green", foreground="green")
-        self.text_widget.tag_configure("blue", foreground="blue")
-        self.text_widget.tag_configure("chocolate", foreground="chocolate")
-        self.text_widget.tag_configure("bold", font=("TkDefaultFont", 10, "bold"))
-        self.text_widget.tag_configure("italic", font=("TkDefaultFont", 10, "italic"))
+        # Configure tags for formatting with theme colors
+        self.text_widget.tag_configure("red", foreground=HSDDarkTheme.ERROR)
+        self.text_widget.tag_configure("green", foreground=HSDDarkTheme.SUCCESS)
+        self.text_widget.tag_configure("blue", foreground=HSDDarkTheme.INFO)
+        self.text_widget.tag_configure("chocolate", foreground=HSDDarkTheme.WARNING)
+        self.text_widget.tag_configure("bold", font=("Consolas", 9, "bold"))
+        self.text_widget.tag_configure("italic", font=("Consolas", 9, "italic"))
 
         MessageBrocker.registerConsoleHook(self.addLine)
 

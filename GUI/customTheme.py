@@ -24,6 +24,9 @@ class HSDDarkTheme:
     ACCENT_DARK = "#2f855a"      # Darker accent
     BORDER = "#4a5568"           # Border color
     ERROR = "#f56565"            # Error/invalid color
+    SUCCESS = "#48bb78"          # Success messages (green)
+    INFO = "#63b3ed"             # Info messages (blue)
+    WARNING = "#ed8936"          # Warning messages (orange/chocolate)
     
     @staticmethod
     def _set_window_titlebar_color(root):

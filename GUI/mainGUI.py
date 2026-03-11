@@ -68,7 +68,7 @@ class MainGUI:
             info_bar, 
             icon_path=getIconPath("irre-logo-32.png"),
             onClick=open_link_IRREWelcome,
-            opacityFactor=10,
+            opacityFactor=0,
             onMouseOverOpacityFactor=255
         )
         self.progressBar = ProgressBar(info_bar)
