@@ -65,10 +65,22 @@ class CollectionURLDialog:
                                   show='tree headings', selectmode='extended', 
                                   yscrollcommand=scrollbar.set)
         self.tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        scrollbar.config(command=self.tree.yview)
+        
+        # Wrap yview to reposition icons on scroll
+        original_yview = self.tree.yview
+        def yview_wrapper(*args):
+            result = original_yview(*args)
+            self.reposition_icons()
+            return result
+        self.tree.yview = yview_wrapper
+        scrollbar.config(command=yview_wrapper)
         
         # Bind double-click to subscribe to single collection
         self.tree.bind('<Double-Button-1>', self.on_double_click)
+        
+        # Bind scroll and configure events to reposition icons
+        self.tree.bind('<Configure>', lambda e: self.reposition_icons())
+        self.tree.bind('<<TreeviewSelect>>', lambda e: self.reposition_icons())
         
         # Column configuration
         self.tree.column('#0', width=30, stretch=False, anchor=tk.CENTER)
@@ -163,6 +175,9 @@ class CollectionURLDialog:
         # Clear existing items and icons
         for item in self.tree.get_children():
             self.tree.delete(item)
+        # Destroy icon widgets before clearing
+        for icon in self.collection_icons.values():
+            icon.destroy()
         self.collection_icons.clear()
         
         # Add collections
@@ -177,6 +192,16 @@ class CollectionURLDialog:
         self.add_collection_icons()
     
     def add_collection_icons(self):
+        # Get the background color of the treeview
+        try:
+            # Try to get color from ttk style first
+            style = ttk.Style()
+            tree_bg = style.lookup('Treeview', 'background')
+            if not tree_bg:
+                # Fallback to direct cget
+                tree_bg = self.tree.cget('background')
+        except:
+            tree_bg = None  # Let CliquableIcon handle it
                 
         for item_id in self.tree.get_children():
             # Get collection by ID
@@ -205,7 +230,8 @@ class CollectionURLDialog:
                     onClick=lambda url=collection.browser_URL(): webbrowser.open(url),
                     opacityFactor=200,
                     onMouseOverOpacityFactor=255,
-                    icon_size=18
+                    icon_size=18,
+                    bg=tree_bg
                 )
                 # Place the icon in the first column, centered
                 icon.place(x=x + (width - 18) // 2, y=y + (height - 18) // 2)
@@ -215,7 +241,25 @@ class CollectionURLDialog:
             except Exception as e:
                 # En mode release, les erreurs peuvent être silencieuses
                 print(f"Error adding icon for item {item_id}: {e}")
+                import traceback
+                traceback.print_exc()
                 continue
+    
+    def reposition_icons(self):
+        """Reposition icons after tree changes (scroll, resize, etc.)"""
+        self.tree.after(10, self._do_reposition_icons)
+    
+    def _do_reposition_icons(self):
+        """Actually reposition the icons"""
+        for item_id, icon in self.collection_icons.items():
+            bbox = self.tree.bbox(item_id, '#0')
+            if bbox:
+                x, y, width, height = bbox
+                if width > 0 and height > 0:
+                    icon.place(x=x + (width - 18) // 2, y=y + (height - 18) // 2)
+            else:
+                # Item not visible, hide icon
+                icon.place_forget()
     
     def apply_filter(self):
         """Apply filter to collections list"""

@@ -10,10 +10,30 @@ class CliquableIcon(tk.Label):
                 opacityFactor: int = 255, #opacity factor comes from 0 to 255
                 onMouseOverOpacityFactor: int = 255, #warning, cannot have tooltip if activated
                 disabled = False,
-                icon_size: int = 24
+                icon_size: int = 24,
+                bg = None #background color
             ):
         
-        super().__init__(root, cursor="hand2")
+        # Get background color from parent if not provided
+        if bg is None:
+            try:
+                bg = root.cget('background')
+            except:
+                try:
+                    bg = root.cget('bg')
+                except:
+                    bg = None  # Use default
+        
+        # Initialize label with background color and no borders
+        label_config = {
+            'cursor': "hand2",
+            'borderwidth': 0,
+            'highlightthickness': 0
+        }
+        if bg:
+            label_config['bg'] = bg
+        
+        super().__init__(root, **label_config)
         # Load and resize the icon
         image = Image.open(icon_path)
         if image.mode != 'RGBA':
