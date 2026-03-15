@@ -31,7 +31,7 @@ class MainGUI:
         # Apply custom dark theme
         apply_theme(self.root)
         
-        self.root.title("Haluter Skin Downloader")
+        self.root.title("Haluter's Skin Downloader")
         self.root.geometry("850x600")
         
         # 1 - UPPER FRAME
