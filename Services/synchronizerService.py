@@ -37,7 +37,7 @@ def updateRegisteredSkins(scanResult: ScanResult) -> tuple[int, int]:
             updateSingleSkinFromRemote(skin)
             successUpdates = successUpdates+1
         except Exception as e:
-            MessageBrocker.emitConsoleMessage(f"<red>Technical error : cannot sync {skin.getValue("name")}</red>")
+            MessageBrocker.emitConsoleMessage(f"<red>Technical error : cannot sync {skin.name()}</red>")
             loggingService.error(e)
 
         _progress += _progress_step #TEMP PROGRESS
@@ -86,10 +86,10 @@ def updateCustomPhotos(toBeUpdatedPhotos):
             
             #Move the file to the target directory and replace existing file if any
             localService.moveCustomPhotoFromPathToDestination(downloadedFile, customPhoto["aircraft"])
-            MessageBrocker.emitConsoleMessage(f"Custom photo {customPhoto["aircraft"]} updated")
-        
+            MessageBrocker.emitConsoleMessage(f"Custom photo {customPhoto['aircraft']} updated")
+
         except HTTPError as httpError:
-            MessageBrocker.emitConsoleMessage(f"Custom photo {customPhoto["aircraft"]} download ERROR {httpError.args} ")
+            MessageBrocker.emitConsoleMessage(f"Custom photo {customPhoto['aircraft']} download ERROR {httpError.args} ")
 
         _progress += _progress_step #TEMP PROGRESS
         MessageBrocker.emitProgress(_progress) #TEMP PROGRESS

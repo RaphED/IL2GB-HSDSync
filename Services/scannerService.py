@@ -32,19 +32,19 @@ class ScanResult:
 
         if customPhotoSyncIsActive():
             returnString += f"\n************ Cockpit notes ************\n"
-            returnString += f"Selected images : {cockpitNotesModes[getConf("cockpitNotesMode")]}\n\n"
+            returnString += f"Selected images : {cockpitNotesModes[getConf('cockpitNotesMode')]}\n\n"
             if len(self.toBeUpdatedCockpitNotes) == 0:
                 returnString += "<bold>All custom photos are up to date</bold>\n"
             else:
-                returnString += f"<bold>{len(self.toBeUpdatedCockpitNotes)} custom photos are to be updated ({bytesToString(diskSpaceStats["toBeUpdatedCustomPhotos"])})</bold>\n"
+                returnString += f"<bold>{len(self.toBeUpdatedCockpitNotes)} custom photos are to be updated ({bytesToString(diskSpaceStats['toBeUpdatedCustomPhotos'])})</bold>\n"
 
-        returnString += f"\nMissing skins ({bytesToString(diskSpaceStats["missingSkinsSpace"])}) :\n"
+        returnString += f"\nMissing skins ({bytesToString(diskSpaceStats['missingSkinsSpace'])}) :\n"
         for skin in self.missingSkins:
             returnString += f"<blue>{skin.name()}</blue>\n"
         if len(self.missingSkins) == 0:
             returnString +="- None -\n"
 
-        returnString += f"\nTo be updated skins ({bytesToString(diskSpaceStats["toBeUpdatedSkinsSpace"])}) :\n"
+        returnString += f"\nTo be updated skins ({bytesToString(diskSpaceStats['toBeUpdatedSkinsSpace'])}) :\n"
         for skin in self.toBeUpdatedSkins:
             returnString += f"<blue>{skin.name()}</blue>\n"
         if len(self.toBeUpdatedSkins) == 0:
@@ -52,7 +52,7 @@ class ScanResult:
 
         afterUpdateDiskSpace = diskSpaceStats["subscribedSkinsSpace"]
 
-        returnString += f"\n********** Unregistered skins ********** ({bytesToString(diskSpaceStats["toBeRemovedSkinsSpace"])})"
+        returnString += f"\n********** Unregistered skins ********** ({bytesToString(diskSpaceStats['toBeRemovedSkinsSpace'])})"
 
         returnString += "\n"
         
@@ -78,10 +78,10 @@ class ScanResult:
 
         if self.IsSyncUpToDate():
             returnString += f"Disk space used by your skins : {bytesToString(beforeUpdateDiskSpace)}\n"
-            returnString += f"Disk space used by your unregistered skins : {bytesToString(diskSpaceStats["toBeRemovedSkinsSpace"])}"
+            returnString += f"Disk space used by your unregistered skins : {bytesToString(diskSpaceStats['toBeRemovedSkinsSpace'])}"
         else:
             returnString += f"Disk space used by your skins (before update) : {bytesToString(beforeUpdateDiskSpace)}\n"
-            returnString += f"Disk space used by your unregistered skins ({unregistered_remove_message}): {bytesToString(diskSpaceStats["toBeRemovedSkinsSpace"])}\n"
+            returnString += f"Disk space used by your unregistered skins ({unregistered_remove_message}): {bytesToString(diskSpaceStats['toBeRemovedSkinsSpace'])}\n"
             returnString += f"Disk space used by your skins (after update) : {bytesToString(afterUpdateDiskSpace)} ({bytesToString(spaceDelta, forceSign=True)})"
         
         

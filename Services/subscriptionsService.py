@@ -121,8 +121,8 @@ def importNewCollection(collectionURL: str):
     return new_collection
 
 def removeCollection(collection_id):
-    if getCollection(collection_id) is not None:
-        Exception(f"Cannot remove non existing collection with id {collection_id}")
+    if getCollection(collection_id) is None:
+        raise Exception(f"Cannot remove non existing collection with id {collection_id}")
     global subscription_list
     subscription_list = [sub for sub in subscription_list if sub.id != collection_id]
     save_subscription_file()
