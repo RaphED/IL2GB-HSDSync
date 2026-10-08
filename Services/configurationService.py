@@ -10,10 +10,30 @@ config_file = 'HSDSync-config.json'
 # Default values for the configuration file
 default_config = {
     "IL2GBGameDirectory": "D:\\IL-2 Sturmovik Battle of Stalingrad",
+    "IL2KoreaGameDirectory": "",
     "autoRemoveUnregisteredSkins": False,
     "cockpitNotesMode": "noSync",
     "applyCensorship": False,
     "displayCollectionsIcons": False
+}
+
+# Supported games, keyed by the game code used by HSD (game_asset.game)
+# - configKey: configuration parameter holding the game root folder (empty = game not installed)
+# - exeName: executable in <root>\bin\game, used to check and auto-detect the root folder
+# - launcherSubFolder: sub folder holding the game root, when the launcher folder is selected instead
+GAMES = {
+    "IL2GB": {
+        "label": "IL-2 Great Battles",
+        "configKey": "IL2GBGameDirectory",
+        "exeName": "Il-2.exe",
+        "launcherSubFolder": None,
+    },
+    "IL2Korea": {
+        "label": "IL-2 Korea",
+        "configKey": "IL2KoreaGameDirectory",
+        "exeName": "IL2Series.exe",
+        "launcherSubFolder": "game",
+    },
 }
 
 cockpitNotesModes = {
@@ -84,8 +104,72 @@ def generateConfFile():
         json.dump(default_config, f, indent=4)
     return default_config
 
-def checkIL2InstallPath():
-    return os.path.exists(os.path.join(getConf("IL2GBGameDirectory"), "bin\\game\\Il-2.exe"))
+def getGameDirectory(game):
+    return getConf(GAMES[game]["configKey"])
+
+def isValidGamePath(game, path):
+    if not path:
+        return False
+    return os.path.exists(os.path.join(path, "bin\\game", GAMES[game]["exeName"]))
+
+def checkGameInstallPath(game):
+    return isValidGamePath(game, getGameDirectory(game))
+
+def isGameConfigured(game):
+    return getGameDirectory(game) != ""
+
+def getInstalledGames():
+    return [game for game in GAMES.keys() if checkGameInstallPath(game)]
+
+def normalizeGamePath(game, path):
+    """Return the game root folder for a selected folder (the launcher folder is accepted for games that have one)"""
+    subFolder = GAMES[game]["launcherSubFolder"]
+    if subFolder and not isValidGamePath(game, path) and isValidGamePath(game, os.path.join(path, subFolder)):
+        return os.path.normpath(os.path.join(path, subFolder))
+    return path
+
+def setGameDirectory(game, path):
+    update_config_param(GAMES[game]["configKey"], normalizeGamePath(game, os.path.normpath(path)))
+
+def detectPathsOfNewGames():
+    """Once per game added after the configuration file was generated: try to auto-detect its path.
+    The parameter is stored even when not found (empty), so that the search is not done at each launch."""
+    global current_config
+    if current_config is None:
+        current_config = load_config()
+    for game, game_info in GAMES.items():
+        if game_info["configKey"] in current_config:
+            continue
+        foundGamePath = tryToFindGamePath(game)
+        if foundGamePath:
+            setGameDirectory(game, foundGamePath)
+        else:
+            update_config_param(game_info["configKey"], "")
+
+def _get_uninstall_locations():
+    """Install locations of the IL-2 games registered in Windows (standalone installers and Steam)."""
+    locations = []
+    uninstall_keys = [
+        (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"),
+        (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall"),
+        (winreg.HKEY_CURRENT_USER, r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"),
+    ]
+    for hive, key_path in uninstall_keys:
+        try:
+            key = winreg.OpenKey(hive, key_path)
+        except OSError:
+            continue
+        for index in range(winreg.QueryInfoKey(key)[0]):
+            try:
+                sub_key = winreg.OpenKey(key, winreg.EnumKey(key, index))
+                display_name = winreg.QueryValueEx(sub_key, "DisplayName")[0]
+                if "IL-2" in display_name or "IL2" in display_name:
+                    locations.append(winreg.QueryValueEx(sub_key, "InstallLocation")[0])
+                winreg.CloseKey(sub_key)
+            except OSError:
+                continue
+        winreg.CloseKey(key)
+    return [location for location in locations if location and os.path.exists(location)]
 
 def _check_steam_registry():
     """Check Windows registry for Steam installation path."""
@@ -138,14 +222,24 @@ def _search_in_directory(directory, exe_name='Il-2.exe', max_depth=4):
         pass
     return None
 
+def tryToFindGamePath(game):
+    return tryToFindIL2Path(GAMES[game]["exeName"])
+
 def tryToFindIL2Path(exe_name='Il-2.exe'):
     """
     Try to find IL-2 Sturmovik installation path using optimized search:
+    0. Check the install locations registered in Windows
     1. Check Steam registry and known Steam libraries
     2. Check common installation directories
     3. As last resort, search all drives (limited depth)
     """
-    
+
+    # Priority 0: Check registered install locations (e.g. IL-2 Korea standalone installer)
+    for location in _get_uninstall_locations():
+        result = _search_in_directory(location, exe_name, max_depth=3)
+        if result:
+            return os.path.normpath(result)
+
     # Priority 1: Check Steam registry and libraries
     steam_path = _check_steam_registry()
     if steam_path:
@@ -186,4 +280,5 @@ def tryToFindIL2Path(exe_name='Il-2.exe'):
     return None  # Return None if the file was not found
 
 def customPhotoSyncIsActive():
-    return getConf("cockpitNotesMode") != "noSync"
+    #cockpit notes only exist for IL-2 Great Battles
+    return getConf("cockpitNotesMode") != "noSync" and checkGameInstallPath("IL2GB")

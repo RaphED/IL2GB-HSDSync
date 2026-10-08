@@ -21,6 +21,9 @@ class RemoteSkin:
         return self._json_raw_data["title"]
     def game_asset_code(self):
         return self._json_raw_data["game_asset"]["code_name"]
+    def game(self):
+        #skins of servers older than the multi-games support are IL-2 Great Battles ones
+        return self._json_raw_data["game_asset"].get("game") or "IL2GB"
     
     #get variant sub json data
     def unrestricted_variant_content(self) -> json:

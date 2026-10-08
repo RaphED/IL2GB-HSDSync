@@ -1,5 +1,5 @@
 import Services.loggingService as loggingService
-from Services.configurationService import getConf, customPhotoSyncIsActive, checkIL2InstallPath, cockpitNotesModes
+from Services.configurationService import getConf, customPhotoSyncIsActive, cockpitNotesModes, GAMES, getInstalledGames, isGameConfigured
 import Services.localService as localService
 import Services.remoteService as remoteService
 from Services.subscriptionsService import getAllSubcriptions
@@ -13,7 +13,9 @@ class ScanResult:
         self.toBeRemovedSkins= list[localService.LocalSkin]()
         self.previouslyInstalledSkins = list[localService.LocalSkin]()
         self.toBeUpdatedCockpitNotes = list()
-        
+        #subscribed skins of games that are not installed (or whose path is not configured), not synchronized
+        self.skippedSkinsPerGame = dict[str, list[remoteService.RemoteSkin]]()
+
     def getDiskUsageStats(self):
         return {
             "subscribedSkinsSpace":sum([skin.size_in_b() for skin in self.subscribedSkins]),
@@ -37,6 +39,10 @@ class ScanResult:
                 returnString += "<bold>All custom photos are up to date</bold>\n"
             else:
                 returnString += f"<bold>{len(self.toBeUpdatedCockpitNotes)} custom photos are to be updated ({bytesToString(diskSpaceStats['toBeUpdatedCustomPhotos'])})</bold>\n"
+
+        for game, skippedSkins in self.skippedSkinsPerGame.items():
+            reason = "invalid game folder" if isGameConfigured(game) else "game folder not configured"
+            returnString += f"\n<chocolate>{len(skippedSkins)} {GAMES[game]['label']} skin(s) skipped: {reason} (see parameters)</chocolate>\n"
 
         returnString += f"\nMissing skins ({bytesToString(diskSpaceStats['missingSkinsSpace'])}) :\n"
         for skin in self.missingSkins:
@@ -139,6 +145,7 @@ def scanSkins():
     scanResult.previouslyInstalledSkins = localService.getSkinsList()
     
     #load all subscriptions and merge all skins in one list
+    installedGames = getInstalledGames()
     subscribedCollectionList = getAllSubcriptions()
     skins_ids = []
     for collection in subscribedCollectionList:
@@ -149,9 +156,14 @@ def scanSkins():
         loggingService.info(f"Subscribed collection : {collection.name}")
         for skin in collection.skins:
             #do not load the same skin twice
-            if skin.id() not in skins_ids:
-                scanResult.subscribedSkins.append(skin)
-                skins_ids.append(skin.id())
+            if skin.id() in skins_ids:
+                continue
+            skins_ids.append(skin.id())
+            #skins of a game that is not installed cannot be synchronized
+            if skin.game() not in installedGames:
+                scanResult.skippedSkinsPerGame.setdefault(skin.game(), []).append(skin)
+                continue
+            scanResult.subscribedSkins.append(skin)
     
     #then check if we can find the remote skin matching with the local skin
     
@@ -162,8 +174,8 @@ def scanSkins():
     for remoteSkin in scanResult.subscribedSkins:
         foundLocalSkin = None
         for localSkin in scanResult.previouslyInstalledSkins:
-            #not the same A/C, no match
-            if remoteSkin.game_asset_code() != localSkin.game_asset_code:
+            #not the same game or A/C, no match
+            if remoteSkin.game() != localSkin.game or remoteSkin.game_asset_code() != localSkin.game_asset_code:
                 continue
             
             #not the same skin name, no match
@@ -207,7 +219,7 @@ def scanSkins():
         foundRemoteSkin = None
 
         for remoteSkin in scanResult.subscribedSkins:
-            if remoteSkin.game_asset_code() == localSkin.game_asset_code: #prefiltering to optimize search
+            if remoteSkin.game() == localSkin.game and remoteSkin.game_asset_code() == localSkin.game_asset_code: #prefiltering to optimize search
                 #TODO: Manage orphans skins
                 if remoteSkin.name() == localSkin.name:
                     foundRemoteSkin = remoteSkin
@@ -245,9 +257,12 @@ def scanCustomPhotos():
     return toBeUpdatedPhotos
 
 def scanAll():
-    #check conf is proper
-    if not checkIL2InstallPath():
-        MessageBrocker.emitConsoleMessage("!!! INVALID IL2 path !!!\nPlease modify the path from the parameters panel\nThis path should point to the IL2 root folder containing the 'bin' and 'data' folders")
+    #check conf is proper: configured games must have a valid path, and at least one game must be installed
+    installedGames = getInstalledGames()
+    for game in GAMES.keys():
+        if isGameConfigured(game) and game not in installedGames:
+            MessageBrocker.emitConsoleMessage(f"!!! INVALID {GAMES[game]['label']} path !!!\nPlease modify the path from the parameters panel\nThis path should point to the game root folder containing the 'bin' and 'data' folders")
+    if len(installedGames) == 0:
         MessageBrocker.emitConsoleMessage("SCAN Cancelled")
         return None
 

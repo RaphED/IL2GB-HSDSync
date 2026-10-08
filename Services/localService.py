@@ -1,18 +1,20 @@
 import os
+import re
 import hashlib
 import json
 
 import Services.loggingService as loggingService
-from Services.configurationService import getConf
+from Services.configurationService import getGameDirectory, getInstalledGames
 from Services.filesService import moveFile, deleteFile
 from Services.messageBrocker import MessageBrocker
 
 
-def getSkinDirectory():
-    return os.path.join(getConf("IL2GBGameDirectory"), "data\\graphics\\skins")
+def getSkinDirectory(game):
+    return os.path.join(getGameDirectory(game), "data\\graphics\\skins")
 
 def getCustomPhotosDirectory():
-    return os.path.join(getConf("IL2GBGameDirectory"), "data\\graphics\\planes")
+    #cockpit notes only exist for IL-2 Great Battles
+    return os.path.join(getGameDirectory("IL2GB"), "data\\graphics\\planes")
 
 class ddsFile:
     def __init__(self, fileName: str, fileSize: int, fileMd5: str):
@@ -21,7 +23,8 @@ class ddsFile:
         self.fileMd5 = fileMd5
 
 class LocalSkin:
-    def __init__(self, game_asset_code: str, name: str, dds_files: list[ddsFile]):
+    def __init__(self, game: str, game_asset_code: str, name: str, dds_files: list[ddsFile]):
+        self.game = game
         self.game_asset_code = game_asset_code
         self.name = name
         self.dds_files = dds_files
@@ -29,85 +32,113 @@ class LocalSkin:
 
 def getSkinsList() -> list[LocalSkin]:
     skinList: list[LocalSkin] = []
-    skinsDirectory = getSkinDirectory()
-    
+    installedGames = getInstalledGames()
+
     _progress = 0.1
     _estimated_total_progress = 0.8
     MessageBrocker.emitProgress(_progress) #TEMP PROGRESS
-    
-    _progress_step = (_estimated_total_progress - _progress) / len(list(os.walk(skinsDirectory)))
 
-    for root, dirs, files in os.walk(skinsDirectory):
-        _progress += _progress_step #TEMP PROGRESS
-        MessageBrocker.emitProgress(_progress) #TEMP PROGRESS
+    for game in installedGames:
+        skinsDirectory = getSkinDirectory(game)
+        skinsDirectoryContent = list(os.walk(skinsDirectory))
+        _progress_step = (_estimated_total_progress - 0.1) / len(installedGames) / max(1, len(skinsDirectoryContent))
 
-        #continue if no files
-        if len(files) == 0:
-            continue
+        for root, dirs, files in skinsDirectoryContent:
+            _progress += _progress_step #TEMP PROGRESS
+            MessageBrocker.emitProgress(_progress) #TEMP PROGRESS
 
-        #get only dds files
-        ddsfiles = [f for f in files if f.lower().endswith('.dds')]
+            #continue if no files
+            if len(files) == 0:
+                continue
 
-        if len(ddsfiles) == 0:
-            continue
+            #get only dds files
+            ddsfiles = [f for f in files if f.lower().endswith('.dds')]
 
-        parentDir = os.path.dirname(root)
-        
-        #only manage 1 level skins (otherwise these are lost skins)
-        if parentDir != skinsDirectory:
-            loggingService.warning(f"Unexpected skin(s) {ddsfiles} placement at {root}. Not managed")
-            continue
-        
-        game_asset_code =  os.path.basename(os.path.normpath(root))
+            if len(ddsfiles) == 0:
+                continue
 
-        #parse only main skin files
-        for ddsFileName in [file for file in ddsfiles if not file.endswith("#1.dds")]:
-            fileFullPath = os.path.join(root,ddsFileName)
-            filestats = os.stat(fileFullPath)
+            parentDir = os.path.dirname(root)
 
-            skin_name = ddsFileName[:-4] #remove extention to get the name
-            #case of dual skins files, remove the &1
-            if skin_name.endswith("&1"):
-                skin_name = skin_name[:-2]
-            
-            skinList.append(LocalSkin(
-                game_asset_code=game_asset_code,
-                name=skin_name,
-                dds_files=[
-                    ddsFile(
-                        fileName=ddsFileName,
-                        fileSize=filestats.st_size,
-                        fileMd5=manage_file_md5(fileFullPath)
-                    )
-                ]
-            ))
+            #only manage 1 level skins (otherwise these are lost skins)
+            if parentDir != skinsDirectory:
+                loggingService.warning(f"Unexpected skin(s) {ddsfiles} placement at {root}. Not managed")
+                continue
 
-        #then if there are secondary files, attach them to the same skin entry
-        for ddsSecondaryFileName in [file for file in ddsfiles if file.endswith("#1.dds")]:
-            fileFullPath = os.path.join(root,ddsSecondaryFileName)
-            filestats = os.stat(fileFullPath)
+            game_asset_code =  os.path.basename(os.path.normpath(root))
 
-            for index, skin in enumerate(skinList):
-                #check if the secondary file matches the main file
-                if skin.dds_files[0].fileName[:-4] == ddsSecondaryFileName[:-6]:
-                    skinList[index].dds_files.append(
-                        ddsFile(
-                            fileName=ddsSecondaryFileName,
-                            fileSize=filestats.st_size,
-                            fileMd5=manage_file_md5(fileFullPath)
-                        )
-                    )
-                    #stop the loop when found
-                    break
+            if game == "IL2Korea":
+                skinList.extend(_parseKoreaSkinsFolder(game, root, game_asset_code, ddsfiles))
+            else:
+                skinList.extend(_parseGBSkinsFolder(game, root, game_asset_code, ddsfiles))
+
     return skinList
 
-def moveSkinFromPathToDestination(src_path, aircraft):
-    return moveFile(src_path, os.path.join(getSkinDirectory(), aircraft))
+def _buildDdsFile(folder, ddsFileName) -> ddsFile:
+    fileFullPath = os.path.join(folder, ddsFileName)
+    return ddsFile(
+        fileName=ddsFileName,
+        fileSize=os.stat(fileFullPath).st_size,
+        fileMd5=manage_file_md5(fileFullPath)
+    )
+
+def _parseGBSkinsFolder(game, folder, game_asset_code, ddsfiles) -> list[LocalSkin]:
+    """IL-2 Great Battles: [name].dds, or [name]&1.dds + [name]&1#1.dds for aircraft with 2 texture sheets"""
+    skinList: list[LocalSkin] = []
+
+    #parse only main skin files
+    for ddsFileName in [file for file in ddsfiles if not file.endswith("#1.dds")]:
+        skin_name = ddsFileName[:-4] #remove extention to get the name
+        #case of dual skins files, remove the &1
+        if skin_name.endswith("&1"):
+            skin_name = skin_name[:-2]
+
+        skinList.append(LocalSkin(
+            game=game,
+            game_asset_code=game_asset_code,
+            name=skin_name,
+            dds_files=[_buildDdsFile(folder, ddsFileName)]
+        ))
+
+    #then if there are secondary files, attach them to the same skin entry
+    for ddsSecondaryFileName in [file for file in ddsfiles if file.endswith("#1.dds")]:
+        for skin in skinList:
+            #check if the secondary file matches the main file
+            if skin.dds_files[0].fileName[:-4] == ddsSecondaryFileName[:-6]:
+                skin.dds_files.append(_buildDdsFile(folder, ddsSecondaryFileName))
+                #stop the loop when found
+                break
+
+    return skinList
+
+# IL-2 Korea: [name]#N.dds (colour) + [name]#N#1.dds ... [name]#N#N.dds, N depending on the aircraft
+_koreaSkinFilePattern = re.compile(r"^(?P<name>[^#]+)#(?P<sheet>\d+)(#\d+)?\.dds$", re.IGNORECASE)
+
+def _parseKoreaSkinsFolder(game, folder, game_asset_code, ddsfiles) -> list[LocalSkin]:
+    skinsFiles: dict[tuple[str, str], list[str]] = {}
+    for ddsFileName in ddsfiles:
+        match = _koreaSkinFilePattern.match(ddsFileName)
+        if match is None:
+            loggingService.warning(f"Unexpected IL-2 Korea skin file name {ddsFileName} at {folder}. Not managed")
+            continue
+        skinsFiles.setdefault((match["name"], match["sheet"]), []).append(ddsFileName)
+
+    return [
+        LocalSkin(
+            game=game,
+            game_asset_code=game_asset_code,
+            name=skin_name,
+            dds_files=[_buildDdsFile(folder, ddsFileName) for ddsFileName in sorted(fileNames, key=len)]
+        )
+        for (skin_name, _sheet), fileNames in skinsFiles.items()
+    ]
+
+def moveSkinFromPathToDestination(src_path, game, aircraft):
+    return moveFile(src_path, os.path.join(getSkinDirectory(game), aircraft))
 
 def removeSkin(localSkinInfo: LocalSkin):
     
     for file in localSkinInfo.dds_files:
-        filePath = os.path.join(getSkinDirectory(), localSkinInfo.game_asset_code, file.fileName)
+        filePath = os.path.join(getSkinDirectory(localSkinInfo.game), localSkinInfo.game_asset_code, file.fileName)
         deleteFile(filePath)
 
 def getSpaceUsageOfLocalSkinCatalog(skinList: list[LocalSkin]):

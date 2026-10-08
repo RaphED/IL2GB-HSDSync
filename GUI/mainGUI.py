@@ -7,7 +7,7 @@ import Services.loggingService as loggingService
 import Services.synchronizerService as SynchronizerService
 import Services.scannerService as ScannerService
 from Services.messageBrocker import MessageBrocker
-from Services.configurationService import configurationFileExists
+from Services.configurationService import configurationFileExists, detectPathsOfNewGames
 from Services.filesService import getRessourcePath, getIconPath, cleanTemporaryFolder
 
 from GUI.collectionsPanel import CollectionsPanel
@@ -200,7 +200,9 @@ def runMainGUI():
     #check conf file is generated
     if not configurationFileExists():
         runFirstLaunchGUI()
-    
+    #games supported after the configuration file was generated (e.g. IL-2 Korea): detect their path once
+    detectPathsOfNewGames()
+
     root = tk.Tk()
     mainGUI = MainGUI(root)
 

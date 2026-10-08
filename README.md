@@ -1,6 +1,6 @@
 # IL2GB-HSDSync
 
-Program for IL2 GB players to synchronise their game skins with multiple collections from HSD website
+Program for IL-2 Great Battles and IL-2 Korea players to synchronise their game skins with multiple collections from HSD website
 
 FULL DOCUMENTATION :
 (TODO, link to provide)

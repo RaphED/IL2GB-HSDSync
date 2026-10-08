@@ -56,8 +56,9 @@ def mainProgress():
     logging.info("FirstLaunch")
     configurationService.generateConfFile()
     logging.info("New configuration file generated")
-    #Then get the IL2 path
-    foundIL2Path = configurationService.tryToFindIL2Path()
-    logging.info(f"IL2 found path {foundIL2Path}")
-    if foundIL2Path is not None:
-        configurationService.update_config_param("IL2GBGameDirectory", foundIL2Path)
+    #Then get the path of each game
+    for game in configurationService.GAMES.keys():
+        foundGamePath = configurationService.tryToFindGamePath(game)
+        logging.info(f"{game} found path {foundGamePath}")
+        if foundGamePath is not None:
+            configurationService.setGameDirectory(game, foundGamePath)

@@ -3,8 +3,14 @@ from tkinter import ttk, filedialog, messagebox
 from PIL import Image, ImageTk
 
 from GUI.Components.tooltip import Tooltip
-from Services.configurationService import getConf, update_config_param, cockpitNotesModes, checkIL2InstallPath, tryToFindIL2Path
+from Services.configurationService import getConf, update_config_param, cockpitNotesModes, GAMES, getGameDirectory, setGameDirectory, checkGameInstallPath, isGameConfigured, tryToFindGamePath
 from Services.filesService import getIconPath
+
+# Icon displayed next to the path of each game
+GAME_ICONS = {
+    "IL2GB": "IL2.png",
+    "IL2Korea": "IL2Korea.png",
+}
 
 class ParametersPanel:
     def __init__(self, root: tk, on_parameters_change=None):
@@ -29,32 +35,40 @@ class ParametersPanel:
         params_label_frame = ttk.LabelFrame(root, labelwidget=label, padding=(5, 5))
         params_label_frame.pack(fill="both", padx=2, pady=2)
         
-        # Path frame
+        # Path frame : one row per supported game
         path_frame = tk.Frame(params_label_frame)
         path_frame.pack(fill="x", pady=10)
-        
-        # Frame to contain icon and label (for better alignment)
+
+        # Frame to contain icon, game name and path label (for better alignment)
         path_content_frame = tk.Frame(path_frame)
         path_content_frame.pack(fill="both", expand=True)
-        path_content_frame.columnconfigure(1, weight=1)
-        
-        # Icon (path placeholder)
-        self.icon_path_image = ImageTk.PhotoImage(Image.open(getIconPath("IL2.png")).convert('RGBA').resize((24, 24), Image.Resampling.LANCZOS))
-        self.icon_path = tk.Label(path_content_frame, image=self.icon_path_image)
-        self.icon_path.grid(row=0, column=0, padx=(0, 5))
+        path_content_frame.columnconfigure(2, weight=1)
 
-        # Clickable path label
-        self.path_label = ttk.Label(path_content_frame, 
-                                  style="Path.TLabel",
-                                  cursor="hand2")
-        self.path_label.grid(row=0, column=1, sticky="ew")
-        Tooltip(self.path_label, "Click to specify the game directory")
+        # widgets of each game row, by game code
+        self.path_icon_images = {}
+        self.path_labels = {}
+        self.find_btns = {}
+        for row, (game, game_info) in enumerate(GAMES.items()):
+            # Game icon
+            self.path_icon_images[game] = ImageTk.PhotoImage(Image.open(getIconPath(GAME_ICONS[game])).convert('RGBA').resize((24, 24), Image.Resampling.LANCZOS))
+            tk.Label(path_content_frame, image=self.path_icon_images[game]).grid(row=row, column=0, padx=(0, 5), pady=2)
 
-        # Auto-detect button (only shown when path is invalid)
-        self.find_btn = ttk.Button(path_content_frame, text="Auto-detect", command=self.auto_find_path)
-        # not gridded initially — shown only when path is invalid
-        
-        self.update_pathLabel()
+            tk.Label(path_content_frame, text=game_info["label"], anchor="w").grid(row=row, column=1, sticky="w", padx=(0, 5))
+
+            # Clickable path label
+            self.path_labels[game] = ttk.Label(path_content_frame,
+                                    style="Path.TLabel",
+                                    cursor="hand2")
+            self.path_labels[game].grid(row=row, column=2, sticky="ew")
+            Tooltip(self.path_labels[game], f"Click to specify the {game_info['label']} directory")
+
+            # Auto-detect button (only shown when path is invalid)
+            self.find_btns[game] = ttk.Button(path_content_frame, text="Auto-detect", command=lambda g=game: self.auto_find_path(g))
+            # not gridded initially — shown only when path is invalid
+            self.find_btns[game].grid(row=row, column=3, padx=(5, 0))
+            self.find_btns[game].grid_remove()
+
+            self.update_pathLabel(game)
 
         # Rest of the interface
         toggle_removeSkins_frame = tk.Frame(params_label_frame)
@@ -102,34 +116,40 @@ class ParametersPanel:
             return f"{fullPath[:maxLength]}..."
         return fullPath
     
-    def update_pathLabel(self):
-        currentIL2Path = getConf("IL2GBGameDirectory")
-        self.path_label.config(text=self.short_path(currentIL2Path))
-        
-        if checkIL2InstallPath():
-            self.path_label.configure(style="Path.TLabel")
-            self.find_btn.grid_remove()
-        else:
-            self.path_label.configure(style="PathError.TLabel")
-            self.find_btn.grid(row=0, column=2, padx=(5, 0))
+    def update_pathLabel(self, game):
+        path_label = self.path_labels[game]
+        if not isGameConfigured(game):
+            #a game that is not configured is not an error: the player may not own it
+            path_label.config(text="Not configured (click to set)", style="Path.TLabel")
+            self.find_btns[game].grid()
+            return
 
-    def auto_find_path(self):
-        found = tryToFindIL2Path()
+        path_label.config(text=self.short_path(getGameDirectory(game)))
+
+        if checkGameInstallPath(game):
+            path_label.configure(style="Path.TLabel")
+            self.find_btns[game].grid_remove()
+        else:
+            path_label.configure(style="PathError.TLabel")
+            self.find_btns[game].grid()
+
+    def auto_find_path(self, game):
+        found = tryToFindGamePath(game)
         if found:
-            update_config_param("IL2GBGameDirectory", found)
-            self.update_pathLabel()
+            setGameDirectory(game, found)
+            self.update_pathLabel(game)
             self.emit_collections_change()
         else:
-            messagebox.showwarning("Not found", "Could not automatically find the IL-2 installation directory.")
-    
-    def modify_path(self):
+            messagebox.showwarning("Not found", f"Could not automatically find the {GAMES[game]['label']} installation directory.")
+
+    def modify_path(self, game):
         file_path = filedialog.askdirectory(
-            initialdir=getConf("IL2GBGameDirectory"),
-            title="Select your IL2 folder"
+            initialdir=getGameDirectory(game) or None,
+            title=f"Select your {GAMES[game]['label']} folder"
         )
         if len(file_path) > 0:
-            update_config_param("IL2GBGameDirectory", file_path)
-            self.update_pathLabel()
+            setGameDirectory(game, file_path)
+            self.update_pathLabel(game)
             self.emit_collections_change()
     
     def modify_auto_remove(self):
@@ -152,11 +172,13 @@ class ParametersPanel:
         self.cokpitNote_dropdown.configure(state="disabled")
         self.toggle_applyCensorship_button.configure(state="disabled")
         self.toggle_removeSkins_button.configure(state="disabled")
-        self.path_label.unbind("<Button-1>")
+        for path_label in self.path_labels.values():
+            path_label.unbind("<Button-1>")
 
     def unlock_actions(self):
         self.cokpitNote_dropdown.configure(state="readonly")
         self.toggle_applyCensorship_button.configure(state="enabled")
         self.toggle_removeSkins_button.configure(state="enabled")
         # Click event configuration
-        self.path_label.bind("<Button-1>", lambda e: self.modify_path())
+        for game, path_label in self.path_labels.items():
+            path_label.bind("<Button-1>", lambda e, g=game: self.modify_path(g))
