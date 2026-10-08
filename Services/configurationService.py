@@ -9,7 +9,7 @@ config_file = 'HSDSync-config.json'
 
 # Default values for the configuration file
 default_config = {
-    "IL2GBGameDirectory": "D:\\IL-2 Sturmovik Battle of Stalingrad",
+    "IL2GBGameDirectory": "",
     "IL2KoreaGameDirectory": "",
     "autoRemoveUnregisteredSkins": False,
     "cockpitNotesMode": "noSync",
