@@ -11,7 +11,7 @@ Get-ChildItem -Path "." -Directory -Recurse -Filter "__pycache__" | ForEach-Obje
 }
 
 #clear build folder
-if (Test-Path $DistDir) {
+if (Test-Path $BuildDir) {
     Remove-Item -Path $BuildDir -Recurse -Force
 }
 New-Item -Path $BuildDir -ItemType Directory
@@ -53,7 +53,7 @@ function New-exeFile {
     New-VersionFile -version $VERSION -exeFileName "$appName.exe" -targetVersionFileName $appName"_versionFile"
     
     
-    pyinstaller --onefile --clean ".\$pythonMainFile" `
+    python -m PyInstaller --onefile --clean ".\$pythonMainFile" `
         --name $appName `
         --distpath $DistDir `
         --specpath $BuildDir `
@@ -68,7 +68,7 @@ function New-exeFileFromSpecFile {
     #generate the version file for that exe
     New-VersionFile -version $VERSION -exeFileName "$appName.exe" -targetVersionFileName $appName"_versionFile"
 
-    pyinstaller --clean "$appName.spec" --distpath $DistDir
+    python -m PyInstaller --clean "$appName.spec" --distpath $DistDir
 }
 
 #Creation of the main EXE
