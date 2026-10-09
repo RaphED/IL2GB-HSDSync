@@ -1,9 +1,17 @@
 import Services.loggingService as loggingService
-from Services.configurationService import getConf, customPhotoSyncIsActive, cockpitNotesModes, GAMES, getInstalledGames, isGameConfigured
+from Services.configurationService import getConf, customPhotoSyncIsActive, getCockpitNotesPacks, setCockpitNotesPacks, GAMES, getInstalledGames, isGameConfigured
 import Services.localService as localService
 import Services.remoteService as remoteService
 from Services.subscriptionsService import getAllSubcriptions
 from Services.messageBrocker import MessageBrocker
+
+class CockpitNoteUpdate:
+    """A cockpit note to install, and the pack it comes from"""
+    def __init__(self, note: remoteService.RemoteCockpitNote, pack: remoteService.RemoteCockpitNotesPack, aircraftFolder: str):
+        self.note = note
+        self.pack = pack
+        #folder of the aircraft in the game: the existing one when there is one (folder names are case insensitive)
+        self.aircraftFolder = aircraftFolder
 
 class ScanResult:
     def __init__(self):
@@ -12,7 +20,10 @@ class ScanResult:
         self.toBeUpdatedSkins = list[remoteService.RemoteSkin]()
         self.toBeRemovedSkins= list[localService.LocalSkin]()
         self.previouslyInstalledSkins = list[localService.LocalSkin]()
-        self.toBeUpdatedCockpitNotes = list()
+        self.toBeUpdatedCockpitNotes = list[CockpitNoteUpdate]()
+        #selected packs that cannot be found online anymore (config entries), or whose game is not installed
+        self.unavailableCockpitNotesPacks = list[dict]()
+        self.skippedCockpitNotesPacks = list[remoteService.RemoteCockpitNotesPack]()
         #subscribed skins of games that are not installed (or whose path is not configured), not synchronized
         self.skippedSkinsPerGame = dict[str, list[remoteService.RemoteSkin]]()
 
@@ -23,7 +34,7 @@ class ScanResult:
             "toBeUpdatedSkinsSpace": sum([skin.size_in_b() for skin in self.toBeUpdatedSkins]),
             "toBeRemovedSkinsSpace": localService.getSpaceUsageOfLocalSkinCatalog(self.toBeRemovedSkins),
             "previouslyInstalledSkinsSpace": localService.getSpaceUsageOfLocalSkinCatalog(self.previouslyInstalledSkins),
-            "toBeUpdatedCustomPhotos": remoteService.getSpaceUsageOfCustomPhotoCatalog(self.toBeUpdatedCockpitNotes)
+            "toBeUpdatedCustomPhotos": sum([update.note.size_in_b() for update in self.toBeUpdatedCockpitNotes])
         }
     
     def toString(self):
@@ -34,11 +45,16 @@ class ScanResult:
 
         if customPhotoSyncIsActive():
             returnString += f"\n************ Cockpit notes ************\n"
-            returnString += f"Selected images : {cockpitNotesModes[getConf('cockpitNotesMode')]}\n\n"
+            returnString += f"Selected packs (by priority) : {' > '.join(pack['title'] for pack in getCockpitNotesPacks())}\n\n"
+            for pack in self.unavailableCockpitNotesPacks:
+                returnString += f"<chocolate>Pack \"{pack['title']}\" is no longer available on HSD: remove it from the parameters</chocolate>\n"
+            for pack in self.skippedCockpitNotesPacks:
+                reason = "invalid game folder" if isGameConfigured(pack.game()) else "game folder not configured"
+                returnString += f"<chocolate>Pack \"{pack.title()}\" skipped: {reason} (see parameters)</chocolate>\n"
             if len(self.toBeUpdatedCockpitNotes) == 0:
-                returnString += "<bold>All custom photos are up to date</bold>\n"
+                returnString += "<bold>All cockpit notes are up to date</bold>\n"
             else:
-                returnString += f"<bold>{len(self.toBeUpdatedCockpitNotes)} custom photos are to be updated ({bytesToString(diskSpaceStats['toBeUpdatedCustomPhotos'])})</bold>\n"
+                returnString += f"<bold>{len(self.toBeUpdatedCockpitNotes)} cockpit notes are to be updated ({bytesToString(diskSpaceStats['toBeUpdatedCustomPhotos'])})</bold>\n"
 
         for game, skippedSkins in self.skippedSkinsPerGame.items():
             reason = "invalid game folder" if isGameConfigured(game) else "game folder not configured"
@@ -233,28 +249,45 @@ def scanSkins():
     return scanResult
 
 
-def scanCustomPhotos():
-    
-    localCustomPhotos = localService.getCustomPhotosList()
-    remoteCustomPhotos = remoteService.getCustomPhotosList()
+def scanCustomPhotos(scanResult: ScanResult):
+    installedGames = getInstalledGames()
 
-    toBeUpdatedPhotos = []
+    #load the selected packs, by priority order
+    selectedPacks = getCockpitNotesPacks()
+    loadedPacks = list[remoteService.RemoteCockpitNotesPack]()
+    titlesChanged = False
+    for selectedPack in selectedPacks:
+        pack = remoteService.getRemoteCockpitNotesPack(selectedPack["id"])
+        if pack is None or not pack.is_online():
+            loggingService.warning(f"Cockpit notes pack {selectedPack['id']} ({selectedPack['title']}) is not available")
+            scanResult.unavailableCockpitNotesPacks.append(selectedPack)
+            continue
+        if pack.title() != selectedPack["title"]:
+            selectedPack["title"] = pack.title()
+            titlesChanged = True
+        if pack.game() not in installedGames:
+            scanResult.skippedCockpitNotesPacks.append(pack)
+            continue
+        loadedPacks.append(pack)
+    if titlesChanged:
+        setCockpitNotesPacks(selectedPacks)
 
-    for remotePhoto in remoteCustomPhotos:
-        match = False
-        for localPhoto in localCustomPhotos:
-            if remotePhoto["aircraft"].lower() == localPhoto["aircraft"].lower():
-                #we have a match
-                if remotePhoto["md5"] != localPhoto["md5"]:
-                    #photo has to be updated
-                    toBeUpdatedPhotos.append(remotePhoto)
-                match = True
-                break
-        
-        if not match:
-            toBeUpdatedPhotos.append(remotePhoto)
+    #for each aircraft, the note of the first pack providing one
+    selectedNotes = dict[tuple[str, str], tuple[remoteService.RemoteCockpitNote, remoteService.RemoteCockpitNotesPack]]()
+    for pack in loadedPacks:
+        for note in pack.notes():
+            selectedNotes.setdefault((note.game(), note.aircraft_code().lower()), (note, pack))
 
-    return toBeUpdatedPhotos
+    #compare with the installed notes (aircraft not covered by any pack are left untouched)
+    localNotesPerGame = dict[str, dict[str, dict]]()
+    for (game, aircraft), (note, pack) in selectedNotes.items():
+        if game not in localNotesPerGame:
+            localNotesPerGame[game] = {localNote["aircraft"].lower(): localNote for localNote in localService.getCustomPhotosList(game)}
+        localNote = localNotesPerGame[game].get(aircraft)
+        if localNote is None:
+            scanResult.toBeUpdatedCockpitNotes.append(CockpitNoteUpdate(note, pack, note.aircraft_code()))
+        elif localNote["md5"] != note.md5():
+            scanResult.toBeUpdatedCockpitNotes.append(CockpitNoteUpdate(note, pack, localNote["aircraft"]))
 
 def scanAll():
     #check conf is proper: configured games must have a valid path, and at least one game must be installed
@@ -272,7 +305,7 @@ def scanAll():
     
     scanResult = scanSkins()
     if customPhotoSyncIsActive():
-        scanResult.toBeUpdatedCockpitNotes = scanCustomPhotos()
+        scanCustomPhotos(scanResult)
     MessageBrocker.emitProgress(1.0) #TEMP PROGRESS
     MessageBrocker.emitConsoleMessage("SCAN FINISHED")
     return scanResult

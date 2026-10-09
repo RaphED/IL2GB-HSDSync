@@ -12,7 +12,9 @@ default_config = {
     "IL2GBGameDirectory": "",
     "IL2KoreaGameDirectory": "",
     "autoRemoveUnregisteredSkins": False,
-    "cockpitNotesMode": "noSync",
+    # cockpit notes packs of HSD, by priority order (the first pack providing a note for an aircraft wins)
+    # each item: {"id": <pack id>, "title": <pack title, kept to name the pack when it is no more available>}
+    "cockpitNotesPacks": [],
     "applyCensorship": False,
     "displayCollectionsIcons": False
 }
@@ -36,13 +38,6 @@ GAMES = {
     },
 }
 
-cockpitNotesModes = {
-    "noSync": "No synchronization, keep current images",
-    "originalPhotos": "Original IL2 game photos",
-    "officialNumbers": "Cockpit notes from IL2 specifications (C6_lefuneste)",
-    "technochatNumbers": "Cockpit notes from technochat measurements (C6_lefuneste)",
-    "MetalheadNumbers": "Cockpit notes from Metalhead measurements"
-}
 
 
 # Global variable to hold the configuration in memory
@@ -145,6 +140,19 @@ def detectPathsOfNewGames():
             setGameDirectory(game, foundGamePath)
         else:
             update_config_param(game_info["configKey"], "")
+
+def migrateCockpitNotesMode():
+    """The single cockpit notes mode (static IRRE catalogs) is replaced by the HSD cockpit notes packs.
+    The old parameter is removed (no automatic mapping): returns True if the player had selected cockpit notes,
+    so that he can be told to choose packs."""
+    global current_config
+    if current_config is None:
+        current_config = load_config()
+    if "cockpitNotesMode" not in current_config:
+        return False
+    hadCockpitNotes = current_config.pop("cockpitNotesMode") != "noSync"
+    update_config_param("cockpitNotesPacks", [])
+    return hadCockpitNotes
 
 def _get_uninstall_locations():
     """Install locations of the IL-2 games registered in Windows (standalone installers and Steam)."""
@@ -279,6 +287,11 @@ def tryToFindIL2Path(exe_name='Il-2.exe'):
     
     return None  # Return None if the file was not found
 
+def getCockpitNotesPacks() -> list[dict]:
+    return getConf("cockpitNotesPacks")
+
+def setCockpitNotesPacks(packs: list[dict]):
+    update_config_param("cockpitNotesPacks", packs)
+
 def customPhotoSyncIsActive():
-    #cockpit notes only exist for IL-2 Great Battles
-    return getConf("cockpitNotesMode") != "noSync" and checkGameInstallPath("IL2GB")
+    return len(getCockpitNotesPacks()) > 0

@@ -3,7 +3,8 @@ from tkinter import ttk, filedialog, messagebox
 from PIL import Image, ImageTk
 
 from GUI.Components.tooltip import Tooltip
-from Services.configurationService import getConf, update_config_param, cockpitNotesModes, GAMES, getGameDirectory, setGameDirectory, checkGameInstallPath, isGameConfigured, tryToFindGamePath
+from GUI.Components.cockpitNotesPacksModal import ask_cockpit_notes_packs
+from Services.configurationService import getConf, update_config_param, getCockpitNotesPacks, setCockpitNotesPacks, GAMES, getGameDirectory, setGameDirectory, checkGameInstallPath, isGameConfigured, tryToFindGamePath
 from Services.filesService import getIconPath
 
 # Icon displayed next to the path of each game
@@ -95,16 +96,13 @@ class ParametersPanel:
         self.icon_cokpitNote = tk.Label(cokpit_note_frame, image=self.cockpit_note_image)
         self.icon_cokpitNote.pack(side=tk.LEFT, padx=5)
         
-        self.cokpitNote_dropdown = ttk.Combobox(
-            cokpit_note_frame,
-            values=[cockpitNotesModes[mode] for mode in cockpitNotesModes.keys()],
-            state="readonly",
-            width=50,
-        )
-        Tooltip(self.cokpitNote_dropdown, text="Select the cockpit photos collection - some include notes on the plane's operational limits")
-        self.cokpitNote_dropdown.set(cockpitNotesModes[getConf("cockpitNotesMode")])
-        self.cokpitNote_dropdown.pack(side=tk.LEFT, padx=5)
-        self.cokpitNote_dropdown.bind("<<ComboboxSelected>>", self.on_cokpitNote_dropdown_change)
+        self.cockpitNotes_button = ttk.Button(cokpit_note_frame, text="Cockpit notes...", command=self.select_cockpit_notes_packs)
+        self.cockpitNotes_button.pack(side=tk.LEFT, padx=5)
+        Tooltip(self.cockpitNotes_button, text="Select the HSD cockpit notes packs to synchronize - notes replace the cockpit photo with the plane's operational limits")
+
+        self.cockpitNotes_label = tk.Label(cokpit_note_frame, anchor="w", justify="left", wraplength=320)
+        self.cockpitNotes_label.pack(side=tk.LEFT, padx=5, fill="x", expand=True)
+        self.update_cockpitNotes_label()
 
     def emit_collections_change(self):
         #external emit
@@ -160,23 +158,30 @@ class ParametersPanel:
         update_config_param("applyCensorship", self.toggle_applyCensorship_var.get())
         self.emit_collections_change()
     
-    def on_cokpitNote_dropdown_change(self, event):
-        #find the cokpit not mode associated to the text
-        selected_mode = next(mode for mode in cockpitNotesModes.keys()
-                           if cockpitNotesModes[mode] == self.cokpitNote_dropdown.get())
-        update_config_param("cockpitNotesMode", selected_mode)
-        self.cokpitNote_dropdown.selection_clear()
+    def update_cockpitNotes_label(self):
+        packs = getCockpitNotesPacks()
+        if len(packs) == 0:
+            self.cockpitNotes_label.config(text="No synchronization, keep current images")
+        else:
+            self.cockpitNotes_label.config(text=" > ".join(pack["title"] for pack in packs))
+
+    def select_cockpit_notes_packs(self):
+        selected_packs = ask_cockpit_notes_packs(self.root.winfo_toplevel())
+        if selected_packs is None:
+            return
+        setCockpitNotesPacks(selected_packs)
+        self.update_cockpitNotes_label()
         self.emit_collections_change()
 
     def lock_actions(self):
-        self.cokpitNote_dropdown.configure(state="disabled")
+        self.cockpitNotes_button.configure(state="disabled")
         self.toggle_applyCensorship_button.configure(state="disabled")
         self.toggle_removeSkins_button.configure(state="disabled")
         for path_label in self.path_labels.values():
             path_label.unbind("<Button-1>")
 
     def unlock_actions(self):
-        self.cokpitNote_dropdown.configure(state="readonly")
+        self.cockpitNotes_button.configure(state="enabled")
         self.toggle_applyCensorship_button.configure(state="enabled")
         self.toggle_removeSkins_button.configure(state="enabled")
         # Click event configuration

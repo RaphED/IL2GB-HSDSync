@@ -12,9 +12,8 @@ from Services.messageBrocker import MessageBrocker
 def getSkinDirectory(game):
     return os.path.join(getGameDirectory(game), "data\\graphics\\skins")
 
-def getCustomPhotosDirectory():
-    #cockpit notes only exist for IL-2 Great Battles
-    return os.path.join(getGameDirectory("IL2GB"), "data\\graphics\\planes")
+def getCustomPhotosDirectory(game):
+    return os.path.join(getGameDirectory(game), "data\\graphics\\planes")
 
 class ddsFile:
     def __init__(self, fileName: str, fileSize: int, fileMd5: str):
@@ -151,8 +150,8 @@ def getSpaceUsageOfLocalSkinCatalog(skinList: list[LocalSkin]):
 
 
 
-def getCustomPhotosList():
-    return getCustomPhotosListFromPath(getCustomPhotosDirectory())
+def getCustomPhotosList(game):
+    return getCustomPhotosListFromPath(getCustomPhotosDirectory(game))
 
 def getCustomPhotosListFromPath(path):
     notesList = []
@@ -194,8 +193,8 @@ def getAndGenerateCustomPhotosCatalogFromPath(parentPath, catalogName):
 
     return cockpitNotesList
 
-def moveCustomPhotoFromPathToDestination(src_path, aircraft):
-    destinationPath = os.path.join(getCustomPhotosDirectory(), aircraft, "Textures")
+def moveCustomPhotoFromPathToDestination(src_path, game, aircraft):
+    destinationPath = os.path.join(getCustomPhotosDirectory(game), aircraft, "Textures")
     return moveFile(src_path, destinationPath)
 
 def calculate_metadata_hash(file_path):

@@ -1,7 +1,7 @@
 import requests
 import json
 
-from Services.configurationService import getConf, cockpitNotesModes
+from Services.configurationService import getConf
 from Services.filesService import downloadFile
 from Services.messageBrocker import MessageBrocker
 
@@ -9,6 +9,9 @@ main_api_URL = "https://hsd-online.net/api"
 collections_catalog_URL = f"{main_api_URL}/skinsCollections"
 collection_brownser_URL = "https://hsd-online.net/collections/[collection_id]"
 skins_download_URL = f"{main_api_URL}/skins/files/[path]"
+cockpit_notes_packs_URL = f"{main_api_URL}/cockpitNotesPacks"
+cockpit_notes_download_URL = f"{main_api_URL}/cockpitNotesPacks/notes/[path]"
+cockpit_notes_pack_browser_URL = "https://hsd-online.net/cockpit-notes/[pack_id]"
 
 class RemoteSkin:
     def __init__(self, json_raw_data: json) -> None:
@@ -126,58 +129,79 @@ def downloadSkinToTempDir(skinInfo: RemoteSkin):
     return downloadedFiles
 
 
-customPhotosCatalogURL = "https://www.lesirreductibles.com/irreskins/IRRE/CustomPhotos/[mode]CustomPhotosManifest.json"
-customPhotosFilesURL = "https://www.lesirreductibles.com/irreskins/IRRE/CustomPhotos/[mode]/[aircraft]/Textures/custom_photo.dds"
+# COCKPIT NOTES
 
+# File installed by the game in data/graphics/planes/<aircraft code>/Textures/
+COCKPIT_NOTE_FILE_NAME = "custom_photo.dds"
 
-def getCockpitNotesModeInfo(mode):
-    if mode not in cockpitNotesModes.keys():
-        raise Exception(f"Unexpected cockpitNotesModes {mode}")
-    
-    if mode == "noSync":
-        return {
-            "catalogURL": None,
-            "filesURL": None
-        }
-    else:
-        return {
-            "catalogURL": customPhotosCatalogURL.replace("[mode]", mode),
-            "filesURL": customPhotosFilesURL.replace("[mode]", mode),
-        }
-            
+class RemoteCockpitNote:
+    def __init__(self, json_raw_data: json) -> None:
+        self._json_raw_data = json_raw_data
 
-def getCustomPhotosList():
-    #hard coded remote address for the cockpitNotesCatalog
-    catalogURL = getCockpitNotesModeInfo(getConf("cockpitNotesMode"))["catalogURL"]
-    if catalogURL is None:
-        return []
+    def aircraft_code(self):
+        return self._json_raw_data["game_asset"]["code_name"]
+    def aircraft_name(self):
+        return self._json_raw_data["game_asset"]["display_name"]
+    def game(self):
+        return self._json_raw_data["game_asset"]["game"]
+    def md5(self):
+        return self._json_raw_data["MD5"]
+    def size_in_b(self) -> int:
+        return self._json_raw_data["size_in_b"]
+    def download_URL(self):
+        return cockpit_notes_download_URL.replace("[path]", self._json_raw_data["path"])
 
+class RemoteCockpitNotesPack:
+    def __init__(self, json_raw_data: json) -> None:
+        self._json_raw_data = json_raw_data
+
+    def id(self):
+        return self._json_raw_data["id"]
+    def title(self):
+        return self._json_raw_data["title"]
+    def description(self):
+        return self._json_raw_data["description"]
+    def creator_name(self):
+        return self._json_raw_data["creator"]
+    def game(self):
+        return self._json_raw_data["game"]
+    def notes_count(self) -> int:
+        return self._json_raw_data["notes_count"]
+    def size_in_b(self) -> int:
+        return self._json_raw_data["size_in_b"]
+    def is_online(self) -> bool:
+        return self._json_raw_data["state"] == "Approved"
+    def browser_URL(self) -> str:
+        return cockpit_notes_pack_browser_URL.replace("[pack_id]", str(self.id()))
+    def notes(self) -> list[RemoteCockpitNote]:
+        #only loaded with a single pack, not in the catalog
+        return [RemoteCockpitNote(note_json) for note_json in self._json_raw_data.get("notes", [])]
+
+def getRemoteCockpitNotesPacksCatalog() -> list[RemoteCockpitNotesPack]:
+    """Online (approved) packs, without their notes"""
     try:
-        response = requests.get(catalogURL)
-
-         # Check if the request was successful (status code 200)
+        response = requests.get(cockpit_notes_packs_URL)
         if response.status_code == 200:
-            file_content = response.json()
-            return file_content
+            return [RemoteCockpitNotesPack(pack_json) for pack_json in response.json()["packs"]]
         else:
-            raise Exception(f"Cannot retrieve cockpit notes catalog due to server response :{response.status_code}")
+            raise Exception(f"Cannot retrieve cockpit notes packs catalog due to server response :{response.status_code}")
+    except requests.ConnectionError as e:
+        MessageBrocker.emitConsoleMessage("Cannot join server to retrieve cockpit notes packs catalog.")
+        raise e
+
+def getRemoteCockpitNotesPack(pack_id: int) -> RemoteCockpitNotesPack | None:
+    """The pack with its notes, None if it does not exist (anymore)"""
+    try:
+        response = requests.get(f"{cockpit_notes_packs_URL}/{pack_id}")
+        if response.status_code == 200:
+            return RemoteCockpitNotesPack(response.json())
+        elif response.status_code == 404:
+            return None
+        else:
+            raise Exception(f"Cannot retrieve cockpit notes pack {pack_id} due to server response :{response.status_code}")
     except requests.ConnectionError as e:
         MessageBrocker.emitConsoleMessage("Cannot join server to retrieve cockpit notes. Consider deactivating its synchronization.")
         raise e
-    except Exception as e:
-        raise e
 
-def getSpaceUsageOfCustomPhotoCatalog(customPhotosList):
-    totalDiskSpace = 0
-    for skin in customPhotosList:
-        #This is soooo bad. custom photos are about 1 400 000 bites
-        #TODO : addd the file size in the manifests
-        totalDiskSpace += 1400000
-    
-    return totalDiskSpace
-
-def downloadCustomPhoto(cockpitNotesMode, cockpitNote):
-    filesURL = getCockpitNotesModeInfo(cockpitNotesMode)["filesURL"]
-
-    targetURL = filesURL.replace("[aircraft]", cockpitNote["aircraft"])
-    return downloadFile(targetURL, cockpitNote["md5"])
+def downloadCockpitNote(note: RemoteCockpitNote):
+    return downloadFile(note.download_URL(), expectedMD5=note.md5(), destination_file_name=COCKPIT_NOTE_FILE_NAME)

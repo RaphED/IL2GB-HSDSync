@@ -4,7 +4,7 @@ import Services.localService as localService
 import Services.remoteService as remoteService
 from Services.messageBrocker import MessageBrocker
 from Services.configurationService import getConf, customPhotoSyncIsActive
-from Services.scannerService import ScanResult
+from Services.scannerService import ScanResult, CockpitNoteUpdate
 import Services.loggingService as loggingService
 
 def updateRegisteredSkins(scanResult: ScanResult) -> tuple[int, int]:
@@ -69,8 +69,7 @@ def deleteSkinFromLocal(localSkinInfo: localService.LocalSkin):
     MessageBrocker.emitConsoleMessage(f"<chocolate>Deleted skin : {localSkinInfo.name}</chocolate>")
 
 
-def updateCustomPhotos(toBeUpdatedPhotos):
-    cockpitMode = getConf("cockpitNotesMode")
+def updateCustomPhotos(toBeUpdatedPhotos: list[CockpitNoteUpdate]):
     _progress = 0
     _estimated_total_progress = 0.2
     MessageBrocker.emitProgress(_progress) #TEMP PROGRESS
@@ -79,17 +78,20 @@ def updateCustomPhotos(toBeUpdatedPhotos):
         totalUpdates = 1
     _progress_step = (_estimated_total_progress - _progress) / totalUpdates
 
-    for customPhoto in toBeUpdatedPhotos:
-        
+    for update in toBeUpdatedPhotos:
+        aircraftName = update.note.aircraft_name()
         try:
-            downloadedFile = remoteService.downloadCustomPhoto(cockpitMode, customPhoto)
-            
+            downloadedFile = remoteService.downloadCockpitNote(update.note)
+
             #Move the file to the target directory and replace existing file if any
-            localService.moveCustomPhotoFromPathToDestination(downloadedFile, customPhoto["aircraft"])
-            MessageBrocker.emitConsoleMessage(f"Custom photo {customPhoto['aircraft']} updated")
+            localService.moveCustomPhotoFromPathToDestination(downloadedFile, update.note.game(), update.aircraftFolder)
+            MessageBrocker.emitConsoleMessage(f"Cockpit note {aircraftName} updated ({update.pack.title()})")
 
         except HTTPError as httpError:
-            MessageBrocker.emitConsoleMessage(f"Custom photo {customPhoto['aircraft']} download ERROR {httpError.args} ")
+            MessageBrocker.emitConsoleMessage(f"<red>Cockpit note {aircraftName} download ERROR {httpError.args}</red>")
+        except Exception as e:
+            MessageBrocker.emitConsoleMessage(f"<red>Technical error : cannot sync the cockpit note {aircraftName}</red>")
+            loggingService.error(e)
 
         _progress += _progress_step #TEMP PROGRESS
         MessageBrocker.emitProgress(_progress) #TEMP PROGRESS

@@ -1,13 +1,14 @@
 import threading
 from tkinter import ttk
 import tkinter as tk
+from tkinter import messagebox
 import webbrowser
 
 import Services.loggingService as loggingService
 import Services.synchronizerService as SynchronizerService
 import Services.scannerService as ScannerService
 from Services.messageBrocker import MessageBrocker
-from Services.configurationService import configurationFileExists, detectPathsOfNewGames
+from Services.configurationService import configurationFileExists, detectPathsOfNewGames, migrateCockpitNotesMode
 from Services.filesService import getRessourcePath, getIconPath, cleanTemporaryFolder
 
 from GUI.collectionsPanel import CollectionsPanel
@@ -202,8 +203,19 @@ def runMainGUI():
         runFirstLaunchGUI()
     #games supported after the configuration file was generated (e.g. IL-2 Korea): detect their path once
     detectPathsOfNewGames()
+    #cockpit notes now come from HSD packs: the previously selected cockpit notes are not synchronized anymore
+    hadCockpitNotes = migrateCockpitNotesMode()
 
     root = tk.Tk()
     mainGUI = MainGUI(root)
+
+    if hadCockpitNotes:
+        root.after(500, lambda: messagebox.showinfo(
+            "Cockpit notes",
+            "Cockpit notes are now provided as packs published on HSD.\n\n"
+            "Your previous cockpit notes selection has been reset: use the \"Cockpit notes...\" button "
+            "of the parameters to choose the packs to synchronize. You can combine several packs, by priority order.",
+            parent=root
+        ))
 
     root.mainloop()
