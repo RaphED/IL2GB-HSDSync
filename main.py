@@ -1,5 +1,9 @@
 import sys
 
+#Must run before the imports below, as they import requests (see sslKeyLogService)
+from Services.sslKeyLogService import dropUnusableSslKeyLogFile
+droppedSslKeyLogFile = dropUnusableSslKeyLogFile()
+
 import Services.loggingService as loggingService
 from Services.versionManager import isCurrentVersionUpToDate
 import Services.updateService as updateService
@@ -31,6 +35,8 @@ if __name__ == "__main__":
     
     #INITIALISE LOGS
     loggingService.initialise_logger(debug_mode=debug_mode)
+    if droppedSslKeyLogFile:
+        loggingService.warning(f"SSLKEYLOGFILE ignored, its file cannot be opened: {droppedSslKeyLogFile}")
 
     try:
         #Check if an update has to be launched
